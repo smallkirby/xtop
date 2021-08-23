@@ -2,6 +2,7 @@ use super::process::{Char2ProcState, ProcState};
 
 type pid_t = i32;
 
+// cf. /fs/proc/array.c/do_task_stat()
 #[derive(Debug, PartialEq)]
 pub struct Stat {
   pub pid: pid_t,
@@ -9,11 +10,11 @@ pub struct Stat {
   pub state: ProcState,
   pub ppid: pid_t,
   pub pgid: pid_t,
-  pub sid: pid_t,       // session id
+  pub sid: pid_t, // session id
   pub tty_nr: i32,
   pub tty_pgrp: i32,
   pub flags: u32,
-  pub min_flt: u64,     // minor fault counter
+  pub min_flt: u64, // minor fault counter
   pub cmin_flt: u64,
   pub maj_flt: u64,
   pub cmaj_flt: u64,
@@ -28,7 +29,7 @@ impl Stat {
     let mut ss = s.split(" ").collect::<Vec<&str>>();
 
     let pid = popi(&mut ss) as pid_t;
-    let comm = extract_comm(&mut ss);
+    let comm = pop_comm(&mut ss);
     let state = Char2ProcState(popc(&mut ss));
     let ppid = popi(&mut ss) as pid_t;
     let pgid = popi(&mut ss) as pid_t;
@@ -61,7 +62,7 @@ impl Stat {
       stime,
     }
   }
-} 
+}
 
 mod util {
   pub fn popi(ss: &mut Vec<&str>) -> i64 {
@@ -76,10 +77,10 @@ mod util {
     c
   }
 
-  pub fn extract_comm(ss: &mut Vec<&str>) -> String {
+  pub fn pop_comm(ss: &mut Vec<&str>) -> String {
     let mut comm = String::from("");
     if ss[0].ends_with(')') {
-      comm.push_str(&ss[0][1..(ss[0].len()-1)]);
+      comm.push_str(&ss[0][1..(ss[0].len() - 1)]);
       ss.remove(0);
       return comm;
     }
@@ -101,8 +102,8 @@ mod util {
 
 #[cfg(test)]
 mod tests {
-    use crate::resource::process::ProcState;
-    use super::Stat;
+  use super::Stat;
+  use crate::resource::process::ProcState;
 
   #[test]
   fn stat_from_string() {

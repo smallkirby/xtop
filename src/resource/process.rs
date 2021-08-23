@@ -18,7 +18,7 @@ pub fn Char2ProcState(c: char) -> ProcState {
     'X' => ProcState::DEAD,
     'W' => ProcState::WAKING,
     _ => ProcState::UNKNOWN,
-  }
+  };
 }
 
 #[cfg(test)]
