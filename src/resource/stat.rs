@@ -1,3 +1,11 @@
+/*****
+
+/proc/<pid>/stat/ related funcs.
+
+*******/
+
+use std::fs;
+
 use super::process::{Char2ProcState, ProcState};
 
 type pid_t = i32;
@@ -64,6 +72,14 @@ impl Stat {
   }
 }
 
+pub fn read_stat(pid: u64) -> Result<Stat, String> {
+  let stat_str = match fs::read_to_string(format!("/proc/{}/stat", pid)) {
+    Ok(s) => s,
+    Err(err) => return Err(err.to_string()),
+  };
+  Ok(Stat::from(stat_str))
+}
+
 mod util {
   pub fn popi(ss: &mut Vec<&str>) -> i64 {
     let n = ss[0].parse().unwrap();
@@ -127,5 +143,11 @@ mod tests {
       stime: 2,
     };
     assert_eq!(correct_stat, stat);
+  }
+
+  #[test]
+  fn read_systemd_stat() {
+    let stat = super::read_stat(1).unwrap();
+    println!("{:?}", stat);
   }
 }

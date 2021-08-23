@@ -1,6 +1,6 @@
 use xtop::resource;
 
 fn main() {
-  let state = resource::process::Char2ProcState('R');
-  println!("{:?}", state);
+  let pids = resource::process::list_all_pids();
+  println!("# of process: {}", pids.len());
 }
