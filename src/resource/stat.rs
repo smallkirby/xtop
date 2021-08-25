@@ -35,7 +35,7 @@ pub struct Stat {
 impl Stat {
   pub fn from(s: String) -> Stat {
     use self::util::*;
-    let mut ss = s.split(" ").collect::<Vec<&str>>();
+    let mut ss = s.split(' ').collect::<Vec<&str>>();
 
     let pid = popi(&mut ss) as pid_t;
     let comm = pop_comm(&mut ss);
@@ -89,7 +89,7 @@ mod util {
   }
 
   pub fn popc(ss: &mut Vec<&str>) -> char {
-    let c = ss[0].chars().nth(0).unwrap();
+    let c = ss[0].chars().next().unwrap();
     ss.remove(0);
     c
   }
