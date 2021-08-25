@@ -1,9 +1,64 @@
-use std::fs;
+use std::{fmt, fs};
 
 pub enum CPUFREQ {
-  Valid(u64),
+  Valid(u64), // kHz
   Absent,
   Offline,
+}
+
+impl fmt::Display for CPUFREQ {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    match *self {
+      Self::Valid(freq) => write!(f, "{} MHz", freq / 1000),
+      Self::Absent => write!(f, "absent"),
+      Self::Offline => write!(f, "offline"),
+    }
+  }
+}
+
+impl fmt::Debug for CPUFREQ {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let content = match *self {
+      Self::Valid(freq) => format!("{} MHz", freq / 1000),
+      Self::Absent => format!("absent"),
+      Self::Offline => format!("offline"),
+    };
+    write!(f, "{}", content)
+  }
+}
+
+#[derive(Debug)]
+pub struct CPU {
+  pub freq: CPUFREQ,
+  pub id: u32,
+}
+
+impl CPU {
+  pub fn new(id: u32) -> Self {
+    let freq = get_cpu_freq(id);
+
+    Self {
+      freq: CPUFREQ::Valid(freq),
+      id,
+    }
+  }
+
+  pub fn freq_update(&mut self) {
+    let freq = get_cpu_freq(self.id);
+    self.freq = CPUFREQ::Valid(freq);
+  }
+}
+
+pub fn init_cpus() -> Vec<CPU> {
+  let mut cpus = vec![];
+  let avail_cpus = num_available_cpus();
+  if is_scaling_cur_freq_supported() {
+    for i in 0..avail_cpus {
+      cpus.push(CPU::new(i));
+    }
+  }
+
+  cpus
 }
 
 pub fn num_available_cpus() -> u32 {
@@ -79,5 +134,15 @@ mod tests {
       let freqs = get_cpus_freq(cpus);
       println!("freqs: {:?}", freqs);
     }
+  }
+
+  #[test]
+  fn test_init_cpus() {
+    let mut cpus = init_cpus();
+    println!("cpus: {:?}", &cpus);
+    for i in 0..cpus.len() {
+      cpus[i].freq_update();
+    }
+    println!("cpus: {:?}", &cpus);
   }
 }
