@@ -1,5 +1,5 @@
-use xtop::resource;
 use xtop::render::window;
+use xtop::resource;
 
 fn main() {
   let pids = resource::process::list_all_pids();

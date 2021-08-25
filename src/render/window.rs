@@ -1,6 +1,7 @@
 use ncurses::*;
 
 pub fn test_just_window(s: &str) {
+  // XXX
   // test of ncurses
   initscr();
   raw();
@@ -16,20 +17,20 @@ pub fn test_just_window(s: &str) {
   let mut max_y = 0;
   getmaxyx(stdscr(), &mut max_y, &mut max_x);
 
-  let win = newwin(max_y - 2, max_x - 2, 1,1);
+  let win = newwin(max_y - 2, max_x - 2, 1, 1);
   box_(win, 0, 0);
   wrefresh(win);
-   
+
   wmove(win, 1, 1);
   refresh();
   wprintw(win, s);
   wrefresh(win);
-   
+
   loop {
     let ch = getch() as u32;
     if std::char::from_u32(ch).unwrap() == 'q' {
       break;
     }
-  } 
+  }
   endwin();
 }
