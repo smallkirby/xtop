@@ -8,6 +8,7 @@ use std::fs;
 
 use super::process::{Char2ProcState, ProcState};
 
+#[allow(non_camel_case_types)]
 type pid_t = i32;
 
 // cf. /fs/proc/array.c/do_task_stat()

@@ -11,8 +11,9 @@ pub enum ProcState {
   UNKNOWN,
 }
 
+#[allow(non_snake_case)]
 pub fn Char2ProcState(c: char) -> ProcState {
-  return match c {
+  match c {
     'R' => ProcState::RUNNING,
     'S' => ProcState::SLEEPING,
     'Z' => ProcState::ZOMBIE,
@@ -20,7 +21,7 @@ pub fn Char2ProcState(c: char) -> ProcState {
     'X' => ProcState::DEAD,
     'W' => ProcState::WAKING,
     _ => ProcState::UNKNOWN,
-  };
+  }
 }
 
 // search /proc/ and return a list of all existing pids.
