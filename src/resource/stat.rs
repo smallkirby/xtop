@@ -18,6 +18,8 @@ pub struct StatCpuTime {
   irq: u64,
   softirq: u64,
   steal: u64,
+  guest: u64,
+  guestnice: u64,
 }
 
 #[derive(Debug)]
@@ -26,23 +28,59 @@ enum CPUID {
   Average,
 }
 
-pub fn scan_cpu_time(cpus: &mut Vec<CPU>) {
+// scan one cpu and update both its time and period.
+pub fn scan_cpu_time(cpu: &mut CPU) {
   let cpu_times = get_cpu_time();
 
   for i in 0..cpu_times.len() {
-    let info = &cpu_times[i];
+    let mut info = &cpu_times[i];
     let id = match info.id {
       CPUID::Average => continue,
-      CPUID::Id(_id) => _id as usize,
+      CPUID::Id(_id) => _id,
     };
-    cpus[id].usertime = info.usertime;
-    cpus[id].nicetime = info.nicetime;
-    cpus[id].systemtime = info.systemtime;
-    cpus[id].idletime = info.idletime;
-    cpus[id].iowait = info.iowait;
-    cpus[id].irq = info.irq;
-    cpus[id].softirq = info.softirq;
-    cpus[id].steal = info.steal;
+    if id != cpu.id {
+      continue;
+    }
+
+    let saturate_diff = |a, b| if a > b { a - b } else { 0 };
+
+    // guest is included in usertime/nicetime
+    let usertime = info.usertime - info.guest;
+    let nicetime = info.nicetime - info.guestnice;
+
+    // classify them
+    let idle_alltime = info.idletime + info.iowait;
+    let system_alltime = info.systemtime + info.irq + info.softirq;
+    let virt_alltime = info.guest + info.guestnice;
+    let totaltime = usertime + nicetime + system_alltime + idle_alltime + info.steal + virt_alltime;
+
+    // update period
+    cpu.usertime_period = saturate_diff(usertime, cpu.usertime);
+    cpu.nicetime_period = saturate_diff(nicetime, cpu.nicetime);
+    cpu.systemtime_period = saturate_diff(info.systemtime, cpu.systemtime);
+    cpu.system_allperiod = saturate_diff(system_alltime, cpu.system_alltime);
+    cpu.idletime_period = saturate_diff(info.idletime, cpu.idletime);
+    cpu.idle_allperiod = saturate_diff(idle_alltime, cpu.idle_alltime);
+    cpu.iowait_period = saturate_diff(info.iowait, cpu.iowait);
+    cpu.irq_period = saturate_diff(info.irq, cpu.irq);
+    cpu.softirq_period = saturate_diff(info.softirq, cpu.softirq);
+    cpu.steal_period = saturate_diff(info.steal, cpu.steal);
+    cpu.guest_period = saturate_diff(virt_alltime, cpu.guest_period);
+    cpu.totaltime_period = saturate_diff(totaltime, cpu.totaltime);
+
+    // update absolute times
+    cpu.usertime = usertime;
+    cpu.nicetime = nicetime;
+    cpu.systemtime = info.systemtime;
+    cpu.system_alltime = system_alltime;
+    cpu.idletime = info.idletime;
+    cpu.idle_alltime = idle_alltime;
+    cpu.iowait = info.iowait;
+    cpu.irq = info.irq;
+    cpu.softirq = info.softirq;
+    cpu.steal = info.steal;
+    cpu.guesttime = virt_alltime;
+    cpu.totaltime = totaltime;
   }
 }
 
@@ -79,6 +117,8 @@ fn get_cpu_time() -> Vec<StatCpuTime> {
     let irq = popi(&mut times);
     let softirq = popi(&mut times);
     let steal = popi(&mut times);
+    let guest = popi(&mut times);
+    let guestnice = popi(&mut times);
 
     result.push(StatCpuTime {
       id,
@@ -90,6 +130,8 @@ fn get_cpu_time() -> Vec<StatCpuTime> {
       irq,
       softirq,
       steal,
+      guest,
+      guestnice,
     });
   }
 
