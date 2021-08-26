@@ -81,10 +81,8 @@ impl CPU {
 pub fn init_cpus() -> Vec<CPU> {
   let mut cpus = vec![];
   let avail_cpus = num_available_cpus();
-  if is_scaling_cur_freq_supported() {
-    for i in 0..avail_cpus {
-      cpus.push(CPU::new(i));
-    }
+  for i in 0..avail_cpus {
+    cpus.push(CPU::new(i));
   }
 
   cpus
@@ -117,7 +115,16 @@ pub fn is_scaling_cur_freq_supported() -> bool {
   std::path::Path::new("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq").exists()
 }
 
+// get cpu freqency in kHz
 fn get_cpu_freq(cpu: u32) -> u64 {
+  if is_scaling_cur_freq_supported() {
+    _get_cpu_freq(cpu)
+  } else {
+    _get_cpu_freq_fallback(cpu)
+  }
+}
+
+fn _get_cpu_freq(cpu: u32) -> u64 {
   let scaling_freq = fs::read_to_string(format!(
     "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_cur_freq",
     cpu
@@ -126,12 +133,26 @@ fn get_cpu_freq(cpu: u32) -> u64 {
   scaling_freq.trim().parse().unwrap()
 }
 
-#[allow(dead_code)]
-fn get_cpu_freq_fallback(cpu: u32) -> u64 {
-  unimplemented!(
-    "cpu{}: reading cpu info via cpuinfo is now not supported.",
-    cpu
-  );
+fn _get_cpu_freq_fallback(cpu: u32) -> u64 {
+  let mut is_target = false;
+  let _cpuinfo = fs::read_to_string("/proc/cpuinfo").unwrap();
+  let cpuinfo: Vec<&str> = _cpuinfo.split("\n").collect();
+
+  for l in cpuinfo {
+    let params: Vec<&str> = l.split(":").map(|p| p.trim()).collect();
+    if params.len() != 2 {
+      continue;
+    }
+    if params[0] != "processor" && params[1].parse() == Ok(cpu) {
+      is_target = true;
+    }
+    if is_target && params[0] == "cpu MHz" {
+      let freq: f64 = params[1].parse().unwrap();
+      return (freq * 1000.0) as u64;
+    }
+  }
+
+  0
 }
 
 pub fn check_cpus_online(avail_cpus: u32) -> bool {
@@ -160,10 +181,8 @@ mod tests {
   #[test]
   fn list_cpus_freq() {
     let cpus = num_available_cpus();
-    if is_scaling_cur_freq_supported() {
-      let freqs = get_cpus_freq(cpus);
-      println!("freqs: {:?}", freqs);
-    }
+    let freqs = get_cpus_freq(cpus);
+    println!("freqs: {:?}", freqs);
   }
 
   #[test]
