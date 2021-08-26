@@ -1,4 +1,8 @@
-use std::{fmt, fs};
+use super::stat::*;
+use std::{
+  fmt::{self},
+  fs,
+};
 
 pub enum CPUFREQ {
   Valid(u64), // kHz
@@ -9,7 +13,7 @@ pub enum CPUFREQ {
 impl fmt::Display for CPUFREQ {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {
-      Self::Valid(freq) => write!(f, "{} MHz", freq / 1000),
+      Self::Valid(freq) => write!(f, "{:>4} MHz", freq / 1000),
       Self::Absent => write!(f, "absent"),
       Self::Offline => write!(f, "offline"),
     }
@@ -18,12 +22,7 @@ impl fmt::Display for CPUFREQ {
 
 impl fmt::Debug for CPUFREQ {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    let content = match *self {
-      Self::Valid(freq) => format!("{} MHz", freq / 1000),
-      Self::Absent => format!("absent"),
-      Self::Offline => format!("offline"),
-    };
-    write!(f, "{}", content)
+    write!(f, "{}", self)
   }
 }
 
@@ -31,6 +30,31 @@ impl fmt::Debug for CPUFREQ {
 pub struct CPU {
   pub freq: CPUFREQ,
   pub id: u32,
+  pub usertime: u64,
+  pub nicetime: u64,
+  pub systemtime: u64,
+  pub idletime: u64,
+  pub iowait: u64,
+  pub irq: u64,
+  pub softirq: u64,
+  pub steal: u64,
+}
+
+impl Default for CPU {
+  fn default() -> Self {
+    Self {
+      freq: CPUFREQ::Absent,
+      id: 0,
+      usertime: 0,
+      nicetime: 0,
+      systemtime: 0,
+      idletime: 0,
+      iowait: 0,
+      irq: 0,
+      softirq: 0,
+      steal: 0,
+    }
+  }
 }
 
 impl CPU {
@@ -40,12 +64,17 @@ impl CPU {
     Self {
       freq: CPUFREQ::Valid(freq),
       id,
+      ..Default::default()
     }
   }
 
   pub fn freq_update(&mut self) {
     let freq = get_cpu_freq(self.id);
     self.freq = CPUFREQ::Valid(freq);
+  }
+
+  pub fn clear_state(&mut self) {
+    self.freq = CPUFREQ::Offline;
   }
 }
 
@@ -119,6 +148,7 @@ fn online_cpus() -> (u32, u32) {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::resource::stat::*;
 
   #[test]
   fn check_available_cpu_num() {
@@ -144,5 +174,17 @@ mod tests {
       cpus[i].freq_update();
     }
     println!("cpus: {:?}", &cpus);
+  }
+
+  #[test]
+  fn test_update_cpu_time() {
+    let mut cpus = init_cpus();
+    println!("{:?}", cpus[0]);
+    scan_cpu_time(&mut cpus);
+    println!("{:?}", cpus[0]);
+    let dur = std::time::Duration::from_millis(1000);
+    std::thread::sleep(dur);
+    scan_cpu_time(&mut cpus);
+    println!("{:?}", cpus[0]);
   }
 }

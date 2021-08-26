@@ -1,154 +1,126 @@
 /*****
 
-/proc/<pid>/stat/ related funcs.
+/proc/stat/ related funcs.
 
 *******/
 
+use super::cpu::*;
 use std::fs;
 
-use super::process::{Char2ProcState, ProcState};
-
-#[allow(non_camel_case_types)]
-type pid_t = i32;
-
-// cf. /fs/proc/array.c/do_task_stat()
-#[derive(Debug, PartialEq)]
-pub struct Stat {
-  pub pid: pid_t,
-  pub comm: String,
-  pub state: ProcState,
-  pub ppid: pid_t,
-  pub pgid: pid_t,
-  pub sid: pid_t, // session id
-  pub tty_nr: i32,
-  pub tty_pgrp: i32,
-  pub flags: u32,
-  pub min_flt: u64, // minor fault counter
-  pub cmin_flt: u64,
-  pub maj_flt: u64,
-  pub cmaj_flt: u64,
-  pub utime: u64,
-  pub stime: u64,
-  // TODO
+#[derive(Debug)]
+pub struct StatCpuTime {
+  id: CPUID,
+  usertime: u64,
+  nicetime: u64,
+  systemtime: u64,
+  idletime: u64,
+  iowait: u64,
+  irq: u64,
+  softirq: u64,
+  steal: u64,
 }
 
-impl Stat {
-  pub fn from(s: String) -> Stat {
-    use self::util::*;
-    let mut ss = s.split(' ').collect::<Vec<&str>>();
+#[derive(Debug)]
+enum CPUID {
+  Id(u32),
+  Average,
+}
 
-    let pid = popi(&mut ss) as pid_t;
-    let comm = pop_comm(&mut ss);
-    let state = Char2ProcState(popc(&mut ss));
-    let ppid = popi(&mut ss) as pid_t;
-    let pgid = popi(&mut ss) as pid_t;
-    let sid = popi(&mut ss) as pid_t;
-    let tty_nr = popi(&mut ss) as i32;
-    let tty_pgrp = popi(&mut ss) as i32;
-    let flags = popi(&mut ss) as u32;
-    let min_flt = popi(&mut ss) as u64;
-    let cmin_flt = popi(&mut ss) as u64;
-    let maj_flt = popi(&mut ss) as u64;
-    let cmaj_flt = popi(&mut ss) as u64;
-    let utime = popi(&mut ss) as u64;
-    let stime = popi(&mut ss) as u64;
+pub fn scan_cpu_time(cpus: &mut Vec<CPU>) {
+  let cpu_times = get_cpu_time();
 
-    Self {
-      pid,
-      comm,
-      state,
-      ppid,
-      pgid,
-      sid,
-      tty_nr,
-      tty_pgrp,
-      flags,
-      min_flt,
-      cmin_flt,
-      maj_flt,
-      cmaj_flt,
-      utime,
-      stime,
-    }
+  for i in 0..cpu_times.len() {
+    let info = &cpu_times[i];
+    let id = match info.id {
+      CPUID::Average => continue,
+      CPUID::Id(_id) => _id as usize,
+    };
+    cpus[id].usertime = info.usertime;
+    cpus[id].nicetime = info.nicetime;
+    cpus[id].systemtime = info.systemtime;
+    cpus[id].idletime = info.idletime;
+    cpus[id].iowait = info.iowait;
+    cpus[id].irq = info.irq;
+    cpus[id].softirq = info.softirq;
+    cpus[id].steal = info.steal;
   }
 }
 
-pub fn read_stat(pid: u64) -> Result<Stat, String> {
-  let stat_str = match fs::read_to_string(format!("/proc/{}/stat", pid)) {
-    Ok(s) => s,
-    Err(err) => return Err(err.to_string()),
-  };
-  Ok(Stat::from(stat_str))
+// index 0 is always average usage of CPUs.
+fn get_cpu_time() -> Vec<StatCpuTime> {
+  use util::*;
+
+  let mut stat_s = read_stat_string();
+  let mut result = vec![];
+
+  loop {
+    let cpu_line = if stat_s[0].starts_with("cpu") {
+      let _s = stat_s[0].to_owned();
+      stat_s.remove(0);
+      _s
+    } else {
+      break;
+    };
+    let mut times = cpu_line.split_whitespace().collect::<Vec<&str>>();
+
+    let id = {
+      let _id = times[0];
+      times.remove(0);
+      match _id {
+        "cpu" => CPUID::Average,
+        _ => CPUID::Id(_id[3..].parse().unwrap()),
+      }
+    };
+    let usertime = popi(&mut times);
+    let nicetime = popi(&mut times);
+    let systemtime = popi(&mut times);
+    let idletime = popi(&mut times);
+    let iowait = popi(&mut times);
+    let irq = popi(&mut times);
+    let softirq = popi(&mut times);
+    let steal = popi(&mut times);
+
+    result.push(StatCpuTime {
+      id,
+      usertime,
+      nicetime,
+      systemtime,
+      idletime,
+      iowait,
+      irq,
+      softirq,
+      steal,
+    });
+  }
+
+  result
+}
+
+fn read_stat_string() -> Vec<String> {
+  fs::read_to_string("/proc/stat")
+    .unwrap()
+    .split("\n")
+    .map(|s| s.to_string())
+    .collect()
 }
 
 mod util {
-  pub fn popi(ss: &mut Vec<&str>) -> i64 {
-    let n = ss[0].parse().unwrap();
-    ss.remove(0);
+  // pop a first element and parse into u64
+  pub fn popi(s: &mut Vec<&str>) -> u64 {
+    let n = s[0].parse().unwrap();
+    s.remove(0);
     n
-  }
-
-  pub fn popc(ss: &mut Vec<&str>) -> char {
-    let c = ss[0].chars().next().unwrap();
-    ss.remove(0);
-    c
-  }
-
-  pub fn pop_comm(ss: &mut Vec<&str>) -> String {
-    let mut comm = String::from("");
-    if ss[0].ends_with(')') {
-      comm.push_str(&ss[0][1..(ss[0].len() - 1)]);
-      ss.remove(0);
-      return comm;
-    }
-
-    comm.push_str(ss[0]);
-    ss.remove(0);
-    loop {
-      if ss[0].ends_with(')') {
-        comm.push_str(&ss[0][..(ss[0].len() - 1)]);
-        ss.remove(0);
-        break;
-      }
-      comm.push_str(&ss[0]);
-      ss.remove(0);
-    }
-    comm
   }
 }
 
 #[cfg(test)]
 mod tests {
-  use super::Stat;
-  use crate::resource::process::ProcState;
+  use super::*;
 
   #[test]
-  fn stat_from_string() {
-    let stat_str = "1586595 (bash) S 13042 1586595 1586595 34821 1616731 4194304 2487 9875 0 0 2 2";
-    let stat = Stat::from(String::from(stat_str));
-    let correct_stat = Stat {
-      pid: 1586595,
-      comm: String::from("bash"),
-      state: ProcState::SLEEPING,
-      ppid: 13042,
-      pgid: 1586595,
-      sid: 1586595,
-      tty_nr: 34821,
-      tty_pgrp: 1616731,
-      flags: 4194304,
-      min_flt: 2487,
-      cmin_flt: 9875,
-      maj_flt: 0,
-      cmaj_flt: 0,
-      utime: 2,
-      stime: 2,
-    };
-    assert_eq!(correct_stat, stat);
-  }
-
-  #[test]
-  fn read_systemd_stat() {
-    let stat = super::read_stat(1).unwrap();
-    println!("{:?}", stat);
+  fn test_get_cpu_time() {
+    let cpu_times = get_cpu_time();
+    assert_eq!(cpu_times.len() >= 1, true);
+    println!("cpu times: {:?}", cpu_times);
   }
 }
