@@ -1,6 +1,9 @@
 use crate::render::cpumeter;
 use crate::resource::cpu;
 use ncurses::*;
+use std::sync::mpsc;
+use std::thread;
+use std::time::Duration;
 
 pub struct WinManager {
   pub screen_height: i32,
@@ -31,14 +34,35 @@ impl WinManager {
     refresh();
   }
 
+  pub fn update_cpu_meters(&mut self) {
+    for i in 0..self.cpumeters.len() {
+      self.cpumeters[i].render();
+    }
+  }
+
   fn finish() {
     endwin();
   }
 
-  pub fn qloop(&self) {
-    loop {
+  // just test func. should create thread pools.
+  pub fn qloop(&mut self) {
+    let (tx, rx) = mpsc::channel();
+
+    let input_handler = thread::spawn(move || loop {
       let ch = getch() as u32;
       if std::char::from_u32(ch).unwrap() == 'q' {
+        tx.send(true).unwrap();
+        break;
+      }
+      refresh();
+    });
+
+    loop {
+      thread::sleep(Duration::from_millis(1000));
+      self.update_cpu_meters();
+      refresh();
+      if rx.try_recv().is_ok() {
+        input_handler.join().unwrap();
         break;
       }
     }

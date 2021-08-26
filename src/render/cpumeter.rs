@@ -4,8 +4,6 @@ use ncurses::*;
 
 use super::window::WinManager;
 
-static BRACKET_START_X: i32 = 3;
-static BRACKET_START_Y: i32 = 0;
 static HEIGHT: i32 = 1;
 
 #[derive(Debug)]
@@ -16,7 +14,24 @@ pub struct CPUMeter {
   win: WINDOW,
 }
 
-impl CPUMeter {}
+impl CPUMeter {
+  pub fn render(&mut self) {
+    self.cpu.update_time_and_period(); // XXX actually, update of these values should be at once.
+
+    let win = self.win;
+    let cpu = self.cpu;
+    let max_width = self.width - "cpuxx []".len() as i32 - 1;
+    let percent = cpu.percent() * 0.01;
+    let divs = (0..((max_width as f64 * percent) as u32))
+      .map(|_| "|")
+      .collect::<String>();
+    let spaces = (0..(max_width - divs.len() as i32))
+      .map(|_| " ")
+      .collect::<String>();
+    mvwprintw(win, 0, 0, &format!("cpu{:>2} [{}{}]", cpu.id, divs, spaces));
+    wrefresh(win);
+  }
+}
 
 pub fn winsize_require(wm: &WinManager, cpus: &Vec<cpu::CPU>) -> (i32, i32) {
   let width = wm.screen_width;
@@ -37,16 +52,14 @@ pub fn init_meters(wm: &window::WinManager, cpus: &Vec<cpu::CPU>) -> Vec<CPUMete
   for i in 0..num_cpu {
     let (y, x) = pos_win_start(&cpus[i], width);
     let win = create_meter_win(wm.cpumeter_win.unwrap(), height, width, y, x);
-    let meter = CPUMeter {
+    let mut meter = CPUMeter {
       cpu: cpus[i],
       height,
       width,
       win,
     };
+    meter.render();
     meters.push(meter);
-
-    waddstr(win, &format!("cpu{:>2} ", cpus[i].id));
-    wrefresh(win);
   }
 
   meters
