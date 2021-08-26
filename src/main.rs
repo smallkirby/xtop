@@ -1,7 +1,10 @@
 use xtop::render::window;
-use xtop::resource;
+use xtop::resource::cpu;
 
 fn main() {
-  let pids = resource::process::list_all_pids();
-  window::test_just_window(&format!("# of procs: {}\n", pids.len()));
+  let mut wm = window::WinManager::new();
+  let cpus = cpu::init_cpus();
+  wm.init_cpu_meters(&cpus);
+
+  wm.qloop();
 }

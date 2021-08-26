@@ -4,6 +4,7 @@ use std::{
   fs,
 };
 
+#[derive(Copy, Clone)]
 pub enum CPUFREQ {
   Valid(u64), // kHz
   Absent,
@@ -26,7 +27,7 @@ impl fmt::Debug for CPUFREQ {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct CPU {
   pub freq: CPUFREQ,
   pub id: u32,
@@ -240,7 +241,6 @@ fn online_cpus() -> (u32, u32) {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::resource::stat::*;
 
   #[test]
   fn check_available_cpu_num() {
