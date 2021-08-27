@@ -1,5 +1,5 @@
+use crate::proclist::list;
 use crate::render::cpumeter;
-use crate::resource::cpu;
 use ncurses::*;
 use std::sync::mpsc;
 use std::thread;
@@ -10,6 +10,7 @@ pub struct WinManager {
   pub screen_width: i32,
 
   // CPU meters
+  pub plist: list::ProcList,
   pub cpumeter_win: Option<WINDOW>,
   cpumeters: Vec<cpumeter::CPUMeter>,
 }
@@ -23,20 +24,20 @@ impl WinManager {
     refresh();
   }
 
-  pub fn init_cpu_meters(&mut self, cpus: &Vec<cpu::CPU>) {
+  pub fn init_cpu_meters(&mut self) {
     // init entire window for cpumeters.
-    let (width, height) = cpumeter::winsize_require(&self, cpus);
+    let (width, height) = cpumeter::winsize_require(&self);
     self.cpumeter_win = Some(newwin(height, width, 0, 0));
     wrefresh(self.cpumeter_win.unwrap());
 
     // init each windows of cpumeter inside parent window.
-    self.cpumeters = cpumeter::init_meters(self, &cpus);
+    self.cpumeters = cpumeter::init_meters(self);
     refresh();
   }
 
   pub fn update_cpu_meters(&mut self) {
     for i in 0..self.cpumeters.len() {
-      self.cpumeters[i].render();
+      self.cpumeters[i].render(&mut self.plist.cpus[i]);
     }
   }
 
@@ -74,7 +75,10 @@ impl WinManager {
     let mut screen_width = 0;
     getmaxyx(stdscr(), &mut screen_height, &mut screen_width);
 
+    let plist = list::ProcList::new();
+
     Self {
+      plist,
       screen_height,
       screen_width,
       cpumeter_win: None,

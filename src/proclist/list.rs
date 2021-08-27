@@ -1,6 +1,6 @@
 use crate::resource::pstat::pid_t;
 use crate::resource::tty::init_tty_drivers;
-use crate::resource::{process, procmem, pstat, stat, tty};
+use crate::resource::{cpu, process, procmem, pstat, stat, tty};
 use std::collections::HashMap;
 use std::fs;
 use sysconf;
@@ -9,6 +9,7 @@ use sysconf;
 pub struct ProcList {
   pub plist: HashMap<pid_t, process::Process>, // XXX should be private
   pub tty_drivers: Vec<tty::TtyDriver>,
+  pub cpus: Vec<cpu::CPU>,
   kernel_threads: u32,
   userland_threads: u32,
   total_tasks: u32,
@@ -20,12 +21,14 @@ impl ProcList {
   pub fn new() -> Self {
     let plist = HashMap::new();
     let mut tty_drivers = vec![];
+    let cpus = cpu::init_cpus();
     init_tty_drivers(&mut tty_drivers);
     let btime = stat::get_btime();
     let jiffy = sysconf::sysconf(sysconf::SysconfVariable::ScClkTck).unwrap() as i64;
 
     Self {
       plist,
+      cpus,
       tty_drivers,
       kernel_threads: 0,
       userland_threads: 0,
@@ -125,6 +128,8 @@ impl ProcList {
       if old_tty_nr != proc.tty_nr && self.tty_drivers.len() != 0 {
         proc.tty_name = tty::get_updated_tty_driver(&self.tty_drivers, proc.tty_nr as u64);
       }
+
+      // update CPU usage
     }
   }
 }

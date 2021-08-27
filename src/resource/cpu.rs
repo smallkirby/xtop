@@ -1,4 +1,5 @@
-use super::stat::*;
+use crate::resource::stat;
+
 use std::{
   fmt::{self},
   fs,
@@ -123,7 +124,7 @@ impl CPU {
   pub fn update_time_and_period(&mut self) {
     use crate::resource::stat::*;
 
-    scan_cpu_time(self)
+    stat::scan_cpu_time(self)
   }
 
   pub fn percent(&self) -> f64 {
@@ -271,11 +272,11 @@ mod tests {
   fn test_update_cpu_time() {
     let mut cpus = init_cpus();
     println!("{:?}", cpus[0]);
-    scan_cpu_time(&mut cpus[0]);
+    stat::scan_cpu_time(&mut cpus[0]);
     println!("{:?}", cpus[0]);
     let dur = std::time::Duration::from_millis(1000);
     std::thread::sleep(dur);
-    scan_cpu_time(&mut cpus[0]);
+    stat::scan_cpu_time(&mut cpus[0]);
     println!("{:?}", cpus[0]);
   }
 

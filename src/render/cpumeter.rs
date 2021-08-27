@@ -8,18 +8,17 @@ static HEIGHT: i32 = 1;
 
 #[derive(Debug)]
 pub struct CPUMeter {
-  cpu: cpu::CPU,
   height: i32,
   width: i32,
   win: WINDOW,
 }
 
 impl CPUMeter {
-  pub fn render(&mut self) {
-    self.cpu.update_time_and_period(); // XXX actually, update of these values should be at once.
+  pub fn render(&mut self, cpu: &mut cpu::CPU) {
+    cpu.update_time_and_period(); // XXX actually, update of these values should be at once.
 
     let win = self.win;
-    let cpu = self.cpu;
+    let cpu = cpu;
     let max_width = self.width - "cpuxx []".len() as i32 - 1;
     let percent = cpu.percent() * 0.01;
     let divs = (0..((max_width as f64 * percent) as u32))
@@ -33,18 +32,19 @@ impl CPUMeter {
   }
 }
 
-pub fn winsize_require(wm: &WinManager, cpus: &Vec<cpu::CPU>) -> (i32, i32) {
+pub fn winsize_require(wm: &WinManager) -> (i32, i32) {
   let width = wm.screen_width;
-  let height = if cpus.len() % 2 == 0 {
-    cpus.len() / 2
+  let height = if wm.plist.cpus.len() % 2 == 0 {
+    wm.plist.cpus.len() / 2
   } else {
-    cpus.len() / 2 + 1
+    wm.plist.cpus.len() / 2 + 1
   } as i32;
 
   (width, height)
 }
 
-pub fn init_meters(wm: &window::WinManager, cpus: &Vec<cpu::CPU>) -> Vec<CPUMeter> {
+pub fn init_meters(wm: &mut window::WinManager) -> Vec<CPUMeter> {
+  let cpus = &mut wm.plist.cpus;
   let mut meters = vec![];
   let num_cpu = cpus.len();
   let width = wm.screen_width / 2;
@@ -52,13 +52,8 @@ pub fn init_meters(wm: &window::WinManager, cpus: &Vec<cpu::CPU>) -> Vec<CPUMete
   for i in 0..num_cpu {
     let (y, x) = pos_win_start(&cpus[i], width);
     let win = create_meter_win(wm.cpumeter_win.unwrap(), height, width, y, x);
-    let mut meter = CPUMeter {
-      cpu: cpus[i],
-      height,
-      width,
-      win,
-    };
-    meter.render();
+    let mut meter = CPUMeter { height, width, win };
+    meter.render(&mut cpus[i]);
     meters.push(meter);
   }
 
