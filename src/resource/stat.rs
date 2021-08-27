@@ -28,12 +28,24 @@ enum CPUID {
   Average,
 }
 
+pub fn get_btime() -> i64 {
+  let stat = fs::read_to_string("/proc/stat").unwrap();
+  for s in stat.split("\n").into_iter() {
+    if !s.starts_with("btime") {
+      continue;
+    }
+    let ss: Vec<&str> = s.split(" ").collect();
+    return ss[1].parse().unwrap();
+  }
+  panic!("failed to fetch btime.");
+}
+
 // scan one cpu and update both its time and period.
 pub fn scan_cpu_time(cpu: &mut CPU) {
   let cpu_times = get_cpu_time();
 
   for i in 0..cpu_times.len() {
-    let mut info = &cpu_times[i];
+    let info = &cpu_times[i];
     let id = match info.id {
       CPUID::Average => continue,
       CPUID::Id(_id) => _id,

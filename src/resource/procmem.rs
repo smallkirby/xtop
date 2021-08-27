@@ -57,6 +57,26 @@ pub fn read_statm(proc: &mut process::Process, parent_dir: &str) {
   proc.m_dirty = statm.m_dirty;
 }
 
+// it reads only three fields: pss, swap, psswap.
+pub fn read_smaps_rollup(proc: &mut process::Process, parent_dir: &str) {
+  let smaps = match fs::read_to_string(format!("{}/smaps_rollup", parent_dir)) {
+    Ok(_s) => _s,
+    Err(_) => return,
+  };
+  for s in smaps.split("\n").into_iter() {
+    if s.starts_with("Pss") {
+      let ss: Vec<&str> = s.split_whitespace().collect();
+      proc.m_pss = ss[1].parse().unwrap();
+    } else if s.starts_with("Swap") {
+      let ss: Vec<&str> = s.split_whitespace().collect();
+      proc.m_swap = ss[1].parse().unwrap();
+    } else if s.starts_with("SwapPss") {
+      let ss: Vec<&str> = s.split_whitespace().collect();
+      proc.m_psswap = ss[1].parse().unwrap();
+    }
+  }
+}
+
 #[cfg(test)]
 pub mod tests {
   use super::*;

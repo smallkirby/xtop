@@ -12,19 +12,45 @@ pub enum ProcState {
   UNKNOWN,
 }
 
+impl Default for ProcState {
+  fn default() -> Self {
+    Self::UNKNOWN
+  }
+}
+
 #[derive(Debug, Default)]
 pub struct Process {
   pub pid: pid_t,
-  pub tgid: pid_t,
+
+  // read from stat
+  pub state: ProcState,
+  pub ppid: pid_t,
+  pub pgrp: pid_t,
+  pub session: pid_t,
+  pub tty_nr: i32,
+  pub tpgid: i32,
+  pub tgid: pid_t, // XXX
+  pub minflt: u64,
+  pub majflt: u64,
   pub cminflt: u64,
   pub cmajflt: u64,
   pub utime: u64,
   pub stime: u64,
   pub cutime: u64,
   pub cstime: u64,
+  pub priority: i64,
+  pub nice: i64,
+  pub nlwp: i64,
+  pub starttime: i64,
+  pub processor: i32,
+  pub time: u64,
+
   pub m_share: i64,
-  pub m_pss: i64,
+
+  // read from smaps/smaps_rollup
+  pub m_pss: i64, // resident set size, divided by # of procs sharing it.
   pub m_swap: i64,
+  pub m_psswap: i64,
 
   pub is_userland_thread: bool,
   pub is_kernel_thread: bool,
@@ -38,6 +64,11 @@ pub struct Process {
   pub m_text: i64,     // text
   pub m_data: i64,     // data and stack
   pub m_dirty: i64,    // dirty pages
+
+  // read from maps
+  pub m_lib: i64, // library size
+
+                  //
 }
 
 impl Process {
