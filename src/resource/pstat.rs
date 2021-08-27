@@ -70,7 +70,7 @@ impl PStat {
     popu64(&mut ss);
     popi64(&mut ss);
     popu64(&mut ss); // rsslim
-    for _ in 0..11 {
+    for _ in 0..12 {
       popu64(&mut ss);
     }
     popi64(&mut ss);
