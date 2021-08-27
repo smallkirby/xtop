@@ -9,7 +9,7 @@ use std::fs;
 use super::process::{Char2ProcState, ProcState};
 
 #[allow(non_camel_case_types)]
-type pid_t = i32;
+pub type pid_t = i32;
 
 // cf. /fs/proc/array.c/do_task_stat()
 #[derive(Debug, PartialEq)]
@@ -35,23 +35,25 @@ pub struct PStat {
 impl PStat {
   pub fn from(s: String) -> PStat {
     use self::util::*;
+    use crate::util::*;
+
     let mut ss = s.split(' ').collect::<Vec<&str>>();
 
-    let pid = popi(&mut ss) as pid_t;
+    let pid = popi64(&mut ss) as pid_t;
     let comm = pop_comm(&mut ss);
     let state = Char2ProcState(popc(&mut ss));
-    let ppid = popi(&mut ss) as pid_t;
-    let pgid = popi(&mut ss) as pid_t;
-    let sid = popi(&mut ss) as pid_t;
-    let tty_nr = popi(&mut ss) as i32;
-    let tty_pgrp = popi(&mut ss) as i32;
-    let flags = popi(&mut ss) as u32;
-    let min_flt = popi(&mut ss) as u64;
-    let cmin_flt = popi(&mut ss) as u64;
-    let maj_flt = popi(&mut ss) as u64;
-    let cmaj_flt = popi(&mut ss) as u64;
-    let utime = popi(&mut ss) as u64;
-    let stime = popi(&mut ss) as u64;
+    let ppid = popi64(&mut ss) as pid_t;
+    let pgid = popi64(&mut ss) as pid_t;
+    let sid = popi64(&mut ss) as pid_t;
+    let tty_nr = popi64(&mut ss) as i32;
+    let tty_pgrp = popi64(&mut ss) as i32;
+    let flags = popi64(&mut ss) as u32;
+    let min_flt = popi64(&mut ss) as u64;
+    let cmin_flt = popi64(&mut ss) as u64;
+    let maj_flt = popi64(&mut ss) as u64;
+    let cmaj_flt = popi64(&mut ss) as u64;
+    let utime = popi64(&mut ss) as u64;
+    let stime = popi64(&mut ss) as u64;
 
     Self {
       pid,
@@ -82,18 +84,6 @@ pub fn read_stat(pid: u64) -> Result<PStat, String> {
 }
 
 mod util {
-  pub fn popi(ss: &mut Vec<&str>) -> i64 {
-    let n = ss[0].parse().unwrap();
-    ss.remove(0);
-    n
-  }
-
-  pub fn popc(ss: &mut Vec<&str>) -> char {
-    let c = ss[0].chars().next().unwrap();
-    ss.remove(0);
-    c
-  }
-
   pub fn pop_comm(ss: &mut Vec<&str>) -> String {
     let mut comm = String::from("");
     if ss[0].ends_with(')') {
