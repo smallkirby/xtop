@@ -1,4 +1,5 @@
 use crate::resource::pstat::pid_t;
+use crate::resource::tty::init_tty_drivers;
 use crate::resource::{process, procmem, pstat, stat, tty};
 use std::collections::HashMap;
 use std::fs;
@@ -7,6 +8,7 @@ use sysconf;
 #[derive(Debug)]
 pub struct ProcList {
   pub plist: HashMap<pid_t, process::Process>, // XXX should be private
+  pub tty_drivers: Vec<tty::TtyDriver>,
   kernel_threads: u32,
   userland_threads: u32,
   total_tasks: u32,
@@ -17,12 +19,14 @@ pub struct ProcList {
 impl ProcList {
   pub fn new() -> Self {
     let plist = HashMap::new();
-    tty::init_tty_drivers(); // XXX
+    let mut tty_drivers = vec![];
+    init_tty_drivers(&mut tty_drivers);
     let btime = stat::get_btime();
     let jiffy = sysconf::sysconf(sysconf::SysconfVariable::ScClkTck).unwrap() as i64;
 
     Self {
       plist,
+      tty_drivers,
       kernel_threads: 0,
       userland_threads: 0,
       total_tasks: 0,
