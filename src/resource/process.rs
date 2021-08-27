@@ -71,6 +71,9 @@ pub struct Process {
   //
   pub tty_name: String,
   pub percent_cpu: f64,
+  pub cmdline: String,
+  pub comm: String,
+  pub exe: String,
 }
 
 impl Process {

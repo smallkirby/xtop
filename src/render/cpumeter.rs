@@ -65,6 +65,7 @@ fn create_meter_win(parent: WINDOW, height: i32, width: i32, y: i32, x: i32) -> 
 }
 
 // returns the position where this CPUMeter's window starts, inside parent window.
+// XXX the start position should be decided by class WindowManager
 fn pos_win_start(cpu: &cpu::CPU, width: i32) -> (i32, i32) {
   let id = cpu.id;
   let x = if id % 2 == 0 { 0 } else { width };

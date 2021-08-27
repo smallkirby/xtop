@@ -1,5 +1,5 @@
 use crate::proclist::list;
-use crate::render::cpumeter;
+use crate::render::{cpumeter, taskmeter};
 use ncurses::*;
 use std::sync::mpsc;
 use std::thread;
@@ -13,6 +13,9 @@ pub struct WinManager {
   // CPU meters
   pub cpumeter_win: Option<WINDOW>,
   cpumeters: Vec<cpumeter::CPUMeter>,
+
+  // Task Meter
+  taskmeter: Option<taskmeter::TaskMeter>,
 }
 
 impl WinManager {
@@ -35,12 +38,22 @@ impl WinManager {
     refresh();
   }
 
+  pub fn init_taskmeter(&mut self) {
+    self.taskmeter = Some(taskmeter::init_meter(self, 4, 0)); // XXX y must be calculated
+    wrefresh(self.taskmeter.as_ref().unwrap().win);
+  }
+
   pub fn update_cpu_meters(&mut self) {
     // XXX update_cpus() must be called right before recurse_proc_tree()
     self.plist.average_period = self.plist.update_cpus();
     for i in 0..self.cpumeters.len() {
       self.cpumeters[i].render(&mut self.plist.cpus[i]);
     }
+  }
+
+  pub fn update_task_meter(&mut self) {
+    let taskmeter = self.taskmeter.as_mut().unwrap();
+    taskmeter.render(&self.plist);
   }
 
   fn finish() {
@@ -62,8 +75,17 @@ impl WinManager {
 
     loop {
       thread::sleep(Duration::from_millis(1000));
-      self.update_cpu_meters();
+
+      // update values
+      self.plist.total_tasks = 0;
+      self.plist.userland_threads = 0;
+      self.plist.kernel_threads = 0;
       self.plist.recurse_proc_tree(None, "/proc");
+
+      // update meters
+      self.update_cpu_meters();
+      self.update_task_meter();
+
       refresh();
       if rx.try_recv().is_ok() {
         input_handler.join().unwrap();
@@ -86,6 +108,7 @@ impl WinManager {
       screen_width,
       cpumeter_win: None,
       cpumeters: vec![],
+      taskmeter: None,
     }
   }
 }

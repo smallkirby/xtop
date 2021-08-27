@@ -4,5 +4,6 @@ fn main() {
   let mut wm = window::WinManager::new();
 
   wm.init_cpu_meters();
+  wm.init_taskmeter();
   wm.qloop();
 }

@@ -1,6 +1,6 @@
 use crate::resource::pstat::pid_t;
 use crate::resource::tty::init_tty_drivers;
-use crate::resource::{cpu, process, procmem, pstat, stat, tty};
+use crate::resource::{cmdline, cpu, process, procmem, pstat, stat, tty};
 use crate::util::clamp;
 use std::collections::HashMap;
 use std::fs;
@@ -11,11 +11,11 @@ pub struct ProcList {
   pub plist: HashMap<pid_t, process::Process>, // XXX should be private
   pub tty_drivers: Vec<tty::TtyDriver>,
   pub cpus: Vec<cpu::CPU>,
-  kernel_threads: u32,
-  userland_threads: u32,
-  total_tasks: u32,
-  btime: i64,
-  jiffy: i64,              // 1Hz = `@jiffy` jiffies // [sec]. now 100
+  pub kernel_threads: u32,
+  pub userland_threads: u32,
+  pub total_tasks: u32,
+  pub btime: i64,
+  pub jiffy: i64,          // 1Hz = `@jiffy` jiffies // [sec]. now 100
   pub average_period: f64, // average period since last update of process
 }
 
@@ -154,6 +154,9 @@ impl ProcList {
         )
       };
 
+      // update cmdline, comm, exe
+      cmdline::read_cmd_files(proc, &format!("{}/{}", dname, pid));
+
       if proc.is_kernel_thread {
         self.kernel_threads += 1;
       } else if proc.is_userland_thread {
@@ -164,5 +167,7 @@ impl ProcList {
       self.total_tasks += 1;
       proc.is_updated = true;
     }
+
+    // XXX must delete dead processes
   }
 }
