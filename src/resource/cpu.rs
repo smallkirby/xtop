@@ -122,8 +122,6 @@ impl CPU {
   }
 
   pub fn update_time_and_period(&mut self) {
-    use crate::resource::stat::*;
-
     stat::scan_cpu_time(self)
   }
 

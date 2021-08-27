@@ -1,6 +1,7 @@
 use crate::resource::pstat::pid_t;
 use crate::resource::tty::init_tty_drivers;
 use crate::resource::{cpu, process, procmem, pstat, stat, tty};
+use crate::util::clamp;
 use std::collections::HashMap;
 use std::fs;
 use sysconf;
@@ -14,7 +15,8 @@ pub struct ProcList {
   userland_threads: u32,
   total_tasks: u32,
   btime: i64,
-  jiffy: i64, // 1Hz = `@jiffy` jiffies // [sec]. now 100
+  jiffy: i64,              // 1Hz = `@jiffy` jiffies // [sec]. now 100
+  pub average_period: f64, // average period since last update of process
 }
 
 impl ProcList {
@@ -35,7 +37,19 @@ impl ProcList {
       total_tasks: 0,
       btime,
       jiffy,
+      average_period: 0.0,
     }
+  }
+
+  // update CPUs and return average period.
+  pub fn update_cpus(&mut self) -> f64 {
+    let mut sum_period = 0;
+    for i in 0..self.cpus.len() {
+      self.cpus[i].update_time_and_period();
+      sum_period += self.cpus[i].totaltime_period;
+    }
+
+    sum_period as f64 / self.cpus.len() as f64
   }
 
   pub fn recurse_proc_tree(&mut self, ppid: Option<pid_t>, _dname: &str) {
@@ -130,6 +144,25 @@ impl ProcList {
       }
 
       // update CPU usage
+      proc.percent_cpu = if self.average_period < 0.1_f64.powi(6) {
+        0.0
+      } else {
+        clamp(
+          (proc.utime as f64 + proc.stime as f64) / self.average_period * 100.0,
+          0.0,
+          100.0,
+        )
+      };
+
+      if proc.is_kernel_thread {
+        self.kernel_threads += 1;
+      } else if proc.is_userland_thread {
+        self.userland_threads += 1;
+      }
+
+      proc.show = true; // XXX
+      self.total_tasks += 1;
+      proc.is_updated = true;
     }
   }
 }

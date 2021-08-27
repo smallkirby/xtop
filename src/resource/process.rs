@@ -70,6 +70,7 @@ pub struct Process {
 
   //
   pub tty_name: String,
+  pub percent_cpu: f64,
 }
 
 impl Process {

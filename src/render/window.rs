@@ -8,9 +8,9 @@ use std::time::Duration;
 pub struct WinManager {
   pub screen_height: i32,
   pub screen_width: i32,
+  pub plist: list::ProcList,
 
   // CPU meters
-  pub plist: list::ProcList,
   pub cpumeter_win: Option<WINDOW>,
   cpumeters: Vec<cpumeter::CPUMeter>,
 }
@@ -36,6 +36,8 @@ impl WinManager {
   }
 
   pub fn update_cpu_meters(&mut self) {
+    // XXX update_cpus() must be called right before recurse_proc_tree()
+    self.plist.average_period = self.plist.update_cpus();
     for i in 0..self.cpumeters.len() {
       self.cpumeters[i].render(&mut self.plist.cpus[i]);
     }
@@ -61,6 +63,7 @@ impl WinManager {
     loop {
       thread::sleep(Duration::from_millis(1000));
       self.update_cpu_meters();
+      self.plist.recurse_proc_tree(None, "/proc");
       refresh();
       if rx.try_recv().is_ok() {
         input_handler.join().unwrap();

@@ -15,8 +15,6 @@ pub struct CPUMeter {
 
 impl CPUMeter {
   pub fn render(&mut self, cpu: &mut cpu::CPU) {
-    cpu.update_time_and_period(); // XXX actually, update of these values should be at once.
-
     let win = self.win;
     let cpu = cpu;
     let max_width = self.width - "cpuxx []".len() as i32 - 1;
