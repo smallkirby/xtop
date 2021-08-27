@@ -68,7 +68,8 @@ pub struct Process {
   // read from maps
   pub m_lib: i64, // library size
 
-                  //
+  //
+  pub tty_name: String,
 }
 
 impl Process {

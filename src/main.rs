@@ -8,6 +8,10 @@ fn main() {
   let mut plist = list::ProcList::new();
 
   plist.recurse_proc_tree(None, "/proc"); // XXX
+  for (k, v) in plist.plist {
+    // XXX
+    println!("{}", v.tty_name);
+  }
 
   //wm.init_cpu_meters(&cpus);
 

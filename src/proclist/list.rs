@@ -118,9 +118,13 @@ impl ProcList {
         }
       }
 
+      let old_tty_nr = proc.tty_nr;
       pstat::update_with_stat(proc, dname, self.btime, self.jiffy);
 
       // XXX update of TTY device should be cond-limited for performance.
+      if old_tty_nr != proc.tty_nr && self.tty_drivers.len() != 0 {
+        proc.tty_name = tty::get_updated_tty_driver(&self.tty_drivers, proc.tty_nr as u64);
+      }
     }
   }
 }
