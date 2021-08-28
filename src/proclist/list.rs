@@ -1,6 +1,6 @@
 use crate::resource::pstat::pid_t;
 use crate::resource::tty::init_tty_drivers;
-use crate::resource::{cmdline, cpu, process, procmem, pstat, stat, tty};
+use crate::resource::{cmdline, cpu, loadavg, process, procmem, pstat, stat, tty};
 use crate::util::clamp;
 use std::collections::HashMap;
 use std::fs;
@@ -11,6 +11,7 @@ pub struct ProcList {
   pub plist: HashMap<pid_t, process::Process>, // XXX should be private
   pub tty_drivers: Vec<tty::TtyDriver>,
   pub cpus: Vec<cpu::CPU>,
+  pub loadaverage: loadavg::LoadAvg,
   pub kernel_threads: u32,
   pub userland_threads: u32,
   pub total_tasks: u32,
@@ -27,10 +28,12 @@ impl ProcList {
     init_tty_drivers(&mut tty_drivers);
     let btime = stat::get_btime();
     let jiffy = sysconf::sysconf(sysconf::SysconfVariable::ScClkTck).unwrap() as i64;
+    let loadaverage = loadavg::LoadAvg::new();
 
     Self {
       plist,
       cpus,
+      loadaverage,
       tty_drivers,
       kernel_threads: 0,
       userland_threads: 0,

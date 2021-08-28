@@ -19,13 +19,19 @@ impl TaskMeter {
     let tasks = plist.total_tasks - plist.kernel_threads - plist.userland_threads;
     let uthr = plist.userland_threads;
     let kthr = plist.kernel_threads;
+    let ave = &plist.loadaverage;
     mvwprintw(
       win,
       0,
       0,
       &format!("Tasks: {}, {} thr; {} kthr", tasks, uthr, kthr),
     );
-    mvwprintw(win, 1, 0, &format!("Load Average: "));
+    mvwprintw(
+      win,
+      1,
+      0,
+      &format!("Load Average: {} {} {}", ave.one, ave.five, ave.fifteen),
+    );
     mvwprintw(win, 2, 0, &format!("Uptime: "));
     wrefresh(win);
   }

@@ -53,6 +53,7 @@ impl WinManager {
 
   pub fn update_task_meter(&mut self) {
     let taskmeter = self.taskmeter.as_mut().unwrap();
+    self.plist.loadaverage.update();
     taskmeter.render(&self.plist);
   }
 
