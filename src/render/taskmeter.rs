@@ -32,7 +32,12 @@ impl TaskMeter {
       0,
       &format!("Load Average: {} {} {}", ave.one, ave.five, ave.fifteen),
     );
-    mvwprintw(win, 2, 0, &format!("Uptime: "));
+    mvwprintw(
+      win,
+      2,
+      0,
+      &format!("Uptime: {}", plist.uptime.into_readable_string()),
+    );
     wrefresh(win);
   }
 }

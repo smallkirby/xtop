@@ -6,3 +6,4 @@ pub mod procmem;
 pub mod pstat;
 pub mod stat;
 pub mod tty;
+pub mod uptime;

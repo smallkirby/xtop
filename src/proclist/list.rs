@@ -1,6 +1,6 @@
 use crate::resource::pstat::pid_t;
 use crate::resource::tty::init_tty_drivers;
-use crate::resource::{cmdline, cpu, loadavg, process, procmem, pstat, stat, tty};
+use crate::resource::{cmdline, cpu, loadavg, process, procmem, pstat, stat, tty, uptime as up};
 use crate::util::clamp;
 use std::collections::HashMap;
 use std::fs;
@@ -18,6 +18,7 @@ pub struct ProcList {
   pub btime: i64,
   pub jiffy: i64,          // 1Hz = `@jiffy` jiffies // [sec]. now 100
   pub average_period: f64, // average period since last update of process
+  pub uptime: up::Uptime,
 }
 
 impl ProcList {
@@ -29,6 +30,7 @@ impl ProcList {
     let btime = stat::get_btime();
     let jiffy = sysconf::sysconf(sysconf::SysconfVariable::ScClkTck).unwrap() as i64;
     let loadaverage = loadavg::LoadAvg::new();
+    let uptime = up::Uptime::new();
 
     Self {
       plist,
@@ -41,6 +43,7 @@ impl ProcList {
       btime,
       jiffy,
       average_period: 0.0,
+      uptime,
     }
   }
 
