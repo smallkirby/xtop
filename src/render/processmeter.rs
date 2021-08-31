@@ -17,7 +17,7 @@ impl ProcessMeter {
       win,
       0,
       0,
-      &format!("{} {} {:?} ", proc.pid, proc.exe, proc.percent_cpu),
+      &format!("{} {:>3.2} {} ", proc.pid, proc.percent_cpu, proc.cmdline),
     );
     wrefresh(win);
   }

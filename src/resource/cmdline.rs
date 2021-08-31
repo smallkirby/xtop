@@ -14,7 +14,7 @@ pub fn read_cmd_files(proc: &mut process::Process, dname: &str) {
     proc.cmdline = String::from("[kthread]");
     return;
   }
-  proc.cmdline = cmdline;
+  proc.cmdline = cmdline.replace("\x00", " ");
 
   proc.comm = match fs::read_to_string(&format!("{}/comm", dname)) {
     Ok(_comm) => _comm,

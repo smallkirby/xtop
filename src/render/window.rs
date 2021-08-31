@@ -115,6 +115,8 @@ impl WinManager {
         "/proc",
         self.plist.aggregated_cpu.totaltime_period as f64 / self.plist.cpus.len() as f64,
       );
+
+      // delete tombed procs
       let mut deleted_pids = vec![];
       for proc in self.plist.plist.values_mut() {
         if proc.is_updated == false {

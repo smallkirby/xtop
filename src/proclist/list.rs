@@ -175,9 +175,29 @@ impl ProcList {
     // XXX must delete dead processes
   }
 
+  // XXX returned vec can have less than @num elements.
   pub fn get_sorted_by_cpu(&self, num: usize) -> Vec<process::Process> {
     let mut procs: Vec<process::Process> = self.plist.values().cloned().collect();
     procs.sort_by(|a, b| b.percent_cpu.partial_cmp(&a.percent_cpu).unwrap());
-    procs.into_iter().take(num).collect()
+
+    let mut result = vec![];
+    let mut iter = procs.into_iter();
+    loop {
+      if result.len() == num {
+        break;
+      }
+      let proc = match iter.next() {
+        Some(_proc) => _proc,
+        None => break,
+      };
+
+      // hide thread for now.
+      if proc.is_kernel_thread || proc.is_userland_thread {
+        continue;
+      }
+
+      result.push(proc);
+    }
+    result
   }
 }
