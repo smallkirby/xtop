@@ -1,5 +1,5 @@
 use crate::proclist::list;
-use crate::render::{cpumeter, taskmeter};
+use crate::render::{cpumeter, taskmeter, processmeter};
 use ncurses::*;
 use std::sync::mpsc;
 use std::thread;
@@ -16,6 +16,10 @@ pub struct WinManager {
 
   // Task Meter
   taskmeter: Option<taskmeter::TaskMeter>,
+
+  // Process meters
+  pub processmeter_win: Option<WINDOW>,
+  processmeters: Vec<processmeter::ProcessMeter>,
 }
 
 impl WinManager {
@@ -43,6 +47,18 @@ impl WinManager {
     wrefresh(self.taskmeter.as_ref().unwrap().win);
   }
 
+  pub fn init_process_meters(&mut self) {
+    // init entire window for cpumeters.
+    let width = self.screen_width; 
+    let height = 30; // XXX
+    self.processmeter_win = Some(newwin(height, width, 10, 0)); // XXX
+    wrefresh(self.processmeter_win.unwrap());
+
+    // init each windows of cpumeter inside parent window.
+    self.processmeters = processmeter::init_meters(self, height);
+    refresh();
+  }
+
   pub fn update_cpu_meters(&mut self) {
     // XXX update_cpus() must be called right before recurse_proc_tree()
     self.plist.average_period = self.plist.update_cpus();
@@ -56,6 +72,13 @@ impl WinManager {
     self.plist.loadaverage.update();
     self.plist.uptime.update();
     taskmeter.render(&self.plist);
+  }
+
+  pub fn update_process_meters(&mut self) {
+    let sorted_proc = self.plist.get_sorted_by_cpu(30); // XXX
+    for (i, proc) in sorted_proc.into_iter().enumerate() {
+      self.processmeters[i].render(&proc);
+    }
   }
 
   fn finish() {
@@ -78,15 +101,28 @@ impl WinManager {
     loop {
       thread::sleep(Duration::from_millis(1000));
 
+      self.update_cpu_meters();
+
       // update values
       self.plist.total_tasks = 0;
       self.plist.userland_threads = 0;
       self.plist.kernel_threads = 0;
-      self.plist.recurse_proc_tree(None, "/proc");
+      for proc in self.plist.plist.values_mut() {
+        proc.is_updated = false;
+      } 
+      self.plist.recurse_proc_tree(None, "/proc", self.plist.average_period);
+      let mut deleted_pids = vec!();
+      for proc in self.plist.plist.values_mut() {
+        if proc.is_updated == false {
+          deleted_pids.push(proc.pid);
+        }
+      }
+      for pid in deleted_pids {
+        self.plist.plist.remove(&pid);
+      }
 
-      // update meters
-      self.update_cpu_meters();
       self.update_task_meter();
+      self.update_process_meters();
 
       refresh();
       if rx.try_recv().is_ok() {
@@ -111,6 +147,8 @@ impl WinManager {
       cpumeter_win: None,
       cpumeters: vec![],
       taskmeter: None,
+      processmeter_win: None,
+      processmeters: vec![],
     }
   }
 }

@@ -1,7 +1,7 @@
 use crate::resource::pstat::pid_t;
 use std::fs;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum ProcState {
   RUNNING,
   SLEEPING,
@@ -18,7 +18,7 @@ impl Default for ProcState {
   }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Process {
   pub pid: pid_t,
 

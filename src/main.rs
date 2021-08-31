@@ -5,5 +5,6 @@ fn main() {
 
   wm.init_cpu_meters();
   wm.init_taskmeter();
+  wm.init_process_meters();
   wm.qloop();
 }

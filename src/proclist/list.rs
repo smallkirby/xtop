@@ -58,7 +58,7 @@ impl ProcList {
     sum_period as f64 / self.cpus.len() as f64
   }
 
-  pub fn recurse_proc_tree(&mut self, ppid: Option<pid_t>, _dname: &str) {
+  pub fn recurse_proc_tree(&mut self, ppid: Option<pid_t>, _dname: &str, average_period: f64) {
     let dname = if _dname.chars().nth(_dname.len() - 1).unwrap() == '/' {
       &_dname[0..(_dname.len() - 1)]
     } else {
@@ -108,7 +108,7 @@ impl ProcList {
 
       // recurse more into its tasks
       let taskdir = &format!("{}/{}/task", dname, pid);
-      self.recurse_proc_tree(Some(pid), taskdir);
+      self.recurse_proc_tree(Some(pid), taskdir, average_period);
 
       let proc = self.plist.get_mut(&pid).unwrap();
 
@@ -141,6 +141,7 @@ impl ProcList {
         }
       }
 
+      let lasttimes = proc.utime + proc.stime;
       let old_tty_nr = proc.tty_nr;
       pstat::update_with_stat(proc, dname, self.btime, self.jiffy);
 
@@ -149,14 +150,15 @@ impl ProcList {
         proc.tty_name = tty::get_updated_tty_driver(&self.tty_drivers, proc.tty_nr as u64);
       }
 
+
       // update CPU usage
-      proc.percent_cpu = if self.average_period < 0.1_f64.powi(6) {
+      proc.percent_cpu = if average_period < 0.1_f64.powi(6) {
         0.0
       } else {
         clamp(
-          (proc.utime as f64 + proc.stime as f64) / self.average_period * 100.0,
+          (proc.utime as f64 + proc.stime as f64 - lasttimes as f64) / average_period * 100.0,
           0.0,
-          100.0,
+          self.cpus.len() as f64 * 100.0,
         )
       };
 
@@ -175,5 +177,11 @@ impl ProcList {
     }
 
     // XXX must delete dead processes
+  }
+
+  pub fn get_sorted_by_cpu(&self, num: usize) -> Vec<process::Process> {
+    let mut procs: Vec<process::Process> = self.plist.values().cloned().collect();
+    procs.sort_by(|a,b| b.percent_cpu.partial_cmp(&a.percent_cpu).unwrap());
+    procs.into_iter().take(num).collect()
   }
 }

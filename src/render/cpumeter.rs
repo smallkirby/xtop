@@ -59,7 +59,7 @@ pub fn init_meters(wm: &mut window::WinManager) -> Vec<CPUMeter> {
 }
 
 fn create_meter_win(parent: WINDOW, height: i32, width: i32, y: i32, x: i32) -> WINDOW {
-  let win = subwin(parent, height, width, y, x);
+  let win = derwin(parent, height, width, y, x);
   wrefresh(win);
   win
 }
