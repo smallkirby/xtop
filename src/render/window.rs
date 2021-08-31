@@ -1,5 +1,5 @@
 use crate::proclist::list;
-use crate::render::{cpumeter, taskmeter, processmeter};
+use crate::render::{cpumeter, processmeter, taskmeter};
 use ncurses::*;
 use std::sync::mpsc;
 use std::thread;
@@ -49,7 +49,7 @@ impl WinManager {
 
   pub fn init_process_meters(&mut self) {
     // init entire window for cpumeters.
-    let width = self.screen_width; 
+    let width = self.screen_width;
     let height = 30; // XXX
     self.processmeter_win = Some(newwin(height, width, 10, 0)); // XXX
     wrefresh(self.processmeter_win.unwrap());
@@ -61,7 +61,7 @@ impl WinManager {
 
   pub fn update_cpu_meters(&mut self) {
     // XXX update_cpus() must be called right before recurse_proc_tree()
-    self.plist.average_period = self.plist.update_cpus();
+    self.plist.update_cpus();
     for i in 0..self.cpumeters.len() {
       self.cpumeters[i].render(&mut self.plist.cpus[i]);
     }
@@ -109,9 +109,13 @@ impl WinManager {
       self.plist.kernel_threads = 0;
       for proc in self.plist.plist.values_mut() {
         proc.is_updated = false;
-      } 
-      self.plist.recurse_proc_tree(None, "/proc", self.plist.average_period);
-      let mut deleted_pids = vec!();
+      }
+      self.plist.recurse_proc_tree(
+        None,
+        "/proc",
+        self.plist.aggregated_cpu.totaltime_period as f64 / self.plist.cpus.len() as f64,
+      );
+      let mut deleted_pids = vec![];
       for proc in self.plist.plist.values_mut() {
         if proc.is_updated == false {
           deleted_pids.push(proc.pid);

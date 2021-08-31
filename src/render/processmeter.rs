@@ -13,7 +13,12 @@ impl ProcessMeter {
   pub fn render(&mut self, proc: &process::Process) {
     let win = self.win;
     wclear(win);
-    mvwprintw(win, 0, 0, &format!("{} {} {:?} ", proc.pid, proc.exe, proc.percent_cpu));
+    mvwprintw(
+      win,
+      0,
+      0,
+      &format!("{} {} {:?} ", proc.pid, proc.exe, proc.percent_cpu),
+    );
     wrefresh(win);
   }
 }
@@ -21,9 +26,13 @@ impl ProcessMeter {
 pub fn init_meters(wm: &mut window::WinManager, height: i32) -> Vec<ProcessMeter> {
   let mut meters = vec![];
   let width = wm.screen_width;
-  for i in 0..height{
+  for i in 0..height {
     let win = create_meter_win(wm.processmeter_win.unwrap(), 1, width, i, 0);
-    let meter = ProcessMeter { height: 1, width, win };
+    let meter = ProcessMeter {
+      height: 1,
+      width,
+      win,
+    };
     meters.push(meter);
   }
 
@@ -35,4 +44,3 @@ fn create_meter_win(parent: WINDOW, height: i32, width: i32, y: i32, x: i32) -> 
   wrefresh(win);
   win
 }
-

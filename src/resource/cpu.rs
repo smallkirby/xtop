@@ -121,10 +121,6 @@ impl CPU {
     self.freq = CPUFREQ::Offline;
   }
 
-  pub fn update_time_and_period(&mut self) {
-    stat::scan_cpu_time(self)
-  }
-
   pub fn percent(&self) -> f64 {
     let total = match self.totaltime_period {
       0 => 1,
@@ -237,6 +233,73 @@ fn online_cpus() -> (u32, u32) {
   (nums[0].parse().unwrap(), nums[1].parse().unwrap())
 }
 
+// update information of each cpus.
+pub fn update_time_and_period(cpus: &mut Vec<CPU>, aggregated: &mut CPU) {
+  use crate::resource::stat::CPUID;
+  let cpu_times = stat::get_cpu_time(); // index 0 is aggregated CPU
+
+  for i in 0..cpu_times.len() {
+    let cpu = if i == 0 {
+      &mut *aggregated
+    } else {
+      &mut cpus[i - 1]
+    };
+    let info = &cpu_times[i];
+    match info.id {
+      CPUID::Average => {
+        if i != 0 {
+          continue;
+        }
+      } // XXX should panic?
+      CPUID::Id(id) => {
+        if cpu.id != id {
+          continue;
+        }
+      } // XXX should panic?
+    }
+
+    let saturate_diff = |a, b| if a > b { a - b } else { 0 };
+
+    // guest is included in usertime/nicetime
+    let usertime = info.usertime - info.guest;
+    let nicetime = info.nicetime - info.guestnice;
+
+    // classify them
+    let idle_alltime = info.idletime + info.iowait;
+    let system_alltime = info.systemtime + info.irq + info.softirq;
+    let virt_alltime = info.guest + info.guestnice;
+    let totaltime = usertime + nicetime + system_alltime + idle_alltime + info.steal + virt_alltime;
+
+    // update period
+    cpu.usertime_period = saturate_diff(usertime, cpu.usertime);
+    cpu.nicetime_period = saturate_diff(nicetime, cpu.nicetime);
+    cpu.systemtime_period = saturate_diff(info.systemtime, cpu.systemtime);
+    cpu.system_allperiod = saturate_diff(system_alltime, cpu.system_alltime);
+    cpu.idletime_period = saturate_diff(info.idletime, cpu.idletime);
+    cpu.idle_allperiod = saturate_diff(idle_alltime, cpu.idle_alltime);
+    cpu.iowait_period = saturate_diff(info.iowait, cpu.iowait);
+    cpu.irq_period = saturate_diff(info.irq, cpu.irq);
+    cpu.softirq_period = saturate_diff(info.softirq, cpu.softirq);
+    cpu.steal_period = saturate_diff(info.steal, cpu.steal);
+    cpu.guest_period = saturate_diff(virt_alltime, cpu.guest_period);
+    cpu.totaltime_period = saturate_diff(totaltime, cpu.totaltime);
+
+    // update absolute times
+    cpu.usertime = usertime;
+    cpu.nicetime = nicetime;
+    cpu.systemtime = info.systemtime;
+    cpu.system_alltime = system_alltime;
+    cpu.idletime = info.idletime;
+    cpu.idle_alltime = idle_alltime;
+    cpu.iowait = info.iowait;
+    cpu.irq = info.irq;
+    cpu.softirq = info.softirq;
+    cpu.steal = info.steal;
+    cpu.guesttime = virt_alltime;
+    cpu.totaltime = totaltime;
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -265,16 +328,19 @@ mod tests {
     println!("cpus: {:?}", &cpus);
   }
 
-  // #[test]
+  //#[test]
   #[allow(dead_code)]
   fn test_update_cpu_time() {
     let mut cpus = init_cpus();
-    println!("{:?}", cpus[0]);
-    stat::scan_cpu_time(&mut cpus[0]);
-    println!("{:?}", cpus[0]);
+    let mut aggregated = CPU {
+      ..Default::default()
+    };
+    println!("{:?}", (cpus[0], aggregated));
+    update_time_and_period(&mut cpus, &mut aggregated);
+    println!("{:?}", (cpus[0], aggregated));
     let dur = std::time::Duration::from_millis(1000);
     std::thread::sleep(dur);
-    stat::scan_cpu_time(&mut cpus[0]);
+    update_time_and_period(&mut cpus, &mut aggregated);
     println!("{:?}", cpus[0]);
   }
 
@@ -282,12 +348,15 @@ mod tests {
   #[allow(dead_code)]
   fn test_percentage() {
     let mut cpus = init_cpus();
+    let mut aggregated = CPU {
+      ..Default::default()
+    };
     let dur = std::time::Duration::from_millis(500);
 
     for _ in 0..10 {
       std::thread::sleep(dur);
       println!("cpu0: {} %", cpus[0].percent());
-      cpus[0].update_time_and_period();
+      update_time_and_period(&mut cpus, &mut aggregated);
     }
   }
 }

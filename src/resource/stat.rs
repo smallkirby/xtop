@@ -9,21 +9,21 @@ use std::fs;
 
 #[derive(Debug)]
 pub struct StatCpuTime {
-  id: CPUID,
-  usertime: u64,
-  nicetime: u64,
-  systemtime: u64,
-  idletime: u64,
-  iowait: u64,
-  irq: u64,
-  softirq: u64,
-  steal: u64,
-  guest: u64,
-  guestnice: u64,
+  pub id: CPUID,
+  pub usertime: u64,
+  pub nicetime: u64,
+  pub systemtime: u64,
+  pub idletime: u64,
+  pub iowait: u64,
+  pub irq: u64,
+  pub softirq: u64,
+  pub steal: u64,
+  pub guest: u64,
+  pub guestnice: u64,
 }
 
 #[derive(Debug)]
-enum CPUID {
+pub enum CPUID {
   Id(u32),
   Average,
 }
@@ -41,7 +41,7 @@ pub fn get_btime() -> i64 {
 }
 
 // scan one cpu and update both its time and period.
-pub fn scan_cpu_time(cpu: &mut CPU) {
+fn _scan_cpu_time(cpu: &mut CPU) {
   let cpu_times = get_cpu_time();
 
   for i in 0..cpu_times.len() {
@@ -96,8 +96,8 @@ pub fn scan_cpu_time(cpu: &mut CPU) {
   }
 }
 
-// index 0 is always average usage of CPUs.
-fn get_cpu_time() -> Vec<StatCpuTime> {
+// index 0 is always aggregated usage of CPUs.
+pub fn get_cpu_time() -> Vec<StatCpuTime> {
   use util::*;
 
   let mut stat_s = read_stat_string();

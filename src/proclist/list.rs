@@ -11,13 +11,13 @@ pub struct ProcList {
   pub plist: HashMap<pid_t, process::Process>, // XXX should be private
   pub tty_drivers: Vec<tty::TtyDriver>,
   pub cpus: Vec<cpu::CPU>,
+  pub aggregated_cpu: cpu::CPU,
   pub loadaverage: loadavg::LoadAvg,
   pub kernel_threads: u32,
   pub userland_threads: u32,
   pub total_tasks: u32,
   pub btime: i64,
-  pub jiffy: i64,          // 1Hz = `@jiffy` jiffies // [sec]. now 100
-  pub average_period: f64, // average period since last update of process
+  pub jiffy: i64, // 1Hz = `@jiffy` jiffies // [sec]. now 100
   pub uptime: up::Uptime,
 }
 
@@ -26,6 +26,9 @@ impl ProcList {
     let plist = HashMap::new();
     let mut tty_drivers = vec![];
     let cpus = cpu::init_cpus();
+    let aggregated_cpu = cpu::CPU {
+      ..Default::default()
+    };
     init_tty_drivers(&mut tty_drivers);
     let btime = stat::get_btime();
     let jiffy = sysconf::sysconf(sysconf::SysconfVariable::ScClkTck).unwrap() as i64;
@@ -35,6 +38,7 @@ impl ProcList {
     Self {
       plist,
       cpus,
+      aggregated_cpu,
       loadaverage,
       tty_drivers,
       kernel_threads: 0,
@@ -42,20 +46,13 @@ impl ProcList {
       total_tasks: 0,
       btime,
       jiffy,
-      average_period: 0.0,
       uptime,
     }
   }
 
-  // update CPUs and return average period.
-  pub fn update_cpus(&mut self) -> f64 {
-    let mut sum_period = 0;
-    for i in 0..self.cpus.len() {
-      self.cpus[i].update_time_and_period();
-      sum_period += self.cpus[i].totaltime_period;
-    }
-
-    sum_period as f64 / self.cpus.len() as f64
+  // update CPUs
+  pub fn update_cpus(&mut self) {
+    cpu::update_time_and_period(&mut self.cpus, &mut self.aggregated_cpu);
   }
 
   pub fn recurse_proc_tree(&mut self, ppid: Option<pid_t>, _dname: &str, average_period: f64) {
@@ -150,7 +147,6 @@ impl ProcList {
         proc.tty_name = tty::get_updated_tty_driver(&self.tty_drivers, proc.tty_nr as u64);
       }
 
-
       // update CPU usage
       proc.percent_cpu = if average_period < 0.1_f64.powi(6) {
         0.0
@@ -181,7 +177,7 @@ impl ProcList {
 
   pub fn get_sorted_by_cpu(&self, num: usize) -> Vec<process::Process> {
     let mut procs: Vec<process::Process> = self.plist.values().cloned().collect();
-    procs.sort_by(|a,b| b.percent_cpu.partial_cmp(&a.percent_cpu).unwrap());
+    procs.sort_by(|a, b| b.percent_cpu.partial_cmp(&a.percent_cpu).unwrap());
     procs.into_iter().take(num).collect()
   }
 }
