@@ -7,6 +7,7 @@ fn main() {
   wm.init_cpumanager();
   wm.init_taskmeter();
   wm.init_cpugraph();
+  wm.init_moragraph();
   wm.init_process_meters();
   wm.qloop();
 }

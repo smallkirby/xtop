@@ -1,5 +1,5 @@
 use crate::proclist::list;
-use crate::render::{cpugraph, cpumanager, meter::Meter, processmeter, taskmeter};
+use crate::render::{cpugraph, cpumanager, meter::Meter, moragraph, processmeter, taskmeter};
 use ncurses::*;
 use std::sync::mpsc;
 use std::thread;
@@ -30,6 +30,9 @@ pub struct WinManager {
 
   // CPU graph
   pub cpu_graph: Option<cpugraph::CPUGraph>,
+
+  // Mora graph
+  pub mora_graph: Option<moragraph::MoraGraph>,
 
   // cursor
   pub cur_x: i32,
@@ -91,7 +94,7 @@ impl WinManager {
   pub fn init_cpugraph(&mut self) {
     let x = 0;
     let height = 10;
-    let width = self.screen_width;
+    let width = self.screen_width / 3 * 2;
     self.cpu_graph = Some(cpugraph::CPUGraph::init_meter(
       self.mainwin,
       self,
@@ -101,6 +104,23 @@ impl WinManager {
       x,
     ));
     self.cur_y += self.cpu_graph.as_ref().unwrap().height + 1;
+    refresh();
+  }
+
+  pub fn init_moragraph(&mut self) {
+    let x = self.screen_width / 3 * 2;
+    let height = 10;
+    let width = self.screen_width / 3 * 1;
+    self.cur_y -= self.cpu_graph.as_ref().unwrap().height + 1;
+    self.mora_graph = Some(moragraph::MoraGraph::init_meter(
+      self.mainwin,
+      self,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      x,
+    ));
+    self.cur_y += self.mora_graph.as_ref().unwrap().height + 1;
     refresh();
   }
 
@@ -137,6 +157,11 @@ impl WinManager {
     cpu_graph.render();
   }
 
+  pub fn update_moragraph(&mut self) {
+    let mora_graph = self.mora_graph.as_mut().unwrap();
+    mora_graph.render();
+  }
+
   pub fn resize_meters(&mut self) {}
 
   fn finish() {
@@ -151,6 +176,7 @@ impl WinManager {
       DOUPDATE => {
         self.update_cpu_meters();
         self.update_cpugraph();
+        self.update_moragraph();
 
         // update values
         self.plist.total_tasks = 0;
@@ -252,6 +278,7 @@ impl WinManager {
       processmeter_win: None,
       processmeters: vec![],
       cpu_graph: None,
+      mora_graph: None,
       cur_x: 0,
       cur_y: 0,
     }
