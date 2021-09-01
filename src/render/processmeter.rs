@@ -54,11 +54,14 @@ impl meter::Meter for ProcessMeter {
     wrefresh(win);
   }
 
-  fn init_meter(parent: WINDOW, wm: &mut window::WinManager, height: Option<i32>, width: Option<i32>, y: i32, x: i32) -> Self {
-    let alloc_height = match height {
-      Some(_h) => _h,
-      None => 1,
-    };
+  fn init_meter(
+    _parent: WINDOW,
+    wm: &mut window::WinManager,
+    _height: Option<i32>,
+    width: Option<i32>,
+    y: i32,
+    x: i32,
+  ) -> Self {
     let alloc_width = match width {
       Some(_w) => _w,
       None => wm.screen_width,

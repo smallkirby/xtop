@@ -19,36 +19,43 @@ impl CPUManager {
 }
 
 impl Meter for CPUManager {
-    fn render(&mut self) {
-      for i in 0..self.cpumeters.len() {
-        self.cpumeters[i].render();
-      }
+  fn render(&mut self) {
+    for i in 0..self.cpumeters.len() {
+      self.cpumeters[i].render();
     }
+  }
 
-    fn init_meter(parent: WINDOW, wm: &mut super::window::WinManager, height: Option<i32>, width: Option<i32>, y: i32, x: i32) -> Self {
-      // init entire window
-      let (_width, _height) = winsize_require(wm);
-      let width = match width {
-        Some(w) => w,
-        None => _width,
-      };
-      let height = match height {
-        Some(h) => h,
-        None => _height,
-      };
-      let win = newwin(height, width, y, x);
+  fn init_meter(
+    _parent: WINDOW,
+    wm: &mut super::window::WinManager,
+    height: Option<i32>,
+    width: Option<i32>,
+    y: i32,
+    x: i32,
+  ) -> Self {
+    // init entire window
+    let (_width, _height) = winsize_require(wm);
+    let width = match width {
+      Some(w) => w,
+      None => _width,
+    };
+    let height = match height {
+      Some(h) => h,
+      None => _height,
+    };
+    let win = newwin(height, width, y, x);
 
-      // init each windows of cpumeter inside parent window.
-      let cpumeters = init_meters(win, wm);
-      refresh();
+    // init each windows of cpumeter inside parent window.
+    let cpumeters = init_meters(win, wm);
+    refresh();
 
-      CPUManager {
-        cpumeters,
-        width,
-        height,
-        win,
-      }
+    CPUManager {
+      cpumeters,
+      width,
+      height,
+      win,
     }
+  }
 }
 
 fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CPUMeter> {

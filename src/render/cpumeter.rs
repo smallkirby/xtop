@@ -1,4 +1,4 @@
-use crate::render::{meter};
+use crate::render::meter;
 use crate::resource::cpu;
 use ncurses::*;
 
@@ -38,7 +38,14 @@ impl meter::Meter for CPUMeter {
     wrefresh(win);
   }
 
-  fn init_meter(parent: WINDOW, wm: &mut WinManager, height: Option<i32>, width: Option<i32>, y: i32, x: i32) -> Self {
+  fn init_meter(
+    parent: WINDOW,
+    _wm: &mut WinManager,
+    height: Option<i32>,
+    width: Option<i32>,
+    y: i32,
+    x: i32,
+  ) -> Self {
     let height = match height {
       Some(h) => h,
       None => 1,

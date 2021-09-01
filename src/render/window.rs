@@ -38,7 +38,14 @@ impl WinManager {
 
   pub fn init_cpumanager(&mut self) {
     let width = self.screen_width;
-    self.cpumanager = Some(cpumanager::CPUManager::init_meter(self.mainwin, self, None, Some(width), self.cur_y, self.cur_x));
+    self.cpumanager = Some(cpumanager::CPUManager::init_meter(
+      self.mainwin,
+      self,
+      None,
+      Some(width),
+      self.cur_y,
+      self.cur_x,
+    ));
     self.cur_y += self.cpumanager.as_mut().unwrap().height;
   }
 
@@ -46,7 +53,12 @@ impl WinManager {
     let height = 4;
     let width = self.screen_width;
     self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
-      self.mainwin, self, Some(height), Some(width), self.cur_y, self.cur_x,
+      self.mainwin,
+      self,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      self.cur_x,
     ));
     self.cur_y += height;
     wrefresh(self.taskmeter.as_ref().unwrap().win);

@@ -95,7 +95,7 @@ pub fn get_updated_tty_driver(drivers: &Vec<TtyDriver>, tty_nr: u64) -> String {
     }
 
     let mut idx = min - driver.minor_from;
-    let mut fullpath = String::new();
+    let mut fullpath;
     loop {
       // step1: check /`tty_path`/idx
       fullpath = format!("{}/{}", driver.path, idx);

@@ -77,7 +77,14 @@ impl meter::Meter for TaskMeter {
     wrefresh(win);
   }
 
-  fn init_meter(parent: WINDOW, wm: &mut WinManager, height: Option<i32>, width: Option<i32>, y: i32, x: i32) -> Self {
+  fn init_meter(
+    _parent: WINDOW,
+    wm: &mut WinManager,
+    _height: Option<i32>,
+    _width: Option<i32>,
+    y: i32,
+    x: i32,
+  ) -> Self {
     let (width, height) = winsize_require(wm);
     let win = create_meter_win(height, width, y, x);
     let mut meter = TaskMeter {
