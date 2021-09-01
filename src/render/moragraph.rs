@@ -27,7 +27,13 @@ impl Meter for MoraGraph {
     // draw picture
     let mut y = 1;
     let x = 10;
-    for s in &self.morastring {
+    let width = self.width - 1 - x;
+    for _s in &self.morastring {
+      let s = if _s.len() > width as usize {
+        _s[0..width as usize].to_string()
+      } else {
+        _s.clone()
+      };
       mvwaddstr(win, y as i32, x, &s);
       y += 1;
     }
