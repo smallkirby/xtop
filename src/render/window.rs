@@ -1,18 +1,18 @@
 use crate::proclist::list;
-use crate::render::{cpumeter, meter::Meter, processmeter, taskmeter};
+use crate::render::{cpumanager, meter::Meter, processmeter, taskmeter};
 use ncurses::*;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
 pub struct WinManager {
+  pub mainwin: WINDOW,
   pub screen_height: i32,
   pub screen_width: i32,
   pub plist: list::ProcList,
 
   // CPU meters
-  pub cpumeter_win: Option<WINDOW>,
-  cpumeters: Vec<cpumeter::CPUMeter>,
+  cpumanager: Option<cpumanager::CPUManager>,
 
   // Task Meter
   taskmeter: Option<taskmeter::TaskMeter>,
@@ -27,31 +27,26 @@ pub struct WinManager {
 }
 
 impl WinManager {
-  fn initialize() {
-    initscr();
+  fn initialize() -> WINDOW {
+    let mainwin = initscr();
     keypad(stdscr(), true);
     noecho();
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
     refresh();
+    mainwin
   }
 
-  pub fn init_cpu_meters(&mut self) {
-    // init entire window for cpumeters.
-    let (width, height) = cpumeter::winsize_require(&self);
-    self.cpumeter_win = Some(newwin(height, width, self.cur_y, self.cur_x));
-    wrefresh(self.cpumeter_win.unwrap());
-
-    // init each windows of cpumeter inside parent window.
-    self.cpumeters = cpumeter::init_meters(self);
-    self.cur_y += (self.cpumeters[0].height * self.cpumeters.len() as i32) / 2;
-    refresh();
+  pub fn init_cpumanager(&mut self) {
+    let width = self.screen_width;
+    self.cpumanager = Some(cpumanager::CPUManager::init_meter(self.mainwin, self, None, Some(width), self.cur_y, self.cur_x));
+    self.cur_y += self.cpumanager.as_mut().unwrap().height;
   }
 
   pub fn init_taskmeter(&mut self) {
     let height = 4;
     let width = self.screen_width;
     self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
-      self, height, width, self.cur_y, self.cur_x,
+      self.mainwin, self, Some(height), Some(width), self.cur_y, self.cur_x,
     ));
     self.cur_y += height;
     wrefresh(self.taskmeter.as_ref().unwrap().win);
@@ -65,17 +60,16 @@ impl WinManager {
     wrefresh(self.processmeter_win.unwrap());
 
     // init each windows of cpumeter inside parent window.
-    self.processmeters = processmeter::init_meters(self, height);
+    self.processmeters = processmeter::init_meters(self.mainwin, self, height);
     self.cur_y += self.processmeters[0].height * self.processmeters.len() as i32;
     refresh();
   }
 
   pub fn update_cpu_meters(&mut self) {
+    let cpumanager = self.cpumanager.as_mut().unwrap();
     self.plist.update_cpus();
-    for i in 0..self.cpumeters.len() {
-      self.cpumeters[i].set_cpu(self.plist.cpus[i].clone());
-      self.cpumeters[i].render();
-    }
+    cpumanager.set_cpus(&self.plist.cpus);
+    cpumanager.render();
   }
 
   pub fn update_task_meter(&mut self) {
@@ -154,7 +148,7 @@ impl WinManager {
   }
 
   pub fn new() -> Self {
-    Self::initialize();
+    let mainwin = Self::initialize();
     let mut screen_height = 0;
     let mut screen_width = 0;
     getmaxyx(stdscr(), &mut screen_height, &mut screen_width);
@@ -162,11 +156,11 @@ impl WinManager {
     let plist = list::ProcList::new();
 
     Self {
+      mainwin,
       plist,
       screen_height,
       screen_width,
-      cpumeter_win: None,
-      cpumeters: vec![],
+      cpumanager: None,
       taskmeter: None,
       processmeter_win: None,
       processmeters: vec![],

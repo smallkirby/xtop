@@ -54,11 +54,19 @@ impl meter::Meter for ProcessMeter {
     wrefresh(win);
   }
 
-  fn init_meter(wm: &mut window::WinManager, height: i32, width: i32, y: i32, x: i32) -> Self {
-    let (win, subwins) = create_meter_win(wm.processmeter_win.unwrap(), width, y, x);
+  fn init_meter(parent: WINDOW, wm: &mut window::WinManager, height: Option<i32>, width: Option<i32>, y: i32, x: i32) -> Self {
+    let alloc_height = match height {
+      Some(_h) => _h,
+      None => 1,
+    };
+    let alloc_width = match width {
+      Some(_w) => _w,
+      None => wm.screen_width,
+    };
+    let (win, subwins) = create_meter_win(wm.processmeter_win.unwrap(), alloc_width, y, x);
     ProcessMeter {
       height: 1,
-      width,
+      width: alloc_width,
       win,
       subwins,
       process: None,
@@ -66,11 +74,11 @@ impl meter::Meter for ProcessMeter {
   }
 }
 
-pub fn init_meters(wm: &mut window::WinManager, height: i32) -> Vec<ProcessMeter> {
+pub fn init_meters(parent: WINDOW, wm: &mut window::WinManager, height: i32) -> Vec<ProcessMeter> {
   let mut meters = vec![];
   let width = wm.screen_width;
   for i in 0..height {
-    let meter = ProcessMeter::init_meter(wm, height, width, i, 0);
+    let meter = ProcessMeter::init_meter(parent, wm, Some(height), Some(width), i, 0);
     meters.push(meter);
   }
 
