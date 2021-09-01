@@ -6,7 +6,7 @@
 
 use std::fs;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Uptime {
   pub uptime: f64,   // uptime since last boot
   pub idle_sum: f64, // total idle time of each cores

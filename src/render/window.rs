@@ -1,5 +1,5 @@
 use crate::proclist::list;
-use crate::render::{cpumeter, processmeter, taskmeter};
+use crate::render::{cpumeter, meter::Meter, processmeter, taskmeter};
 use ncurses::*;
 use std::sync::mpsc;
 use std::thread;
@@ -20,6 +20,10 @@ pub struct WinManager {
   // Process meters
   pub processmeter_win: Option<WINDOW>,
   processmeters: Vec<processmeter::ProcessMeter>,
+
+  // cursor
+  pub cur_x: i32,
+  pub cur_y: i32,
 }
 
 impl WinManager {
@@ -34,36 +38,43 @@ impl WinManager {
   pub fn init_cpu_meters(&mut self) {
     // init entire window for cpumeters.
     let (width, height) = cpumeter::winsize_require(&self);
-    self.cpumeter_win = Some(newwin(height, width, 0, 0));
+    self.cpumeter_win = Some(newwin(height, width, self.cur_y, self.cur_x));
     wrefresh(self.cpumeter_win.unwrap());
 
     // init each windows of cpumeter inside parent window.
     self.cpumeters = cpumeter::init_meters(self);
+    self.cur_y += (self.cpumeters[0].height * self.cpumeters.len() as i32) / 2;
     refresh();
   }
 
   pub fn init_taskmeter(&mut self) {
-    self.taskmeter = Some(taskmeter::init_meter(self, 4, 0)); // XXX y must be calculated
+    let height = 4;
+    let width = self.screen_width;
+    self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
+      self, height, width, self.cur_y, self.cur_x,
+    ));
+    self.cur_y += height;
     wrefresh(self.taskmeter.as_ref().unwrap().win);
   }
 
   pub fn init_process_meters(&mut self) {
     // init entire window for cpumeters.
     let width = self.screen_width;
-    let height = 30; // XXX
-    self.processmeter_win = Some(newwin(height, width, 10, 0)); // XXX
+    let height = self.screen_height - self.cur_y;
+    self.processmeter_win = Some(newwin(height, width, self.cur_y, 0));
     wrefresh(self.processmeter_win.unwrap());
 
     // init each windows of cpumeter inside parent window.
     self.processmeters = processmeter::init_meters(self, height);
+    self.cur_y += self.processmeters[0].height * self.processmeters.len() as i32;
     refresh();
   }
 
   pub fn update_cpu_meters(&mut self) {
-    // XXX update_cpus() must be called right before recurse_proc_tree()
     self.plist.update_cpus();
     for i in 0..self.cpumeters.len() {
-      self.cpumeters[i].render(&mut self.plist.cpus[i]);
+      self.cpumeters[i].set_cpu(self.plist.cpus[i].clone());
+      self.cpumeters[i].render();
     }
   }
 
@@ -71,13 +82,17 @@ impl WinManager {
     let taskmeter = self.taskmeter.as_mut().unwrap();
     self.plist.loadaverage.update();
     self.plist.uptime.update();
-    taskmeter.render(&self.plist);
+
+    taskmeter.set_values(&self.plist);
+    taskmeter.render();
   }
 
   pub fn update_process_meters(&mut self) {
-    let sorted_proc = self.plist.get_sorted_by_cpu(30); // XXX
+    let num = self.processmeters.len();
+    let sorted_proc = self.plist.get_sorted_by_cpu(num);
     for (i, proc) in sorted_proc.into_iter().enumerate() {
-      self.processmeters[i].render(&proc);
+      self.processmeters[i].set_proc(proc.clone());
+      self.processmeters[i].render();
     }
   }
 
@@ -155,6 +170,8 @@ impl WinManager {
       taskmeter: None,
       processmeter_win: None,
       processmeters: vec![],
+      cur_x: 0,
+      cur_y: 0,
     }
   }
 }

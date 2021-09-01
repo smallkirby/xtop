@@ -1,4 +1,5 @@
-use crate::render::window;
+use crate::render::meter::Meter;
+use crate::render::{meter, window};
 use crate::resource::process;
 use ncurses::*;
 
@@ -18,18 +19,50 @@ pub struct ProcessMeter {
   pub width: i32,
   pub win: WINDOW,
   pub subwins: SubWins,
+  pub process: Option<process::Process>,
 }
 
 impl ProcessMeter {
-  pub fn render(&mut self, proc: &process::Process) {
+  pub fn set_proc(&mut self, proc: process::Process) {
+    self.process = Some(proc);
+  }
+}
+
+impl meter::Meter for ProcessMeter {
+  fn render(&mut self) {
     let win = self.win;
     let subwins = &self.subwins;
     wclear(win);
+
+    let proc = match self.process.as_ref() {
+      Some(_proc) => _proc,
+      None => {
+        mvwprintw(
+          subwins.comm_win,
+          0,
+          0,
+          &format!("[ERROR] process not initialized."),
+        );
+        wrefresh(win);
+        return;
+      }
+    };
 
     mvwprintw(subwins.pid_win, 0, 0, &format!("{:>6}", proc.pid));
     mvwprintw(subwins.cpu_win, 0, 0, &format!("{:>3.2}", proc.percent_cpu));
     mvwprintw(subwins.comm_win, 0, 0, &format!("{}", proc.cmdline));
     wrefresh(win);
+  }
+
+  fn init_meter(wm: &mut window::WinManager, height: i32, width: i32, y: i32, x: i32) -> Self {
+    let (win, subwins) = create_meter_win(wm.processmeter_win.unwrap(), width, y, x);
+    ProcessMeter {
+      height: 1,
+      width,
+      win,
+      subwins,
+      process: None,
+    }
   }
 }
 
@@ -37,13 +70,7 @@ pub fn init_meters(wm: &mut window::WinManager, height: i32) -> Vec<ProcessMeter
   let mut meters = vec![];
   let width = wm.screen_width;
   for i in 0..height {
-    let (win, subwins) = create_meter_win(wm.processmeter_win.unwrap(), width, i, 0);
-    let meter = ProcessMeter {
-      height: 1,
-      width,
-      win,
-      subwins,
-    };
+    let meter = ProcessMeter::init_meter(wm, height, width, i, 0);
     meters.push(meter);
   }
 
@@ -63,5 +90,12 @@ fn create_meter_win(parent: WINDOW, width: i32, y: i32, x: i32) -> (WINDOW, SubW
   let comm_win = derwin(win, 1, width - cur_x, 0, cur_x);
 
   wrefresh(win);
-  (win, SubWins { cpu_win, pid_win, comm_win })
+  (
+    win,
+    SubWins {
+      cpu_win,
+      pid_win,
+      comm_win,
+    },
+  )
 }

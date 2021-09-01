@@ -6,7 +6,7 @@
 
 use std::fs;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct LoadAvg {
   // CPU and IO load of past x-minutes
   pub one: f64,
