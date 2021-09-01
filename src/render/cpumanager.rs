@@ -56,6 +56,8 @@ impl Meter for CPUManager {
       win,
     }
   }
+
+  fn resize(&mut self) {}
 }
 
 fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CPUMeter> {

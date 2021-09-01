@@ -5,6 +5,13 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
+#[derive(Clone, Copy)]
+enum ThreadSignal {
+  DOUPDATE,
+  RESIZE,
+  QUIT,
+}
+
 pub struct WinManager {
   pub mainwin: WINDOW,
   pub screen_height: i32,
@@ -102,58 +109,97 @@ impl WinManager {
     }
   }
 
+  pub fn resize_meters(&mut self) {}
+
   fn finish() {
     endwin();
   }
 
-  // just test func. should create thread pools.
+  // Handle all the signal from threads.
+  // if true is returned, main thread should exit immediately.
+  fn handle_thread_signal(&mut self, sig: &ThreadSignal) -> bool {
+    use ThreadSignal::*;
+    match sig {
+      DOUPDATE => {
+        self.update_cpu_meters();
+
+        // update values
+        self.plist.total_tasks = 0;
+        self.plist.userland_threads = 0;
+        self.plist.kernel_threads = 0;
+        for proc in self.plist.plist.values_mut() {
+          proc.is_updated = false;
+        }
+        self.plist.recurse_proc_tree(
+          None,
+          "/proc",
+          self.plist.aggregated_cpu.totaltime_period as f64 / self.plist.cpus.len() as f64,
+        );
+
+        // delete tombed procs
+        let mut deleted_pids = vec![];
+        for proc in self.plist.plist.values_mut() {
+          if proc.is_updated == false {
+            deleted_pids.push(proc.pid);
+          }
+        }
+        for pid in deleted_pids {
+          self.plist.plist.remove(&pid);
+        }
+
+        self.update_task_meter();
+        self.update_process_meters();
+
+        refresh();
+
+        false
+      }
+
+      QUIT => {
+        true // XXX kill other threads immediately
+      }
+
+      RESIZE => {
+        self.resize_meters();
+        false
+      }
+    }
+  }
+
   pub fn qloop(&mut self) {
+    use ThreadSignal::*;
     let (tx, rx) = mpsc::channel();
 
-    let input_handler = thread::spawn(move || loop {
-      let ch = getch() as u32;
-      if std::char::from_u32(ch).unwrap() == 'q' {
-        tx.send(true).unwrap();
-        break;
-      }
-      refresh();
+    let update_timer_tx = tx.clone();
+    let _update_timer = thread::spawn(move || loop {
+      thread::sleep(Duration::from_millis(1000)); // XXX
+      update_timer_tx.send(DOUPDATE).unwrap(); // XXX
     });
 
-    loop {
-      thread::sleep(Duration::from_millis(1000));
-
-      self.update_cpu_meters();
-
-      // update values
-      self.plist.total_tasks = 0;
-      self.plist.userland_threads = 0;
-      self.plist.kernel_threads = 0;
-      for proc in self.plist.plist.values_mut() {
-        proc.is_updated = false;
-      }
-      self.plist.recurse_proc_tree(
-        None,
-        "/proc",
-        self.plist.aggregated_cpu.totaltime_period as f64 / self.plist.cpus.len() as f64,
-      );
-
-      // delete tombed procs
-      let mut deleted_pids = vec![];
-      for proc in self.plist.plist.values_mut() {
-        if proc.is_updated == false {
-          deleted_pids.push(proc.pid);
+    let input_sender_tx = tx.clone();
+    let _input_sender = thread::spawn(move || loop {
+      let ch = getch();
+      match ch {
+        // special inputs
+        KEY_RESIZE => {
+          input_sender_tx.send(RESIZE).unwrap();
         }
-      }
-      for pid in deleted_pids {
-        self.plist.plist.remove(&pid);
-      }
 
-      self.update_task_meter();
-      self.update_process_meters();
+        // normal key input
+        _ => match std::char::from_u32(ch as u32).unwrap() {
+          'q' => {
+            tx.send(QUIT).unwrap();
+            break;
+          }
+          _ => {}
+        },
+      };
+    });
 
-      refresh();
-      if rx.try_recv().is_ok() {
-        input_handler.join().unwrap();
+    // main handler
+    loop {
+      let sig = rx.recv().unwrap();
+      if self.handle_thread_signal(&sig) {
         break;
       }
     }

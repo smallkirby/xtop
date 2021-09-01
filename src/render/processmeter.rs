@@ -75,6 +75,8 @@ impl meter::Meter for ProcessMeter {
       process: None,
     }
   }
+
+  fn resize(&mut self) {}
 }
 
 pub fn init_meters(parent: WINDOW, wm: &mut window::WinManager, height: i32) -> Vec<ProcessMeter> {

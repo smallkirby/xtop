@@ -97,6 +97,8 @@ impl meter::Meter for TaskMeter {
 
     meter
   }
+
+  fn resize(&mut self) {}
 }
 
 pub fn winsize_require(wm: &WinManager) -> (i32, i32) {

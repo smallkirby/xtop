@@ -62,6 +62,8 @@ impl meter::Meter for CPUMeter {
       cpu: None,
     }
   }
+
+  fn resize(&mut self) {}
 }
 
 impl CPUMeter {

@@ -15,4 +15,7 @@ pub trait Meter {
     y: i32,
     x: i32,
   ) -> Self;
+
+  // resize the meter.
+  fn resize(&mut self);
 }
