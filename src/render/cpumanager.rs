@@ -1,3 +1,10 @@
+/*****
+
+Implementation of CPUManager.
+CPUManager manages CPUMeters.
+
+*******/
+
 use crate::render::{cpumeter, meter::*, window::*};
 use crate::resource::cpu;
 use ncurses::*;

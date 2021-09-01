@@ -1,3 +1,10 @@
+/*****
+
+Implementation of Process.
+Each Process structure holds one process information.
+
+*******/
+
 use crate::resource::pstat::pid_t;
 use std::fs;
 

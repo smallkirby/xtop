@@ -1,3 +1,9 @@
+/*****
+
+/proc/<pid>/stat/cmdline related funcs.
+
+*******/
+
 use crate::resource::process;
 use std::fs;
 

@@ -1,3 +1,9 @@
+/*****
+
+Utility functions used globally.
+
+*******/
+
 use std::cmp::Ordering;
 use std::fs;
 use std::os::unix::fs::MetadataExt;

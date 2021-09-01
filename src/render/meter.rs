@@ -1,3 +1,10 @@
+/*****
+
+Implementation of Meter trait.
+Meter trait decides the necessary funcs for each meters.
+
+*******/
+
 use super::window::WinManager;
 use ncurses::*;
 

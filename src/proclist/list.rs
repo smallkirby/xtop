@@ -1,10 +1,16 @@
+/*****
+
+Implementation of ProcessList.
+ProcessList stores information about CPU, processes, tty drivers...
+
+*******/
+
 use crate::resource::pstat::pid_t;
 use crate::resource::tty::init_tty_drivers;
 use crate::resource::{cmdline, cpu, loadavg, process, procmem, pstat, stat, tty, uptime as up};
 use crate::util::clamp;
 use std::collections::HashMap;
 use std::fs;
-use sysconf;
 
 #[derive(Debug)]
 pub struct ProcList {

@@ -1,3 +1,10 @@
+/*****
+
+Implementation of CPUMeter.
+CPUMeter shows information about each CPUs.
+
+*******/
+
 use crate::render::meter;
 use crate::resource::cpu;
 use ncurses::*;

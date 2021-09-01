@@ -1,3 +1,10 @@
+/*****
+
+Implementation of TaskMeter.
+TaskMeter shows the statistics of task/threads.
+
+*******/
+
 use crate::proclist::list;
 use crate::render::meter;
 use crate::resource::{loadavg, uptime};

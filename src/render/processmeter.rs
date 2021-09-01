@@ -1,3 +1,10 @@
+/*****
+
+Implementation of ProcessMeter.
+ProcessMeter shows the list of processes.
+
+*******/
+
 use crate::render::meter::Meter;
 use crate::render::{meter, window};
 use crate::resource::process;

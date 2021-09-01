@@ -1,3 +1,9 @@
+/*****
+
+CPU related structures and funcs.
+
+*******/
+
 use crate::resource::stat;
 
 use std::{
