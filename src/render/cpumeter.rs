@@ -22,7 +22,7 @@ pub struct CPUMeter {
 impl meter::Meter for CPUMeter {
   fn render(&mut self) {
     let win = self.win;
-    wclear(win);
+    werase(win);
 
     let cpu = match self.cpu.as_ref() {
       Some(_cpu) => _cpu,

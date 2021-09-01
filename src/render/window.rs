@@ -38,7 +38,7 @@ pub struct WinManager {
 
 impl WinManager {
   fn initialize() -> WINDOW {
-    //setlocale(LcCategory::all, "");
+    setlocale(LcCategory::all, "");
     let mainwin = initscr();
     keypad(stdscr(), true);
     noecho();

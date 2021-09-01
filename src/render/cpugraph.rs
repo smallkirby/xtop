@@ -8,7 +8,6 @@ CPUGraph shows the transition of CPU usage.
 use crate::render::meter::*;
 use crate::resource::cpu;
 use crate::symbol::block::lv;
-use ncurses::ll::mvwaddch;
 use ncurses::*;
 
 static MAXBUFSZ: usize = 300; // XXX should decide dynamically.
@@ -55,6 +54,11 @@ impl CPUGraph {
 impl Meter for CPUGraph {
   fn render(&mut self) {
     let win = self.win;
+    // erase and draw box
+    werase(win);
+    box_(win, 0, 0);
+
+    // draw bars
     let width = self.width - 2;
     let height = self.height - 2;
     let y_bottom = height;
@@ -64,6 +68,9 @@ impl Meter for CPUGraph {
       let bar = get_bar(height, hist);
       self.draw_single_bar(&bar, y_bottom, i as i32 + 1);
     }
+    // draw header
+    mvwaddstr(win, 1, 1, "CPU Usage");
+
     wrefresh(win);
   }
 

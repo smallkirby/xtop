@@ -49,7 +49,7 @@ impl TaskMeter {
 impl meter::Meter for TaskMeter {
   fn render(&mut self) {
     let win = self.win;
-    wclear(win);
+    werase(win);
 
     let vals = match self.vals.as_ref() {
       Some(_vals) => _vals,

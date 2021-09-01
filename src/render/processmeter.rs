@@ -39,7 +39,7 @@ impl meter::Meter for ProcessMeter {
   fn render(&mut self) {
     let win = self.win;
     let subwins = &self.subwins;
-    wclear(win);
+    werase(win);
 
     let proc = match self.process.as_ref() {
       Some(_proc) => _proc,
