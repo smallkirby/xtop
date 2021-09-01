@@ -1,3 +1,4 @@
+pub mod cpugraph;
 pub mod cpumanager;
 pub mod cpumeter;
 pub mod meter;

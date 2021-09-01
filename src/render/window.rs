@@ -1,5 +1,5 @@
 use crate::proclist::list;
-use crate::render::{cpumanager, meter::Meter, processmeter, taskmeter};
+use crate::render::{cpugraph, cpumanager, meter::Meter, processmeter, taskmeter};
 use ncurses::*;
 use std::sync::mpsc;
 use std::thread;
@@ -28,6 +28,9 @@ pub struct WinManager {
   pub processmeter_win: Option<WINDOW>,
   processmeters: Vec<processmeter::ProcessMeter>,
 
+  // CPU graph
+  pub cpu_graph: Option<cpugraph::CPUGraph>,
+
   // cursor
   pub cur_x: i32,
   pub cur_y: i32,
@@ -35,6 +38,7 @@ pub struct WinManager {
 
 impl WinManager {
   fn initialize() -> WINDOW {
+    //setlocale(LcCategory::all, "");
     let mainwin = initscr();
     keypad(stdscr(), true);
     noecho();
@@ -53,7 +57,7 @@ impl WinManager {
       self.cur_y,
       self.cur_x,
     ));
-    self.cur_y += self.cpumanager.as_mut().unwrap().height;
+    self.cur_y += self.cpumanager.as_mut().unwrap().height + 1;
   }
 
   pub fn init_taskmeter(&mut self) {
@@ -84,6 +88,22 @@ impl WinManager {
     refresh();
   }
 
+  pub fn init_cpugraph(&mut self) {
+    let x = 0;
+    let height = 10;
+    let width = self.screen_width;
+    self.cpu_graph = Some(cpugraph::CPUGraph::init_meter(
+      self.mainwin,
+      self,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      x,
+    ));
+    self.cur_y += self.cpu_graph.as_ref().unwrap().height + 1;
+    refresh();
+  }
+
   pub fn update_cpu_meters(&mut self) {
     let cpumanager = self.cpumanager.as_mut().unwrap();
     self.plist.update_cpus();
@@ -109,6 +129,14 @@ impl WinManager {
     }
   }
 
+  pub fn update_cpugraph(&mut self) {
+    let cpu_graph = self.cpu_graph.as_mut().unwrap();
+    let ave_cpu = &self.plist.aggregated_cpu;
+
+    cpu_graph.set_cpu(ave_cpu);
+    cpu_graph.render();
+  }
+
   pub fn resize_meters(&mut self) {}
 
   fn finish() {
@@ -122,6 +150,7 @@ impl WinManager {
     match sig {
       DOUPDATE => {
         self.update_cpu_meters();
+        self.update_cpugraph();
 
         // update values
         self.plist.total_tasks = 0;
@@ -222,6 +251,7 @@ impl WinManager {
       taskmeter: None,
       processmeter_win: None,
       processmeters: vec![],
+      cpu_graph: None,
       cur_x: 0,
       cur_y: 0,
     }
