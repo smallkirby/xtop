@@ -18,6 +18,7 @@ pub struct CPUGraph {
   pub win: WINDOW,
   history: Vec<f64>,  // ring-buffer for history of CPU usage
   cur_hist_ix: usize, // always points to newly recorded value of history
+  max_percent: f64,
 }
 
 impl CPUGraph {
@@ -49,6 +50,15 @@ impl CPUGraph {
     res.reverse();
     res
   }
+
+  fn get_bar(&self, maxheight: i32, percent: f64) -> String {
+    lv::get_bar(maxheight, percent / self.max_percent / 100.0)
+  }
+
+  fn update_upper_limit(&mut self, recent_hists: &Vec<f64>) {
+    let max_percent = recent_hists.iter().fold(0.0 / 0.0, |a, b| b.max(a));
+    self.max_percent = if max_percent >= 50.0 { 1.0 } else { 0.5 }
+  }
 }
 
 impl Meter for CPUGraph {
@@ -59,17 +69,30 @@ impl Meter for CPUGraph {
     box_(win, 0, 0);
 
     // draw bars
-    let width = self.width - 2;
+    let x_start = 3;
+    let width = self.width - 2 - x_start;
     let height = self.height - 2;
     let y_bottom = height;
 
     let hists = self.get_recent_history(width as usize);
-    for (i, hist) in hists.into_iter().enumerate() {
-      let bar = get_bar(height, hist);
-      self.draw_single_bar(&bar, y_bottom, i as i32 + 1);
+    let current_usage = hists.last().copied().unwrap();
+    for (i, hist) in hists.iter().enumerate() {
+      let bar = self.get_bar(height, *hist);
+      self.draw_single_bar(&bar, y_bottom, x_start + i as i32 + 1);
     }
+
+    self.update_upper_limit(&hists);
     // draw header
-    mvwaddstr(win, 1, 1, "CPU Usage");
+    mvwaddstr(win, 0, 1, &format!(" CPU Usage ({:>3.2}) ", current_usage));
+
+    // draw y-axes
+    mvwaddstr(win, 1, 1, &format!("{:>3}", self.max_percent * 100.0));
+    mvwaddstr(
+      win,
+      self.height / 2,
+      1,
+      &format!("{:>3}", self.max_percent * 0.5 * 100.0),
+    );
 
     wrefresh(win);
   }
@@ -97,15 +120,11 @@ impl Meter for CPUGraph {
       win,
       history: vec![0.0; MAXBUFSZ],
       cur_hist_ix: 0,
+      max_percent: 0.5,
     }
   }
 
   fn resize(&mut self) {
     todo!()
   }
-}
-
-fn get_bar(maxheight: i32, percent: f64) -> String {
-  // XXX set upper limit as 50% for now. it should be dynamically decided.
-  lv::get_bar(maxheight, percent / 0.5 / 100.0)
 }

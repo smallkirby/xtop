@@ -39,7 +39,7 @@ impl Meter for MoraGraph {
     }
 
     // draw header
-    mvwaddstr(win, 1, 1, "Mora");
+    mvwaddstr(win, 0, 1, " Mora ");
 
     wrefresh(win);
   }

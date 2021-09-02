@@ -1,3 +1,4 @@
+use crate::consts::*;
 use crate::proclist::list;
 use crate::render::{cpugraph, cpumanager, meter::Meter, moragraph, processmeter, taskmeter};
 use ncurses::*;
@@ -227,8 +228,8 @@ impl WinManager {
 
     let update_timer_tx = tx.clone();
     let _update_timer = thread::spawn(move || loop {
-      thread::sleep(Duration::from_millis(1000)); // XXX
-      update_timer_tx.send(DOUPDATE).unwrap(); // XXX
+      update_timer_tx.send(DOUPDATE).unwrap();
+      thread::sleep(Duration::from_millis(UPDATE_INTERVAL));
     });
 
     let input_sender_tx = tx.clone();
