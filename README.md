@@ -2,7 +2,10 @@
 
 # xtop 
 
-extremely-simplified top with xinput
+extremely-simplified top
+
+![log1](./images/log1.png)
+
 
 ## Depends
 
