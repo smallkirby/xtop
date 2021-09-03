@@ -2,6 +2,7 @@ use crate::consts::*;
 use crate::proclist::list;
 use crate::render::{cpugraph, cpumanager, meter::Meter, moragraph, processmeter, taskmeter};
 use ncurses::*;
+use signal_hook::{consts::SIGWINCH, iterator::Signals};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -44,8 +45,10 @@ impl WinManager {
   fn initialize() -> WINDOW {
     setlocale(LcCategory::all, "");
     let mainwin = initscr();
-    keypad(stdscr(), true);
+    cbreak();
     noecho();
+    intrflush(mainwin, true);
+    keypad(stdscr(), true);
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
     refresh();
     mainwin
@@ -243,19 +246,27 @@ impl WinManager {
       let ch = getch();
       match ch {
         // special inputs
-        KEY_RESIZE => {
-          input_sender_tx.send(RESIZE).unwrap();
-        }
 
         // normal key input
         _ => match std::char::from_u32(ch as u32).unwrap() {
           'q' => {
-            tx.send(QUIT).unwrap();
+            input_sender_tx.send(QUIT).unwrap();
             break;
           }
           _ => {}
         },
       };
+    });
+
+    let sigwinch_tx = tx.clone();
+    let mut signals = Signals::new(&[SIGWINCH]).unwrap();
+    let _sigwinch_notifier = thread::spawn(move || loop {
+      for sig in signals.forever() {
+        match sig {
+          SIGWINCH => sigwinch_tx.send(RESIZE).unwrap(),
+          _ => {}
+        }
+      }
     });
 
     // main handler
