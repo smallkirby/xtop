@@ -36,7 +36,7 @@ pub struct Process {
   pub session: pid_t,
   pub tty_nr: i32,
   pub tpgid: i32,
-  pub tgid: pid_t, // XXX
+  pub tgid: pid_t,
   pub minflt: u64,
   pub majflt: u64,
   pub cminflt: u64,
@@ -62,7 +62,6 @@ pub struct Process {
   pub is_userland_thread: bool,
   pub is_kernel_thread: bool,
   pub is_updated: bool,
-  pub show: bool,
 
   // read from statm
   pub m_virt: i64,     // total program size [kB]
@@ -75,12 +74,16 @@ pub struct Process {
   // read from maps
   pub m_lib: i64, // library size
 
-  //
+  // others
   pub tty_name: String,
   pub percent_cpu: f64,
   pub cmdline: String,
   pub comm: String,
   pub exe: String,
+
+  // flags for performance.
+  pub is_smaps_read: bool,
+  pub is_tty_read: bool,
 }
 
 impl Process {

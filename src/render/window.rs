@@ -219,9 +219,7 @@ impl WinManager {
         false
       }
 
-      QUIT => {
-        true // XXX kill other threads immediately
-      }
+      QUIT => true,
 
       RESIZE => {
         self.resize_meters();

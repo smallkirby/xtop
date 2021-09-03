@@ -116,15 +116,11 @@ impl ProcList {
       let proc = self.plist.get_mut(&pid).unwrap();
 
       if pre_existing && proc.is_kernel_thread {
-        proc.is_updated = true;
-        proc.show = false;
         self.kernel_threads += 1;
         self.total_tasks += 1;
         continue;
       }
       if pre_existing && proc.is_userland_thread {
-        proc.is_updated = true;
-        proc.show = false;
         self.userland_threads += 1;
         self.total_tasks += 1;
         continue;
@@ -133,11 +129,15 @@ impl ProcList {
       // update process's page usage
       procmem::read_statm(proc, &format!("{}/{}", dname, pid));
 
-      // XXX reading smaps file should be rate-limited for performance.
       if !proc.is_kernel_thread {
         if ppid.is_none() {
-          // root process
-          procmem::read_smaps_rollup(proc, &format!("{}/{}", dname, pid));
+          // root process: reading smas file is high-cost work. so read it once every two times.
+          if proc.is_smaps_read == true {
+            proc.is_smaps_read = false;
+          } else {
+            procmem::read_smaps_rollup(proc, &format!("{}/{}", dname, pid));
+            proc.is_smaps_read = true;
+          }
         } else {
           // child thread
           proc.m_pss = parent_m_pss;
@@ -148,9 +148,13 @@ impl ProcList {
       let old_tty_nr = proc.tty_nr;
       pstat::update_with_stat(proc, dname, self.btime, self.jiffy);
 
-      // XXX update of TTY device should be cond-limited for performance.
       if old_tty_nr != proc.tty_nr && self.tty_drivers.len() != 0 {
-        proc.tty_name = tty::get_updated_tty_driver(&self.tty_drivers, proc.tty_nr as u64);
+        if proc.is_tty_read == true {
+          proc.is_tty_read = false;
+        } else {
+          proc.tty_name = tty::get_updated_tty_driver(&self.tty_drivers, proc.tty_nr as u64);
+          proc.is_tty_read = true;
+        }
       }
 
       // update CPU usage
@@ -173,15 +177,12 @@ impl ProcList {
         self.userland_threads += 1;
       }
 
-      proc.show = true; // XXX
       self.total_tasks += 1;
       proc.is_updated = true;
     }
-
-    // XXX must delete dead processes
   }
 
-  // XXX returned vec can have less than @num elements.
+  // get process list sorted by cpu usage.
   pub fn get_sorted_by_cpu(&self, num: usize) -> Vec<process::Process> {
     let mut procs: Vec<process::Process> = self.plist.values().cloned().collect();
     procs.sort_by(|a, b| b.percent_cpu.partial_cmp(&a.percent_cpu).unwrap());
