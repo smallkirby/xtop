@@ -14,7 +14,7 @@ use std::fs;
 
 #[derive(Debug)]
 pub struct ProcList {
-  pub plist: HashMap<pid_t, process::Process>, // XXX should be private
+  pub plist: HashMap<pid_t, process::Process>,
   pub tty_drivers: Vec<tty::TtyDriver>,
   pub cpus: Vec<cpu::CPU>,
   pub aggregated_cpu: cpu::CPU,

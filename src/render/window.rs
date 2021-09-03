@@ -51,7 +51,15 @@ impl WinManager {
     mainwin
   }
 
-  pub fn init_cpumanager(&mut self) {
+  pub fn init_meters(&mut self) {
+    self.init_cpumanager();
+    self.init_taskmeter();
+    self.init_cpugraph();
+    self.init_moragraph();
+    self.init_process_meters();
+  }
+
+  fn init_cpumanager(&mut self) {
     let width = self.screen_width;
     self.cpumanager = Some(cpumanager::CPUManager::init_meter(
       self.mainwin,
@@ -64,7 +72,7 @@ impl WinManager {
     self.cur_y += self.cpumanager.as_mut().unwrap().height + 1;
   }
 
-  pub fn init_taskmeter(&mut self) {
+  fn init_taskmeter(&mut self) {
     let height = 4;
     let width = self.screen_width;
     self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
@@ -79,7 +87,7 @@ impl WinManager {
     wrefresh(self.taskmeter.as_ref().unwrap().win);
   }
 
-  pub fn init_process_meters(&mut self) {
+  fn init_process_meters(&mut self) {
     // init entire window for cpumeters.
     let width = self.screen_width;
     let height = self.screen_height - self.cur_y;
@@ -92,7 +100,7 @@ impl WinManager {
     refresh();
   }
 
-  pub fn init_cpugraph(&mut self) {
+  fn init_cpugraph(&mut self) {
     let x = 0;
     let height = 10;
     let width = self.screen_width / 3 * 2;
@@ -125,14 +133,14 @@ impl WinManager {
     refresh();
   }
 
-  pub fn update_cpu_meters(&mut self) {
+  fn update_cpu_meters(&mut self) {
     let cpumanager = self.cpumanager.as_mut().unwrap();
     self.plist.update_cpus();
     cpumanager.set_cpus(&self.plist.cpus);
     cpumanager.render();
   }
 
-  pub fn update_task_meter(&mut self) {
+  fn update_task_meter(&mut self) {
     let taskmeter = self.taskmeter.as_mut().unwrap();
     self.plist.loadaverage.update();
     self.plist.uptime.update();
@@ -141,7 +149,7 @@ impl WinManager {
     taskmeter.render();
   }
 
-  pub fn update_process_meters(&mut self) {
+  fn update_process_meters(&mut self) {
     let num = self.processmeters.len();
     let sorted_proc = self.plist.get_sorted_by_cpu(num);
     for (i, proc) in sorted_proc.into_iter().enumerate() {
@@ -150,7 +158,7 @@ impl WinManager {
     }
   }
 
-  pub fn update_cpugraph(&mut self) {
+  fn update_cpugraph(&mut self) {
     let cpu_graph = self.cpu_graph.as_mut().unwrap();
     let ave_cpu = &self.plist.aggregated_cpu;
 
@@ -158,12 +166,12 @@ impl WinManager {
     cpu_graph.render();
   }
 
-  pub fn update_moragraph(&mut self) {
+  fn update_moragraph(&mut self) {
     let mora_graph = self.mora_graph.as_mut().unwrap();
     mora_graph.render();
   }
 
-  pub fn resize_meters(&mut self) {}
+  fn resize_meters(&mut self) {}
 
   fn finish() {
     endwin();
