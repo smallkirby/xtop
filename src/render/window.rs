@@ -1,6 +1,7 @@
 use crate::consts::*;
 use crate::proclist::list;
 use crate::render::{cpugraph, cpumanager, meter::Meter, moragraph, processmeter, taskmeter};
+use crate::resource::process;
 use ncurses::*;
 use signal_hook::{consts::SIGWINCH, iterator::Signals};
 use std::sync::mpsc;
@@ -29,6 +30,7 @@ pub struct WinManager {
   // Process meters
   pub processmeter_win: Option<WINDOW>,
   processmeters: Vec<processmeter::ProcessMeter>,
+  sorted_procs: Vec<process::Process>,
 
   // CPU graph
   pub cpu_graph: Option<cpugraph::CPUGraph>,
@@ -55,8 +57,12 @@ impl WinManager {
   }
 
   pub fn init_meters(&mut self) {
+    self.cur_x = 0;
+    self.cur_y = 0;
     self.init_cpumanager();
+    self.cur_y += 1;
     self.init_taskmeter();
+    self.cur_y += 1;
     self.init_cpugraph();
     self.init_moragraph();
     self.init_process_meters();
@@ -72,11 +78,11 @@ impl WinManager {
       self.cur_y,
       self.cur_x,
     ));
-    self.cur_y += self.cpumanager.as_mut().unwrap().height + 1;
+    self.cur_y += self.cpumanager.as_mut().unwrap().height;
   }
 
   fn init_taskmeter(&mut self) {
-    let height = 4;
+    let height = 3;
     let width = self.screen_width;
     self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
       self.mainwin,
@@ -87,20 +93,18 @@ impl WinManager {
       self.cur_x,
     ));
     self.cur_y += height;
-    wrefresh(self.taskmeter.as_ref().unwrap().win);
   }
 
   fn init_process_meters(&mut self) {
     // init entire window for cpumeters.
     let width = self.screen_width;
-    let height = self.screen_height - self.cur_y;
+    let height = std::cmp::max(self.screen_height - self.cur_y, 1);
     self.processmeter_win = Some(newwin(height, width, self.cur_y, 0));
     wrefresh(self.processmeter_win.unwrap());
 
     // init each windows of cpumeter inside parent window.
-    self.processmeters = processmeter::init_meters(self.mainwin, self, height);
+    self.processmeters = processmeter::init_meters(self.processmeter_win.unwrap(), self, height);
     self.cur_y += self.processmeters[0].height * self.processmeters.len() as i32;
-    refresh();
   }
 
   fn init_cpugraph(&mut self) {
@@ -115,15 +119,12 @@ impl WinManager {
       self.cur_y,
       x,
     ));
-    self.cur_y += self.cpu_graph.as_ref().unwrap().height + 1;
-    refresh();
   }
 
   pub fn init_moragraph(&mut self) {
     let x = self.screen_width / 3 * 2;
     let height = 10;
     let width = self.screen_width / 3 * 1;
-    self.cur_y -= self.cpu_graph.as_ref().unwrap().height + 1;
     self.mora_graph = Some(moragraph::MoraGraph::init_meter(
       self.mainwin,
       self,
@@ -132,7 +133,7 @@ impl WinManager {
       self.cur_y,
       x,
     ));
-    self.cur_y += self.mora_graph.as_ref().unwrap().height + 1;
+    self.cur_y += self.mora_graph.as_ref().unwrap().height;
     refresh();
   }
 
@@ -153,9 +154,29 @@ impl WinManager {
   }
 
   fn update_process_meters(&mut self) {
-    let num = self.processmeters.len();
-    let sorted_proc = self.plist.get_sorted_by_cpu(num);
-    for (i, proc) in sorted_proc.into_iter().enumerate() {
+    let mut x = 0;
+    let mut y = 0;
+    getbegyx(self.processmeter_win.unwrap(), &mut y, &mut x);
+    let start_y = y;
+    let num = self.screen_height - start_y as i32;
+    let diff = num - self.processmeters.len() as i32;
+    if num <= 0 {
+      return;
+    }
+    // delete all windows for processes. create new ones.
+    if diff > 0 {
+      for i in 0..self.processmeters.len() {
+        self.processmeters[i as usize].del();
+      }
+      wresize(self.processmeter_win.unwrap(), num, self.screen_width);
+    }
+    self.processmeters = processmeter::init_meters(self.processmeter_win.unwrap(), self, num);
+
+    // update
+    self.sorted_procs = self.plist.get_sorted_by_cpu(num as usize);
+    for _i in 0..num {
+      let i = _i as usize;
+      let proc = &self.sorted_procs[i];
       self.processmeters[i].set_proc(proc.clone());
       self.processmeters[i].render();
     }
@@ -174,7 +195,49 @@ impl WinManager {
     mora_graph.render();
   }
 
-  fn resize_meters(&mut self) {}
+  fn resize_cpumanager(&mut self) {
+    let cpumanager = self.cpumanager.as_mut().unwrap();
+    cpumanager.resize(self.mainwin, None, Some(self.screen_width), 0, 0);
+    self.cur_y += cpumanager.height;
+  }
+
+  fn resize_taskmeter(&mut self) {
+    let taskmeter = self.taskmeter.as_mut().unwrap();
+    let width = self.screen_width;
+    taskmeter.resize(self.mainwin, None, Some(width), self.cur_y, 0);
+    self.cur_y += taskmeter.height;
+  }
+
+  fn resize_cpugraph(&mut self) {
+    let cpugraph = self.cpu_graph.as_mut().unwrap();
+    let width = self.screen_width / 3 * 2;
+    cpugraph.resize(self.mainwin, None, Some(width), self.cur_y, 0);
+  }
+
+  fn resize_moragraph(&mut self) {
+    let x = self.screen_width / 3 * 2;
+    let moragraph = self.mora_graph.as_mut().unwrap();
+    let width = self.screen_width / 3 * 1;
+    moragraph.resize(self.mainwin, None, Some(width), self.cur_y, x);
+    self.cur_y += moragraph.height;
+  }
+
+  fn resize_process_meters(&mut self) {
+    self.update_process_meters();
+  }
+
+  fn resize_meters(&mut self) {
+    self.cur_x = 0;
+    self.cur_y = 0;
+    werase(self.mainwin);
+    self.resize_cpumanager();
+    self.cur_y += 1;
+    self.resize_taskmeter();
+    self.cur_y += 1;
+    self.resize_cpugraph();
+    self.resize_moragraph();
+    self.resize_process_meters();
+  }
 
   fn finish() {
     endwin();
@@ -225,7 +288,18 @@ impl WinManager {
       QUIT => true,
 
       RESIZE => {
+        flushinp();
+        // get new term size
+        refresh();
+        getmaxyx(
+          self.mainwin,
+          &mut self.screen_height,
+          &mut self.screen_width,
+        );
+        wresize(self.mainwin, self.screen_height, self.screen_width);
+        // resize/redraw
         self.resize_meters();
+        flushinp();
         false
       }
     }
@@ -248,13 +322,22 @@ impl WinManager {
         // special inputs
 
         // normal key input
-        _ => match std::char::from_u32(ch as u32).unwrap() {
-          'q' => {
-            input_sender_tx.send(QUIT).unwrap();
-            break;
+        _ => {
+          let c = match std::char::from_u32(ch as u32) {
+            Some(_c) => _c,
+            None => continue,
+          };
+          match c {
+            'q' => {
+              input_sender_tx.send(QUIT).unwrap();
+              break;
+            }
+            'U' => {
+              input_sender_tx.send(DOUPDATE).unwrap();
+            }
+            _ => {}
           }
-          _ => {}
-        },
+        }
       };
     });
 
@@ -299,6 +382,7 @@ impl WinManager {
       mora_graph: None,
       cur_x: 0,
       cur_y: 0,
+      sorted_procs: vec![],
     }
   }
 }

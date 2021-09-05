@@ -14,7 +14,7 @@ pub struct CPUManager {
   pub cpumeters: Vec<cpumeter::CPUMeter>,
   pub height: i32,
   pub width: i32,
-  win: WINDOW,
+  pub win: WINDOW,
 }
 
 impl CPUManager {
@@ -41,7 +41,7 @@ impl Meter for CPUManager {
     x: i32,
   ) -> Self {
     // init entire window
-    let (_width, _height) = winsize_require(wm);
+    let (_width, _height) = winsize_require(wm.screen_width, wm.plist.cpus.len());
     let width = match width {
       Some(w) => w,
       None => _width,
@@ -64,7 +64,26 @@ impl Meter for CPUManager {
     }
   }
 
-  fn resize(&mut self) {}
+  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+    self.width = match width {
+      Some(w) => w,
+      None => self.width,
+    };
+    self.height = match height {
+      Some(h) => h,
+      None => self.height,
+    };
+
+    wresize(self.win, self.height, self.width);
+    werase(self.win);
+    for i in 0..self.cpumeters.len() {
+      let (y, x) = pos_win_start(i as u32, self.width / 2);
+      self.cpumeters[i].resize(self.win, None, Some(self.width / 2), y, x);
+    }
+
+    self.render();
+    wrefresh(self.win);
+  }
 }
 
 fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CPUMeter> {
@@ -74,7 +93,7 @@ fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CPUMeter> {
   let height = 1;
 
   for i in 0..num_cpu {
-    let (y, x) = pos_win_start(&wm.plist.cpus[i], width);
+    let (y, x) = pos_win_start(wm.plist.cpus[i].id, width);
     let meter = cpumeter::CPUMeter::init_meter(parent, wm, Some(height), Some(width), y, x);
     meters.push(meter);
   }
@@ -82,19 +101,18 @@ fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CPUMeter> {
   meters
 }
 
-fn winsize_require(wm: &WinManager) -> (i32, i32) {
-  let width = wm.screen_width;
-  let height = if wm.plist.cpus.len() % 2 == 0 {
-    wm.plist.cpus.len() / 2
+fn winsize_require(screen_width: i32, num_cpu: usize) -> (i32, i32) {
+  let height = if num_cpu % 2 == 0 {
+    num_cpu / 2
   } else {
-    wm.plist.cpus.len() / 2 + 1
+    num_cpu / 2 + 1
   } as i32;
 
-  (width, height)
+  (screen_width, height)
 }
 
-fn pos_win_start(cpu: &cpu::CPU, width: i32) -> (i32, i32) {
-  let id = cpu.id;
+// `width` is a width of each cpumeter, not a screen-width (manager width).
+fn pos_win_start(id: u32, width: i32) -> (i32, i32) {
   let x = if id % 2 == 0 { 0 } else { width };
   let y = id as i32 / 2;
 

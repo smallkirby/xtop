@@ -105,7 +105,23 @@ impl meter::Meter for TaskMeter {
     meter
   }
 
-  fn resize(&mut self) {}
+  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+    self.width = match width {
+      Some(w) => w,
+      None => self.width,
+    };
+    self.height = match height {
+      Some(h) => h,
+      None => self.height,
+    };
+
+    wresize(self.win, self.height, self.width);
+    werase(self.win);
+    mvwin(self.win, y, x);
+
+    self.render();
+    wrefresh(self.win);
+  }
 }
 
 pub fn winsize_require(wm: &WinManager) -> (i32, i32) {

@@ -70,7 +70,22 @@ impl meter::Meter for CPUMeter {
     }
   }
 
-  fn resize(&mut self) {}
+  fn resize(&mut self, parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+    self.width = match width {
+      Some(w) => w,
+      None => self.width,
+    };
+    self.height = match height {
+      Some(h) => h,
+      None => self.height,
+    };
+
+    wresize(self.win, self.height, self.width);
+    werase(self.win);
+    delwin(self.win);
+    self.win = derwin(parent, self.height, self.width, y, x);
+    wrefresh(self.win);
+  }
 }
 
 impl CPUMeter {

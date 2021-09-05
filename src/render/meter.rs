@@ -24,5 +24,5 @@ pub trait Meter {
   ) -> Self;
 
   // resize the meter.
-  fn resize(&mut self);
+  fn resize(&mut self, parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32);
 }

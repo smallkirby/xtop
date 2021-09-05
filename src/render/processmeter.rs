@@ -33,6 +33,10 @@ impl ProcessMeter {
   pub fn set_proc(&mut self, proc: process::Process) {
     self.process = Some(proc);
   }
+
+  pub fn del(&mut self) {
+    delwin(self.win);
+  }
 }
 
 impl meter::Meter for ProcessMeter {
@@ -83,7 +87,15 @@ impl meter::Meter for ProcessMeter {
     }
   }
 
-  fn resize(&mut self) {}
+  fn resize(
+    &mut self,
+    _parent: WINDOW,
+    _height: Option<i32>,
+    _width: Option<i32>,
+    _y: i32,
+    _x: i32,
+  ) {
+  }
 }
 
 pub fn init_meters(parent: WINDOW, wm: &mut window::WinManager, height: i32) -> Vec<ProcessMeter> {

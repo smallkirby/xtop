@@ -124,7 +124,21 @@ impl Meter for CPUGraph {
     }
   }
 
-  fn resize(&mut self) {
-    todo!()
+  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+    self.width = match width {
+      Some(w) => w,
+      None => self.width,
+    };
+    self.height = match height {
+      Some(h) => h,
+      None => self.height,
+    };
+
+    wresize(self.win, self.height, self.width);
+    werase(self.win);
+    mvwin(self.win, y, x);
+
+    self.render();
+    wrefresh(self.win);
   }
 }
