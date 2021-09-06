@@ -1,6 +1,8 @@
 use crate::consts::*;
 use crate::proclist::list;
-use crate::render::{cpugraph, cpumanager, meter::Meter, moragraph, processmeter, taskmeter};
+use crate::render::{
+  cpugraph, cpumanager, meter::Meter, moragraph, processmeter_manager, taskmeter,
+};
 use crate::resource::process;
 use ncurses::*;
 use signal_hook::{consts::SIGWINCH, iterator::Signals};
@@ -28,9 +30,7 @@ pub struct WinManager {
   taskmeter: Option<taskmeter::TaskMeter>,
 
   // Process meters
-  pub processmeter_win: Option<WINDOW>,
-  processmeters: Vec<processmeter::ProcessMeter>,
-  sorted_procs: Vec<process::Process>,
+  processmanager: Option<processmeter_manager::ProcessMeterManager>,
 
   // CPU graph
   pub cpu_graph: Option<cpugraph::CPUGraph>,
@@ -99,12 +99,18 @@ impl WinManager {
     // init entire window for cpumeters.
     let width = self.screen_width;
     let height = std::cmp::max(self.screen_height - self.cur_y, 1);
-    self.processmeter_win = Some(newwin(height, width, self.cur_y, 0));
-    wrefresh(self.processmeter_win.unwrap());
-
-    // init each windows of cpumeter inside parent window.
-    self.processmeters = processmeter::init_meters(self.processmeter_win.unwrap(), self, height);
-    self.cur_y += self.processmeters[0].height * self.processmeters.len() as i32;
+    let y = self.cur_y;
+    let x = 0;
+    self.processmanager = Some(processmeter_manager::ProcessMeterManager::init_meter(
+      self.mainwin,
+      self,
+      Some(height),
+      Some(width),
+      y,
+      x,
+    ));
+    wrefresh(self.processmanager.as_mut().unwrap().win);
+    self.cur_y += self.processmanager.as_mut().unwrap().height;
   }
 
   fn init_cpugraph(&mut self) {
@@ -154,32 +160,10 @@ impl WinManager {
   }
 
   fn update_process_meters(&mut self) {
-    let mut x = 0;
-    let mut y = 0;
-    getbegyx(self.processmeter_win.unwrap(), &mut y, &mut x);
-    let start_y = y;
-    let num = self.screen_height - start_y as i32;
-    let diff = num - self.processmeters.len() as i32;
-    if num <= 0 {
-      return;
-    }
-    // delete all windows for processes. create new ones.
-    if diff > 0 {
-      for i in 0..self.processmeters.len() {
-        self.processmeters[i as usize].del();
-      }
-      wresize(self.processmeter_win.unwrap(), num, self.screen_width);
-    }
-    self.processmeters = processmeter::init_meters(self.processmeter_win.unwrap(), self, num);
-
-    // update
-    self.sorted_procs = self.plist.get_sorted_by_cpu(num as usize);
-    for _i in 0..num {
-      let i = _i as usize;
-      let proc = &self.sorted_procs[i];
-      self.processmeters[i].set_proc(proc.clone());
-      self.processmeters[i].render();
-    }
+    let processmanager = self.processmanager.as_mut().unwrap();
+    let sorted_procs = self.plist.get_sorted_by_cpu();
+    processmanager.set_sorted_procs(sorted_procs);
+    processmanager.render();
   }
 
   fn update_cpugraph(&mut self) {
@@ -211,6 +195,7 @@ impl WinManager {
   fn resize_cpugraph(&mut self) {
     let cpugraph = self.cpu_graph.as_mut().unwrap();
     let width = self.screen_width / 3 * 2;
+
     cpugraph.resize(self.mainwin, None, Some(width), self.cur_y, 0);
   }
 
@@ -223,7 +208,20 @@ impl WinManager {
   }
 
   fn resize_process_meters(&mut self) {
-    self.update_process_meters();
+    let processmanager = self.processmanager.as_mut().unwrap();
+    let mut x = 0;
+    let mut y = 0;
+
+    getbegyx(processmanager.win, &mut y, &mut x);
+    let start_y = y;
+    let height = std::cmp::max(self.screen_height - start_y as i32, 2);
+    processmanager.resize(
+      self.mainwin,
+      Some(height),
+      Some(self.screen_width),
+      start_y,
+      0,
+    );
   }
 
   fn resize_meters(&mut self) {
@@ -376,13 +374,11 @@ impl WinManager {
       screen_width,
       cpumanager: None,
       taskmeter: None,
-      processmeter_win: None,
-      processmeters: vec![],
+      processmanager: None,
       cpu_graph: None,
       mora_graph: None,
       cur_x: 0,
       cur_y: 0,
-      sorted_procs: vec![],
     }
   }
 }

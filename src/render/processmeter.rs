@@ -5,7 +5,6 @@ ProcessMeter shows the list of processes.
 
 *******/
 
-use crate::render::meter::Meter;
 use crate::render::{meter, window};
 use crate::resource::process;
 use ncurses::*;
@@ -66,7 +65,7 @@ impl meter::Meter for ProcessMeter {
   }
 
   fn init_meter(
-    _parent: WINDOW,
+    parent: WINDOW,
     wm: &mut window::WinManager,
     _height: Option<i32>,
     width: Option<i32>,
@@ -77,7 +76,7 @@ impl meter::Meter for ProcessMeter {
       Some(_w) => _w,
       None => wm.screen_width,
     };
-    let (win, subwins) = create_meter_win(wm.processmeter_win.unwrap(), alloc_width, y, x);
+    let (win, subwins) = create_meter_win(parent, alloc_width, y, x);
     ProcessMeter {
       height: 1,
       width: alloc_width,
@@ -98,15 +97,22 @@ impl meter::Meter for ProcessMeter {
   }
 }
 
-pub fn init_meters(parent: WINDOW, wm: &mut window::WinManager, height: i32) -> Vec<ProcessMeter> {
-  let mut meters = vec![];
-  let width = wm.screen_width;
-  for i in 0..height {
-    let meter = ProcessMeter::init_meter(parent, wm, Some(height), Some(width), i, 0);
-    meters.push(meter);
-  }
+// create header windows inside `parent`.
+pub fn create_header_win(parent: WINDOW, width: i32, y: i32, x: i32) -> SubWins {
+  // create sub windows
+  let mut cur_x = 0;
+  let pid_win = derwin(parent, 1, PID_WIDTH, 0, cur_x);
+  cur_x += PID_WIDTH + 1;
+  let cpu_win = derwin(parent, 1, CPU_WIDTH, 0, cur_x);
+  cur_x += CPU_WIDTH + 1;
+  let comm_win = derwin(parent, 1, width - cur_x, 0, cur_x);
 
-  meters
+  wrefresh(parent);
+  SubWins {
+    cpu_win,
+    pid_win,
+    comm_win,
+  }
 }
 
 fn create_meter_win(parent: WINDOW, width: i32, y: i32, x: i32) -> (WINDOW, SubWins) {
@@ -130,4 +136,16 @@ fn create_meter_win(parent: WINDOW, width: i32, y: i32, x: i32) -> (WINDOW, SubW
       comm_win,
     },
   )
+}
+
+// XXX too dirty
+pub fn _init_meter(parent: WINDOW, width: i32, y: i32, x: i32) -> ProcessMeter {
+  let (win, subwins) = create_meter_win(parent, width, y, x);
+  ProcessMeter {
+    height: 1,
+    width: width,
+    win,
+    subwins,
+    process: None,
+  }
 }

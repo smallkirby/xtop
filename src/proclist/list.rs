@@ -183,28 +183,13 @@ impl ProcList {
   }
 
   // get process list sorted by cpu usage.
-  pub fn get_sorted_by_cpu(&self, num: usize) -> Vec<process::Process> {
+  pub fn get_sorted_by_cpu(&self) -> Vec<process::Process> {
     let mut procs: Vec<process::Process> = self.plist.values().cloned().collect();
+    // show only main thread
+    procs.retain(|p| !p.is_userland_thread && !p.is_kernel_thread);
+    // sort by CPU usage
     procs.sort_by(|a, b| b.percent_cpu.partial_cmp(&a.percent_cpu).unwrap());
 
-    let mut result = vec![];
-    let mut iter = procs.into_iter();
-    loop {
-      if result.len() == num {
-        break;
-      }
-      let proc = match iter.next() {
-        Some(_proc) => _proc,
-        None => break,
-      };
-
-      // hide thread for now.
-      if proc.is_kernel_thread || proc.is_userland_thread {
-        continue;
-      }
-
-      result.push(proc);
-    }
-    result
+    procs
   }
 }
