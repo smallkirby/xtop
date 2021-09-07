@@ -6,7 +6,7 @@ TaskMeter shows the statistics of task/threads.
 *******/
 
 use crate::proclist::list;
-use crate::render::meter;
+use crate::render::{color, meter};
 use crate::resource::{loadavg, uptime};
 use ncurses::*;
 
@@ -133,6 +133,11 @@ pub fn winsize_require(wm: &WinManager) -> (i32, i32) {
 
 fn create_meter_win(height: i32, width: i32, y: i32, x: i32) -> WINDOW {
   let win = newwin(height, width, y, x);
+  wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+  wbkgd(
+    win,
+    ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+  );
   wrefresh(win);
   win
 }

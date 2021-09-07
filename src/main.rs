@@ -1,9 +1,17 @@
 use xtop::render::window;
 
+#[cfg(all(target_os = "linux"))]
 fn main() {
   let mut wm = window::WinManager::new();
 
-  // this should be called inside window module, cuz the order is important.
   wm.init_meters();
   wm.qloop();
+}
+
+#[cfg(not(all(target_os = "linux")))]
+fn main() {
+  println!("xtop needs below:");
+  println!(" - Linux (intended on Ubuntu only)");
+  println!(" - ncursesw is installed and wide feature is enabled.");
+  println!("Any conditions are not fulfilled in your environment.");
 }

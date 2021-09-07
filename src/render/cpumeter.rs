@@ -5,7 +5,7 @@ CPUMeter shows information about each CPUs.
 
 *******/
 
-use crate::render::meter;
+use crate::render::{color, meter};
 use crate::resource::cpu;
 use ncurses::*;
 
@@ -96,6 +96,7 @@ impl CPUMeter {
 
 fn create_meter_win(parent: WINDOW, height: i32, width: i32, y: i32, x: i32) -> WINDOW {
   let win = derwin(parent, height, width, y, x);
+  wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
   wrefresh(win);
   win
 }

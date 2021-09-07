@@ -5,7 +5,7 @@ CPUGraph shows the transition of CPU usage.
 
 *******/
 
-use crate::render::meter::*;
+use crate::render::{color, meter::*};
 use crate::resource::cpu;
 use crate::symbol::block::lv;
 use ncurses::*;
@@ -111,6 +111,11 @@ impl Meter for CPUGraph {
     let height = std::cmp::min(height.unwrap(), MAXBUFSZ as i32);
     let width = width.unwrap();
     let win = newwin(height, width, y, x);
+    wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+    wbkgd(
+      win,
+      ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+    );
     box_(win, 0, 0);
     wrefresh(win);
 

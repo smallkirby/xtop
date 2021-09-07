@@ -1,7 +1,7 @@
 use crate::consts::*;
 use crate::proclist::list;
 use crate::render::{
-  cpugraph, cpumanager, inputmeter, meter::Meter, moragraph, processmeter_manager, taskmeter,
+  color, cpugraph, cpumanager, inputmeter, meter::Meter, moragraph, processmeter_manager, taskmeter,
 };
 use ncurses::*;
 use signal_hook::{consts::SIGWINCH, iterator::Signals};
@@ -47,9 +47,10 @@ impl WinManager {
     setlocale(LcCategory::all, "");
     let mainwin = initscr();
     cbreak();
-    noecho();
     intrflush(mainwin, true);
     keypad(stdscr(), true);
+    noecho();
+    color::initialize_color();
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
     refresh();
     mainwin

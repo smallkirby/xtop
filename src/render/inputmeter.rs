@@ -5,7 +5,7 @@ InputMeter shows the list of X input devices and their hierachy.
 
 *******/
 
-use crate::render::meter::*;
+use crate::render::{color, meter::*};
 use crate::resource::input::{self, InputDevice};
 use ncurses::*;
 
@@ -167,6 +167,11 @@ impl Meter for InputMeter {
     let height = height.unwrap();
     let width = width.unwrap();
     let win = newwin(height, width, y, x);
+    wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+    wbkgd(
+      win,
+      ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+    );
     box_(win, 0, 0);
     wrefresh(win);
 

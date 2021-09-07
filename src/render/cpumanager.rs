@@ -5,7 +5,7 @@ CPUManager manages CPUMeters.
 
 *******/
 
-use crate::render::{cpumeter, meter::*, window::*};
+use crate::render::{color, cpumeter, meter::*, window::*};
 use crate::resource::cpu;
 use ncurses::*;
 
@@ -51,6 +51,11 @@ impl Meter for CPUManager {
       None => _height,
     };
     let win = newwin(height, width, y, x);
+    wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+    wbkgd(
+      win,
+      ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+    );
 
     // init each windows of cpumeter inside parent window.
     let cpumeters = init_meters(win, wm);
