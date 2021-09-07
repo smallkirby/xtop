@@ -86,14 +86,25 @@ impl meter::Meter for ProcessMeter {
     }
   }
 
-  fn resize(
-    &mut self,
-    _parent: WINDOW,
-    _height: Option<i32>,
-    _width: Option<i32>,
-    _y: i32,
-    _x: i32,
-  ) {
+  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, _y: i32, _x: i32) {
+    self.width = match width {
+      Some(w) => w,
+      None => self.width,
+    };
+    self.height = match height {
+      Some(h) => h,
+      None => self.height,
+    };
+
+    // resize entire window
+    wresize(self.win, self.height, self.width);
+    // resize sub windows
+    let comm_win = self.subwins.comm_win;
+    let new_width = self.width - (PID_WIDTH + 1 + CPU_WIDTH + 1);
+    wresize(comm_win, 1, new_width);
+
+    wrefresh(comm_win);
+    wrefresh(self.win);
   }
 }
 
@@ -112,6 +123,21 @@ pub fn create_header_win(parent: WINDOW, width: i32, y: i32, x: i32) -> SubWins 
     cpu_win,
     pid_win,
     comm_win,
+  }
+}
+
+impl SubWins {
+  pub fn resize(&mut self, width: i32) {
+    let comm_win = self.comm_win;
+    let new_width = width - (PID_WIDTH + 1 + CPU_WIDTH + 1);
+    wresize(comm_win, 1, new_width);
+    self.refresh();
+  }
+
+  pub fn refresh(&mut self) {
+    wrefresh(self.pid_win);
+    wrefresh(self.cpu_win);
+    wrefresh(self.comm_win);
   }
 }
 

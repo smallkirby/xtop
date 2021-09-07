@@ -140,7 +140,6 @@ impl WinManager {
       x,
     ));
     self.cur_y += self.mora_graph.as_ref().unwrap().height;
-    refresh();
   }
 
   fn update_cpu_meters(&mut self) {

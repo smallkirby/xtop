@@ -98,7 +98,7 @@ impl Meter for ProcessMeterManager {
 
   // it doesn NOT resize horizontally.
   // change the size of vertical size and height of processmeters.
-  fn resize(&mut self, parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
     let old_height = self.height;
     self.width = match width {
       Some(w) => w,
@@ -109,29 +109,40 @@ impl Meter for ProcessMeterManager {
       None => self.height,
     };
 
-    // resize, erase, and move.
+    // resize
     let proc_height = std::cmp::max(self.height - 1, 1);
     wresize(self.win, self.height, self.width);
     wresize(self.processmeters_win, proc_height, self.width);
-    if self.height <= old_height {
-      return;
+    wresize(self.header_win, 1, self.width);
+    self.header_subwins.resize(self.width);
+    for i in 0..self.processmeters.len() {
+      let mut x = 0;
+      let mut y = 0;
+      getbegyx(self.processmeters[i].win, &mut y, &mut x);
+      self.processmeters[i].resize(self.processmeters_win, None, Some(self.width), y, x);
     }
+
     werase(self.win);
     werase(self.processmeters_win);
     mvwin(self.win, y, x); // XXX subwindows also moves?
 
-    // delete all processmeters windows. create new ones.
-    for i in 0..self.processmeters.len() {
-      self.processmeters[i as usize].del();
+    // if height becomes larger, delete current wins.
+    if self.height > old_height {
+      // delete all processmeters windows. create new ones.
+      for i in 0..self.processmeters.len() {
+        self.processmeters[i as usize].del();
+      }
+      delwin(self.processmeters_win);
+
+      // create new one
+      self.processmeters_win = derwin(self.win, proc_height, self.width, 1, 0);
+      self.processmeters = _init_meters(self.processmeters_win, proc_height, self.width);
+
+      // update
+      self.set_procs_meter();
     }
-    delwin(self.processmeters_win);
 
-    // create new one
-    self.processmeters_win = derwin(self.win, proc_height, self.width, 1, 0);
-    self.processmeters = _init_meters(self.processmeters_win, proc_height, self.width);
-
-    // update
-    self.set_procs_meter();
+    // refresh all
     self.render();
   }
 }
