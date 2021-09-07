@@ -1,9 +1,8 @@
 use crate::consts::*;
 use crate::proclist::list;
 use crate::render::{
-  cpugraph, cpumanager, meter::Meter, moragraph, processmeter_manager, taskmeter,
+  cpugraph, cpumanager, inputmeter, meter::Meter, moragraph, processmeter_manager, taskmeter,
 };
-use crate::resource::process;
 use ncurses::*;
 use signal_hook::{consts::SIGWINCH, iterator::Signals};
 use std::sync::mpsc;
@@ -35,8 +34,8 @@ pub struct WinManager {
   // CPU graph
   pub cpu_graph: Option<cpugraph::CPUGraph>,
 
-  // Mora graph
-  pub mora_graph: Option<moragraph::MoraGraph>,
+  // Input meter
+  pub inputmeter: Option<inputmeter::InputMeter>,
 
   // cursor
   pub cur_x: i32,
@@ -64,7 +63,7 @@ impl WinManager {
     self.init_taskmeter();
     self.cur_y += 1;
     self.init_cpugraph();
-    self.init_moragraph();
+    self.init_inputmeter();
     self.init_process_meters();
   }
 
@@ -115,7 +114,7 @@ impl WinManager {
 
   fn init_cpugraph(&mut self) {
     let x = 0;
-    let height = 10;
+    let height = 13;
     let width = self.screen_width / 3 * 2;
     self.cpu_graph = Some(cpugraph::CPUGraph::init_meter(
       self.mainwin,
@@ -127,11 +126,11 @@ impl WinManager {
     ));
   }
 
-  pub fn init_moragraph(&mut self) {
+  pub fn init_inputmeter(&mut self) {
     let x = self.screen_width / 3 * 2;
-    let height = 10;
+    let height = 13;
     let width = self.screen_width / 3 * 1;
-    self.mora_graph = Some(moragraph::MoraGraph::init_meter(
+    self.inputmeter = Some(inputmeter::InputMeter::init_meter(
       self.mainwin,
       self,
       Some(height),
@@ -139,7 +138,7 @@ impl WinManager {
       self.cur_y,
       x,
     ));
-    self.cur_y += self.mora_graph.as_ref().unwrap().height;
+    self.cur_y += self.inputmeter.as_ref().unwrap().height;
   }
 
   fn update_cpu_meters(&mut self) {
@@ -173,9 +172,10 @@ impl WinManager {
     cpu_graph.render();
   }
 
-  fn update_moragraph(&mut self) {
-    let mora_graph = self.mora_graph.as_mut().unwrap();
-    mora_graph.render();
+  fn update_inputmeter(&mut self) {
+    let inputmeter = self.inputmeter.as_mut().unwrap();
+    inputmeter.update_inputs();
+    inputmeter.render();
   }
 
   fn resize_cpumanager(&mut self) {
@@ -198,12 +198,12 @@ impl WinManager {
     cpugraph.resize(self.mainwin, None, Some(width), self.cur_y, 0);
   }
 
-  fn resize_moragraph(&mut self) {
-    let x = self.screen_width / 3 * 2;
-    let moragraph = self.mora_graph.as_mut().unwrap();
-    let width = self.screen_width / 3 * 1;
-    moragraph.resize(self.mainwin, None, Some(width), self.cur_y, x);
-    self.cur_y += moragraph.height;
+  fn resize_inputmeter(&mut self) {
+    //let x = self.screen_width / 3 * 2;
+    //let inputmeter = self.inputmeter.as_mut().unwrap();
+    //let width = self.screen_width / 3 * 1;
+    //inputmeter.resize(self.mainwin, None, Some(width), self.cur_y, x);
+    //self.cur_y += inputmeter.height;
   }
 
   fn resize_process_meters(&mut self) {
@@ -232,7 +232,7 @@ impl WinManager {
     self.resize_taskmeter();
     self.cur_y += 1;
     self.resize_cpugraph();
-    self.resize_moragraph();
+    self.resize_inputmeter();
     self.resize_process_meters();
   }
 
@@ -248,7 +248,7 @@ impl WinManager {
       DOUPDATE => {
         self.update_cpu_meters();
         self.update_cpugraph();
-        self.update_moragraph();
+        self.update_inputmeter();
 
         // update values
         self.plist.total_tasks = 0;
@@ -375,7 +375,7 @@ impl WinManager {
       taskmeter: None,
       processmanager: None,
       cpu_graph: None,
-      mora_graph: None,
+      inputmeter: None,
       cur_x: 0,
       cur_y: 0,
     }

@@ -17,20 +17,20 @@ static FLOATMARK: &str = "∼";
 static ATTACHEDMARK1: &str = " ";
 static ATTACHEDMARK2: &str = "⎜";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum InputType {
   Pointer,
   Keyboard,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum State {
   Master,        // master input
   Attached(u32), // slave, attached to `id`:u32
   Floating,      // slave, floating
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InputDevice {
   pub name: String,
   pub typ: InputType,
