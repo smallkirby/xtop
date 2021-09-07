@@ -112,7 +112,7 @@ pub fn read_stat(pid: pid_t) -> Result<PStat, String> {
   Ok(PStat::from(stat_str))
 }
 
-pub fn update_with_stat(proc: &mut Process, dirname: &str, btime: i64, jiffy: i64) {
+pub fn update_with_stat(proc: &mut Process, _dirname: &str, btime: i64, jiffy: i64) {
   let stat = read_stat(proc.pid).unwrap();
 
   if stat.pid != proc.pid {

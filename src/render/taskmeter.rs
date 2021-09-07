@@ -133,10 +133,10 @@ pub fn winsize_require(wm: &WinManager) -> (i32, i32) {
 
 fn create_meter_win(height: i32, width: i32, y: i32, x: i32) -> WINDOW {
   let win = newwin(height, width, y, x);
-  wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+  wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
   wbkgd(
     win,
-    ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+    ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
   );
   wrefresh(win);
   win

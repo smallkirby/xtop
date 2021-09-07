@@ -96,7 +96,7 @@ impl CPUMeter {
 
 fn create_meter_win(parent: WINDOW, height: i32, width: i32, y: i32, x: i32) -> WINDOW {
   let win = derwin(parent, height, width, y, x);
-  wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+  wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
   wrefresh(win);
   win
 }

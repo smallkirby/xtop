@@ -76,10 +76,10 @@ impl Meter for ProcessMeterManager {
     };
     // entire window for ProcessMeters
     let win = newwin(height, width, y, x);
-    wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+    wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
     wbkgd(
       win,
-      ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+      ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
     );
     // header sub-window
     let header_win = derwin(win, 1, width, 0, 0);

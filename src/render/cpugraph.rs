@@ -111,10 +111,10 @@ impl Meter for CPUGraph {
     let height = std::cmp::min(height.unwrap(), MAXBUFSZ as i32);
     let width = width.unwrap();
     let win = newwin(height, width, y, x);
-    wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+    wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
     wbkgd(
       win,
-      ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+      ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
     );
     box_(win, 0, 0);
     wrefresh(win);

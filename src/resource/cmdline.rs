@@ -13,7 +13,7 @@ pub fn read_cmd_files(proc: &mut process::Process, dname: &str) {
     Err(_) => return,
   };
 
-  if cmdline.len() <= 0 {
+  if cmdline.len() == 0 {
     if proc.state != process::ProcState::ZOMBIE {
       proc.is_kernel_thread = true;
     }

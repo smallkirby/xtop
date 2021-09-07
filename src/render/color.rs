@@ -1,16 +1,16 @@
 use ncurses::*;
 
-mod COLORS {
+mod colors {
   pub static BROWN_BLACK: i16 = 16;
   pub static WHITE: i16 = 17;
 }
 
-pub mod CPAIR {
+pub mod cpair {
   pub static DEFAULT: i16 = 1;
 }
 
 pub fn initialize_color() {
-  use CPAIR::*;
+  use cpair::*;
 
   start_color();
   define_colors();
@@ -19,8 +19,8 @@ pub fn initialize_color() {
 }
 
 pub fn define_colors() {
-  use COLORS::*;
-  use CPAIR::*;
+  use colors::*;
+  use cpair::*;
 
   // init colors
   init_color(BROWN_BLACK, 0x32 * 4, 0x30 * 4, 0x2F * 4);

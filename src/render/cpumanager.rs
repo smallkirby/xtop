@@ -51,10 +51,10 @@ impl Meter for CPUManager {
       None => _height,
     };
     let win = newwin(height, width, y, x);
-    wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+    wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
     wbkgd(
       win,
-      ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+      ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
     );
 
     // init each windows of cpumeter inside parent window.
@@ -69,7 +69,7 @@ impl Meter for CPUManager {
     }
   }
 
-  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, _y: i32, _x: i32) {
     self.width = match width {
       Some(w) => w,
       None => self.width,

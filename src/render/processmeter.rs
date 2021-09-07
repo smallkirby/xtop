@@ -109,7 +109,7 @@ impl meter::Meter for ProcessMeter {
 }
 
 // create header windows inside `parent`.
-pub fn create_header_win(parent: WINDOW, width: i32, y: i32, x: i32) -> SubWins {
+pub fn create_header_win(parent: WINDOW, width: i32, _y: i32, _x: i32) -> SubWins {
   // create sub windows
   let mut cur_x = 0;
   let pid_win = derwin(parent, 1, PID_WIDTH, 0, cur_x);
@@ -117,8 +117,8 @@ pub fn create_header_win(parent: WINDOW, width: i32, y: i32, x: i32) -> SubWins 
   let cpu_win = derwin(parent, 1, CPU_WIDTH, 0, cur_x);
   cur_x += CPU_WIDTH + 1;
   let comm_win = derwin(parent, 1, width - cur_x, 0, cur_x);
-  wattron(comm_win, COLOR_PAIR(color::CPAIR::DEFAULT));
-  bkgd(' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype);
+  wattron(comm_win, COLOR_PAIR(color::cpair::DEFAULT));
+  bkgd(' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype);
 
   wrefresh(parent);
   SubWins {

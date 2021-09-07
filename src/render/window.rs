@@ -1,7 +1,7 @@
 use crate::consts::*;
 use crate::proclist::list;
 use crate::render::{
-  color, cpugraph, cpumanager, inputmeter, meter::Meter, moragraph, processmeter_manager, taskmeter,
+  color, cpugraph, cpumanager, inputmeter, meter::Meter, processmeter_manager, taskmeter,
 };
 use ncurses::*;
 use signal_hook::{consts::SIGWINCH, iterator::Signals};

@@ -82,10 +82,9 @@ impl Meter for InputMeter {
     werase(win);
 
     // draw picture
-    let mut cursor_x = 1;
     let mut cursor_y = 1;
     for block in &self.devices {
-      cursor_x = 1;
+      let mut cursor_x = 1;
       match block {
         Floating(slaves) => {
           mvwaddstr(self.win, cursor_y, cursor_x, "Floating");
@@ -167,10 +166,10 @@ impl Meter for InputMeter {
     let height = height.unwrap();
     let width = width.unwrap();
     let win = newwin(height, width, y, x);
-    wattron(win, COLOR_PAIR(color::CPAIR::DEFAULT));
+    wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
     wbkgd(
       win,
-      ' ' as chtype | COLOR_PAIR(color::CPAIR::DEFAULT) as chtype,
+      ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
     );
     box_(win, 0, 0);
     wrefresh(win);
@@ -183,7 +182,7 @@ impl Meter for InputMeter {
     }
   }
 
-  fn resize(&mut self, parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
     self.width = match width {
       Some(w) => w,
       None => self.width,
