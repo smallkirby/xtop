@@ -1,5 +1,6 @@
 pub mod cmdline;
 pub mod cpu;
+pub mod input;
 pub mod loadavg;
 pub mod process;
 pub mod procmem;
