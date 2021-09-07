@@ -4,7 +4,7 @@
 
 extremely-simplified top
 
-![log1](./images/log1.png)
+![log1](./images/log2.png)
 
 
 ## Depends
@@ -17,3 +17,25 @@ extremely-simplified top
 ## Env
 
 Intended only on Linux(Ubuntu).
+
+## Progress
+
+| Status | Functionality |
+| ------------- | ------------- |
+| 🌤 | CPU Graph |
+| 🌤 | CPU Meter |
+| 🌤 | XInput list |
+| 🌤 | process list |
+| ☀ | task list |
+| ☁ | command window |
+| ⛈ | search process |
+| ⛈ | scrollable process list |
+| ⛈ | modest colorize |
+
+
+### legend
+
+- ☀️: completed
+- 🌤: almost done, still needs more impls 
+- ☁️: work in progress
+- ⛈: totally untouched
