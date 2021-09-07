@@ -1,7 +1,7 @@
 /*****
 
 Implementation of InputMeter.
-MoraGraph shows the list of X input devices and their hierachy.
+InputMeter shows the list of X input devices and their hierachy.
 
 *******/
 
@@ -179,6 +179,20 @@ impl Meter for InputMeter {
   }
 
   fn resize(&mut self, parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
-    todo!()
+    self.width = match width {
+      Some(w) => w,
+      None => self.width,
+    };
+    self.height = match height {
+      Some(h) => h,
+      None => self.height,
+    };
+
+    wresize(self.win, self.height, self.width);
+    werase(self.win);
+    mvwin(self.win, y, x);
+
+    self.render();
+    wrefresh(self.win);
   }
 }

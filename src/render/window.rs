@@ -199,11 +199,11 @@ impl WinManager {
   }
 
   fn resize_inputmeter(&mut self) {
-    //let x = self.screen_width / 3 * 2;
-    //let inputmeter = self.inputmeter.as_mut().unwrap();
-    //let width = self.screen_width / 3 * 1;
-    //inputmeter.resize(self.mainwin, None, Some(width), self.cur_y, x);
-    //self.cur_y += inputmeter.height;
+    let x = self.screen_width / 3 * 2;
+    let inputmeter = self.inputmeter.as_mut().unwrap();
+    let width = self.screen_width / 3 * 1;
+    inputmeter.resize(self.mainwin, None, Some(width), self.cur_y, x);
+    self.cur_y += inputmeter.height;
   }
 
   fn resize_process_meters(&mut self) {
