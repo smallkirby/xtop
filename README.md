@@ -31,6 +31,9 @@ Intended only on Linux(Ubuntu).
 | ⛈ | search process |
 | ⛈ | scrollable process list |
 | ⛈ | modest colorize |
+| ⛈ | configurable layout |
+| ⛈ | network usage |
+| ⛈ | memory usage |
 
 
 ### legend

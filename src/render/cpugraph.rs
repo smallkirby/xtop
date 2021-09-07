@@ -56,7 +56,7 @@ impl CPUGraph {
   }
 
   fn update_upper_limit(&mut self, recent_hists: &Vec<f64>) {
-    let max_percent = recent_hists.iter().fold(0.0 / 0.0, |a, b| b.max(a));
+    let max_percent = recent_hists.iter().fold(0.0, |a, b| b.max(a));
     self.max_percent = if max_percent >= 50.0 { 1.0 } else { 0.5 }
   }
 }

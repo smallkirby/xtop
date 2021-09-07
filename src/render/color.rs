@@ -3,10 +3,14 @@ use ncurses::*;
 mod colors {
   pub static BROWN_BLACK: i16 = 16;
   pub static WHITE: i16 = 17;
+  pub static LIGHT_BLUE: i16 = 18;
+  pub static LIGHT_GREEN: i16 = 19;
 }
 
 pub mod cpair {
   pub static DEFAULT: i16 = 1;
+  pub static PAIR_COMM: i16 = 2;
+  pub static PAIR_HEAD: i16 = 3;
 }
 
 pub fn initialize_color() {
@@ -23,15 +27,26 @@ pub fn define_colors() {
   use cpair::*;
 
   // init colors
-  init_color(BROWN_BLACK, 0x32 * 4, 0x30 * 4, 0x2F * 4);
-  init_color(WHITE, 0xEB * 4, 0xDB * 4, 0xB2 * 4);
+  init_color_rgb_m(BROWN_BLACK, 0x32302F, 4);
+  init_color_rgb_m(WHITE, 0xEBD8B2, 4);
+  init_color_rgb_m(LIGHT_BLUE, 0x84A87F, 4);
+  init_color_rgb_m(LIGHT_GREEN, 0x4E9A06, 4);
 
   // init pairs
   init_pair(DEFAULT, WHITE, BROWN_BLACK);
+  init_pair(PAIR_COMM, LIGHT_BLUE, BROWN_BLACK);
+  init_pair(PAIR_HEAD, LIGHT_GREEN, BROWN_BLACK);
 }
 
-pub fn mvwaddstr_fgcolor(win: WINDOW, y: i32, x: i32, s: &str, cpair: i16) {
+pub fn mvwaddstr_color(win: WINDOW, y: i32, x: i32, s: &str, cpair: i16) {
   wattron(win, COLOR_PAIR(cpair));
   mvwaddstr(win, y, x, s);
-  wattron(win, COLOR_PAIR(cpair));
+  wattroff(win, COLOR_PAIR(cpair));
+}
+
+fn init_color_rgb_m(color: i16, rgb: u32, m: i16) {
+  let b = (rgb & 0xFF) as i16;
+  let g = ((rgb >> 8) & 0xFF) as i16;
+  let r = ((rgb >> 16) & 0xFF) as i16;
+  init_color(color, r * m, g * m, b * m);
 }

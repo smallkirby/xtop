@@ -115,7 +115,7 @@ impl WinManager {
 
   fn init_cpugraph(&mut self) {
     let x = 0;
-    let height = 13;
+    let height = 15;
     let width = self.screen_width / 3 * 2;
     self.cpu_graph = Some(cpugraph::CPUGraph::init_meter(
       self.mainwin,
@@ -129,7 +129,7 @@ impl WinManager {
 
   pub fn init_inputmeter(&mut self) {
     let x = self.screen_width / 3 * 2;
-    let height = 13;
+    let height = 15;
     let width = self.screen_width / 3 * 1;
     self.inputmeter = Some(inputmeter::InputMeter::init_meter(
       self.mainwin,

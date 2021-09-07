@@ -36,6 +36,34 @@ impl ProcessMeter {
   pub fn del(&mut self) {
     delwin(self.win);
   }
+
+  // XXX this is not comm, it's cmdline.
+  fn render_comm(&self, full_comm: &str) {
+    use crate::render::color::{cpair, mvwaddstr_color};
+    use crate::util::*;
+
+    let tokens: Vec<&str> = full_comm.split(" ").collect();
+    let comm_win = self.subwins.comm_win;
+    let (exe_path_dir, exe_path_file) = get_dir_file(tokens[0]);
+    let args = if tokens.len() > 1 {
+      tokens[1..].join(" ")
+    } else {
+      "".into()
+    };
+
+    let mut cur_x = 0;
+    mvwprintw(comm_win, 0, cur_x, &format!("{}", exe_path_dir));
+    cur_x += exe_path_dir.len() as i32;
+    mvwaddstr_color(
+      comm_win,
+      0,
+      cur_x,
+      &format!("{}", exe_path_file),
+      cpair::PAIR_COMM,
+    );
+    cur_x += exe_path_file.len() as i32 + 1;
+    mvwprintw(comm_win, 0, cur_x, &args);
+  }
 }
 
 impl meter::Meter for ProcessMeter {
@@ -60,7 +88,9 @@ impl meter::Meter for ProcessMeter {
 
     mvwprintw(subwins.pid_win, 0, 0, &format!("{:>6}", proc.pid));
     mvwprintw(subwins.cpu_win, 0, 0, &format!("{:>3.2}", proc.percent_cpu));
-    mvwprintw(subwins.comm_win, 0, 0, &format!("{}", proc.cmdline));
+    let cmdline = &proc.cmdline;
+    self.render_comm(cmdline);
+
     wrefresh(win);
   }
 
