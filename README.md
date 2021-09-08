@@ -4,7 +4,7 @@
 
 extremely-simplified top
 
-![log1](./images/log2.png)
+![log3](./images/log3.png)
 
 
 ## Depends

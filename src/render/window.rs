@@ -228,8 +228,9 @@ impl WinManager {
   fn resize_memmeter(&mut self) {
     let memmeter = self.memmeter.as_mut().unwrap();
     let width = self.screen_width / 6 * 1;
+    let x = self.screen_width / 6 * 3;
 
-    memmeter.resize(self.mainwin, None, Some(width), self.cur_y, 0);
+    memmeter.resize(self.mainwin, None, Some(width), self.cur_y, x);
   }
 
   fn resize_inputmeter(&mut self) {
