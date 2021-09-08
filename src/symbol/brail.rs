@@ -55,7 +55,8 @@ pub mod b32 {
         }
         Some(d1) => {
           let d0 = pos(*_d0.unwrap());
-          res.push(get_single_col(Some(d0), Some(*d1 as u32)));
+          let d1 = pos(*d1);
+          res.push(get_single_col(Some(d0), Some(d1)));
         }
       }
     }
