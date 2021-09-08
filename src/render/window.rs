@@ -1,8 +1,9 @@
 use crate::consts::*;
 use crate::proclist::list;
 use crate::render::{
-  color, cpugraph, cpumanager, inputmeter, meter::Meter, processmeter_manager, taskmeter,
+  color, cpugraph, cpumanager, inputmeter, memmeter, meter::Meter, processmeter_manager, taskmeter,
 };
+use crate::resource::mem;
 use ncurses::*;
 use signal_hook::{consts::SIGWINCH, iterator::Signals};
 use std::sync::mpsc;
@@ -34,6 +35,9 @@ pub struct WinManager {
   // CPU graph
   pub cpu_graph: Option<cpugraph::CPUGraph>,
 
+  // Memory meter
+  pub memmeter: Option<memmeter::MemMeter>,
+
   // Input meter
   pub inputmeter: Option<inputmeter::InputMeter>,
 
@@ -64,6 +68,7 @@ impl WinManager {
     self.init_taskmeter();
     self.cur_y += 1;
     self.init_cpugraph();
+    self.init_memmeter();
     self.init_inputmeter();
     self.init_process_meters();
   }
@@ -116,7 +121,7 @@ impl WinManager {
   fn init_cpugraph(&mut self) {
     let x = 0;
     let height = 15;
-    let width = self.screen_width / 3 * 2;
+    let width = self.screen_width / 6 * 3;
     self.cpu_graph = Some(cpugraph::CPUGraph::init_meter(
       self.mainwin,
       self,
@@ -127,10 +132,24 @@ impl WinManager {
     ));
   }
 
-  pub fn init_inputmeter(&mut self) {
-    let x = self.screen_width / 3 * 2;
+  fn init_memmeter(&mut self) {
     let height = 15;
-    let width = self.screen_width / 3 * 1;
+    let width = self.screen_width / 6 * 1;
+    let x = self.screen_width / 6 * 3;
+    self.memmeter = Some(memmeter::MemMeter::init_meter(
+      self.mainwin,
+      self,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      x,
+    ));
+  }
+
+  pub fn init_inputmeter(&mut self) {
+    let x = self.screen_width / 6 * 4;
+    let height = 15;
+    let width = self.screen_width / 6 * 2;
     self.inputmeter = Some(inputmeter::InputMeter::init_meter(
       self.mainwin,
       self,
@@ -173,6 +192,13 @@ impl WinManager {
     cpu_graph.render();
   }
 
+  fn update_memmeter(&mut self) {
+    let memmeter = self.memmeter.as_mut().unwrap();
+    let usage = mem::MemInfo::new();
+    memmeter.set_usage(&usage);
+    memmeter.render();
+  }
+
   fn update_inputmeter(&mut self) {
     let inputmeter = self.inputmeter.as_mut().unwrap();
     inputmeter.update_inputs();
@@ -194,15 +220,22 @@ impl WinManager {
 
   fn resize_cpugraph(&mut self) {
     let cpugraph = self.cpu_graph.as_mut().unwrap();
-    let width = self.screen_width / 3 * 2;
+    let width = self.screen_width / 6 * 3;
 
     cpugraph.resize(self.mainwin, None, Some(width), self.cur_y, 0);
   }
 
+  fn resize_memmeter(&mut self) {
+    let memmeter = self.memmeter.as_mut().unwrap();
+    let width = self.screen_width / 6 * 1;
+
+    memmeter.resize(self.mainwin, None, Some(width), self.cur_y, 0);
+  }
+
   fn resize_inputmeter(&mut self) {
-    let x = self.screen_width / 3 * 2;
+    let x = self.screen_width / 6 * 4;
     let inputmeter = self.inputmeter.as_mut().unwrap();
-    let width = self.screen_width / 3 * 1;
+    let width = self.screen_width / 6 * 2;
     inputmeter.resize(self.mainwin, None, Some(width), self.cur_y, x);
     self.cur_y += inputmeter.height;
   }
@@ -233,6 +266,7 @@ impl WinManager {
     self.resize_taskmeter();
     self.cur_y += 1;
     self.resize_cpugraph();
+    self.resize_memmeter();
     self.resize_inputmeter();
     self.resize_process_meters();
   }
@@ -250,6 +284,7 @@ impl WinManager {
         self.update_cpu_meters();
         self.update_cpugraph();
         self.update_inputmeter();
+        self.update_memmeter();
 
         // update values
         self.plist.total_tasks = 0;
@@ -373,6 +408,7 @@ impl WinManager {
       screen_height,
       screen_width,
       cpumanager: None,
+      memmeter: None,
       taskmeter: None,
       processmanager: None,
       cpu_graph: None,

@@ -34,6 +34,7 @@ Intended only on Linux(Ubuntu).
 | ⛈ | configurable layout |
 | ⛈ | network usage |
 | ⛈ | memory usage |
+| ⛈ | kernel config list |
 
 
 ### legend
