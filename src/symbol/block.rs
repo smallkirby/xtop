@@ -7,14 +7,14 @@ cf. https://en.wikipedia.org/wiki/Block_Elements
 
 // Low-alighed verticasl blocks
 pub mod lv {
-  pub const FULL: &str = "▇";
-  pub const SEVEN_EIGHTHS: &str = "▇";
-  pub const THREE_QUARTERS: &str = "▆";
-  pub const FIVE_EIGHTHS: &str = "▅";
-  pub const HALF: &str = "▄";
-  pub const THREE_EIGHTHS: &str = "▃";
-  pub const ONE_QUARTER: &str = "▂";
-  pub const ONE_EIGHTH: &str = "▁";
+  const FULL: &str = "▇";
+  const SEVEN_EIGHTHS: &str = "▇";
+  const THREE_QUARTERS: &str = "▆";
+  const FIVE_EIGHTHS: &str = "▅";
+  const HALF: &str = "▄";
+  const THREE_EIGHTHS: &str = "▃";
+  const ONE_QUARTER: &str = "▂";
+  const ONE_EIGHTH: &str = "▁";
 
   pub fn get_bar(maxheight: i32, r: f64) -> String {
     let r = if r > 1.0 { 1.0 } else { r };
