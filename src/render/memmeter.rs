@@ -13,6 +13,7 @@ use ncurses::*;
 use crate::render::{meter::Meter, window::WinManager};
 
 static UNIT_MB: u64 = 1024;
+#[allow(dead_code)]
 static UNIT_GB: u64 = UNIT_MB * 1024;
 
 static MAXBUFSZ: usize = 1000; // XXX should decide dynamically.
@@ -75,8 +76,6 @@ impl Meter for MemMeter {
     werase(win);
     box_(win, 0, 0);
 
-    let mut x0 = 1;
-    let mut cx = x0;
     let mut cy = 1;
     let used_percent = {
       let usage = self.usage.as_ref().unwrap();
@@ -132,8 +131,8 @@ impl Meter for MemMeter {
   }
 
   fn init_meter(
-    parent: WINDOW,
-    wm: &mut WinManager,
+    _parent: WINDOW,
+    _wm: &mut WinManager,
     height: Option<i32>,
     width: Option<i32>,
     y: i32,
@@ -161,7 +160,7 @@ impl Meter for MemMeter {
     }
   }
 
-  fn resize(&mut self, parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
     self.width = match width {
       Some(w) => w,
       None => self.width,

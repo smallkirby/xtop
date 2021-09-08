@@ -23,12 +23,10 @@ pub fn clamp(v: f64, from: f64, to: f64) -> f64 {
 
 // compare to return Ordering
 pub fn spaceship_number_u32(a: u32, b: u32) -> Ordering {
-  if a > b {
-    Ordering::Greater
-  } else if a < b {
-    Ordering::Less
-  } else {
-    Ordering::Equal
+  match a.cmp(&b) {
+    Ordering::Greater => Ordering::Greater,
+    Ordering::Less => Ordering::Less,
+    Ordering::Equal => Ordering::Equal,
   }
 }
 
@@ -55,12 +53,12 @@ pub fn popc(ss: &mut Vec<&str>) -> char {
 
 // receive dev_t like number and return major
 pub fn major(nr: u64) -> u32 {
-  (((nr >> 8) & 0xFFF) | ((nr >> 32) & !(0xFFF as u64))) as u32
+  (((nr >> 8) & 0xFFF) | ((nr >> 32) & !(0xFFF_u64))) as u32
 }
 
 // receive dev_t like number and return minor
 pub fn minor(nr: u64) -> u32 {
-  ((nr & 0xFF) | ((nr >> 12) & !(0xFF as u64))) as u32
+  ((nr & 0xFF) | ((nr >> 12) & !(0xFF_u64))) as u32
 }
 
 pub fn get_dev_number(path: &str) -> Option<u64> {
@@ -79,12 +77,12 @@ pub fn get_dev_number(path: &str) -> Option<u64> {
 //          : contains trailing "/" if given 'full_path' is a path.
 pub fn get_dir_file(full_path: &str) -> (String, String) {
   let exe_name = full_path;
-  if !exe_name.contains("/") {
+  if !exe_name.contains('/') {
     ("".into(), exe_name.into())
   } else {
     let exe_path = path::Path::new(exe_name);
     let exe_path_file = exe_path.file_name().unwrap().to_str().unwrap();
-    let exe_path_dir = if exe_name.contains("/") {
+    let exe_path_dir = if exe_name.contains('/') {
       &exe_name[0..(exe_name.len() - exe_path_file.len())]
     } else {
       ""

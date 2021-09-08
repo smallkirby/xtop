@@ -48,13 +48,15 @@ pub mod b32 {
 
       let _d0 = rest.next();
       let _d1 = rest.next();
-      if _d1.is_none() {
-        let d0 = pos(*_d0.unwrap());
-        res.push(get_single_col(Some(d0), None));
-      } else {
-        let d0 = pos(*_d0.unwrap());
-        let d1 = pos(*_d1.unwrap());
-        res.push(get_single_col(Some(d0), Some(d1)));
+      match _d1 {
+        None => {
+          let d0 = pos(*_d0.unwrap());
+          res.push(get_single_col(Some(d0), None));
+        },
+        Some(d1) => {
+          let d0 = pos(*_d0.unwrap());
+          res.push(get_single_col(Some(d0), Some(*d1 as u32)));
+        }
       }
     }
 
