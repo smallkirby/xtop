@@ -5,7 +5,8 @@ CPUGraph shows the transition of CPU usage.
 
 *******/
 
-use crate::render::{color, meter::*};
+use crate::consts::*;
+use crate::render::{color::*, meter::*};
 use crate::resource::cpu;
 use crate::symbol::block::lv;
 use ncurses::*;
@@ -18,7 +19,7 @@ pub struct CPUGraph {
   pub win: WINDOW,
   history: Vec<f64>,  // ring-buffer for history of CPU usage
   cur_hist_ix: usize, // always points to newly recorded value of history
-  max_percent: f64,
+  max_percent: f64,   // [0.0, 1.0]
 }
 
 impl CPUGraph {
@@ -31,10 +32,22 @@ impl CPUGraph {
     self.history[self.cur_hist_ix] = acpu.percent();
   }
 
-  fn draw_single_bar(&mut self, bar: &String, y_bottom: i32, x: i32) {
-    let win = self.win;
+  fn draw_single_bar(&self, bar: &String, y_bottom: i32, x: i32) {
+    let max_height = self.height - 2;
+    let threshold = (max_height as f64 * CPUUSAGE_MED_DANGER) as usize;
+    // draw from bottom.
     for (i, c) in bar.chars().enumerate() {
-      mvwaddstr(win, y_bottom - i as i32, x, &c.to_string());
+      if self.max_percent > CPUUSAGE_MED_DANGER && threshold <= i {
+        mvwaddstr_color(
+          self.win,
+          y_bottom - i as i32,
+          x,
+          &c.to_string(),
+          cpair::PAIR_DANGER,
+        );
+      } else {
+        mvwaddstr(self.win, y_bottom - i as i32, x, &c.to_string());
+      }
     }
   }
 
@@ -83,7 +96,13 @@ impl Meter for CPUGraph {
 
     self.update_upper_limit(&hists);
     // draw header
-    mvwaddstr(win, 0, 1, &format!(" CPU Usage ({:>3.2}) ", current_usage));
+    mvwaddstr_color(
+      win,
+      0,
+      1,
+      &format!(" CPU Usage ({:>3.2}) ", current_usage),
+      cpair::PAIR_HEAD,
+    );
 
     // draw y-axes
     mvwaddstr(win, 1, 1, &format!("{:>3}", self.max_percent * 100.0));
@@ -111,11 +130,8 @@ impl Meter for CPUGraph {
     let height = std::cmp::min(height.unwrap(), MAXBUFSZ as i32);
     let width = width.unwrap();
     let win = newwin(height, width, y, x);
-    wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
-    wbkgd(
-      win,
-      ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
-    );
+    wattron(win, COLOR_PAIR(cpair::DEFAULT));
+    wbkgd(win, ' ' as chtype | COLOR_PAIR(cpair::DEFAULT) as chtype);
     box_(win, 0, 0);
     wrefresh(win);
 

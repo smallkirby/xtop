@@ -5,7 +5,7 @@ ProcessMeterManager manages ProcessMeter and directly communicaste with WinManag
 
 *******/
 
-use crate::render::{color, meter::*, processmeter::*, window::*};
+use crate::render::{color::*, meter::*, processmeter::*, window::*};
 use crate::resource::process;
 use ncurses::*;
 
@@ -39,9 +39,9 @@ impl ProcessMeterManager {
   // XXX should align in center
   fn render_header(&self) {
     let header = &self.header_subwins;
-    mvwaddstr(header.pid_win, 0, 0, "PID");
-    mvwaddstr(header.cpu_win, 0, 0, "CPU");
-    mvwaddstr(header.comm_win, 0, 0, "COMM");
+    mvwaddstr_color(header.pid_win, 0, 0, "PID", cpair::PAIR_HEAD);
+    mvwaddstr_color(header.cpu_win, 0, 0, "CPU", cpair::PAIR_HEAD);
+    mvwaddstr_color(header.comm_win, 0, 0, "COMM", cpair::PAIR_HEAD);
     wrefresh(header.pid_win);
     wrefresh(header.cpu_win);
     wrefresh(header.comm_win);
@@ -76,11 +76,8 @@ impl Meter for ProcessMeterManager {
     };
     // entire window for ProcessMeters
     let win = newwin(height, width, y, x);
-    wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
-    wbkgd(
-      win,
-      ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
-    );
+    wattron(win, COLOR_PAIR(cpair::DEFAULT));
+    wbkgd(win, ' ' as chtype | COLOR_PAIR(cpair::DEFAULT) as chtype);
     // header sub-window
     let header_win = derwin(win, 1, width, 0, 0);
     let header_subwins = create_header_win(header_win, width, 0, 0); // XXX should hold subwins?

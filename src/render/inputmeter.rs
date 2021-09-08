@@ -5,7 +5,7 @@ InputMeter shows the list of X input devices and their hierachy.
 
 *******/
 
-use crate::render::{color, meter::*};
+use crate::render::{color::*, meter::*};
 use crate::resource::input::{self, InputDevice};
 use ncurses::*;
 
@@ -82,63 +82,61 @@ impl Meter for InputMeter {
     werase(win);
 
     // draw picture
-    let mut cursor_y = 1;
+    let mut cy = 1;
     for block in &self.devices {
-      let mut cursor_x = 1;
+      let mut cx = 1;
       match block {
         Floating(slaves) => {
-          mvwaddstr(self.win, cursor_y, cursor_x, "Floating");
-          cursor_y += 1;
-          cursor_x = 2;
+          mvwaddstr_color(self.win, cy, cx, "Floating", cpair::PAIR_COMM);
+          cy += 1;
+          cx = 2;
           for slave in slaves {
             let slave_str = &format!("{}({}), ", slave.name, slave.id);
-            mvwaddstr(self.win, cursor_y, cursor_x, slave_str);
-            cursor_x += slave_str.len() as i32;
-            if cursor_x > (self.width * 2 / 3) {
-              cursor_x = 2;
-              cursor_y += 1;
+            mvwaddstr(self.win, cy, cx, slave_str);
+            cx += slave_str.len() as i32;
+            if cx > (self.width * 2 / 3) {
+              cx = 2;
+              cy += 1;
             }
           }
         }
         Keyboard(hierachy) => {
           let master = &hierachy.master;
           let slaves = &hierachy.slaves;
-          mvwaddstr(
-            self.win,
-            cursor_y,
-            cursor_x,
-            &format!("Keyboards: {}({})", master.name, master.id),
-          );
-          cursor_y += 1;
-          cursor_x = 2;
+          let s = "Keyboards";
+          mvwaddstr_color(self.win, cy, cx, s, cpair::PAIR_COMM);
+          cx += s.len() as i32;
+          let s = &format!(": {}({})", master.name, master.id);
+          mvwaddstr(self.win, cy, cx, s);
+          cy += 1;
+          cx = 2;
           for slave in slaves {
             let slave_str = &format!("{}({}), ", slave.name, slave.id);
-            mvwaddstr(self.win, cursor_y, cursor_x, slave_str);
-            cursor_x += slave_str.len() as i32;
-            if cursor_x > (self.width * 2 / 3) {
-              cursor_x = 2;
-              cursor_y += 1;
+            mvwaddstr(self.win, cy, cx, slave_str);
+            cx += slave_str.len() as i32;
+            if cx > (self.width * 2 / 3) {
+              cx = 2;
+              cy += 1;
             }
           }
         }
         Pointer(hierachy) => {
           let master = &hierachy.master;
           let slaves = &hierachy.slaves;
-          mvwaddstr(
-            self.win,
-            cursor_y,
-            cursor_x,
-            &format!("Pointers: {}({})", master.name, master.id),
-          );
-          cursor_y += 1;
-          cursor_x = 2;
+          let s = "Pointers";
+          mvwaddstr_color(self.win, cy, cx, s, cpair::PAIR_COMM);
+          cx += s.len() as i32;
+          let s = &format!(": {}({})", master.name, master.id);
+          mvwaddstr(self.win, cy, cx, s);
+          cy += 1;
+          cx = 2;
           for slave in slaves {
             let slave_str = &format!("{}({}), ", slave.name, slave.id);
-            mvwaddstr(self.win, cursor_y, cursor_x, slave_str);
-            cursor_x += slave_str.len() as i32;
-            if cursor_x > (self.width * 2 / 3) {
-              cursor_x = 2;
-              cursor_y += 1;
+            mvwaddstr(self.win, cy, cx, slave_str);
+            cx += slave_str.len() as i32;
+            if cx > (self.width * 2 / 3) {
+              cx = 2;
+              cy += 1;
             }
           }
         }
@@ -147,7 +145,7 @@ impl Meter for InputMeter {
 
     // draw header
     box_(win, 0, 0);
-    mvwaddstr(win, 0, 1, " X Inputs ");
+    mvwaddstr_color(win, 0, 1, " X Inputs ", cpair::PAIR_HEAD);
 
     wrefresh(win);
   }
@@ -166,11 +164,8 @@ impl Meter for InputMeter {
     let height = height.unwrap();
     let width = width.unwrap();
     let win = newwin(height, width, y, x);
-    wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
-    wbkgd(
-      win,
-      ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
-    );
+    wattron(win, COLOR_PAIR(cpair::DEFAULT));
+    wbkgd(win, ' ' as chtype | COLOR_PAIR(cpair::DEFAULT) as chtype);
     box_(win, 0, 0);
     wrefresh(win);
 
