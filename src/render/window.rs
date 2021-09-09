@@ -1,4 +1,5 @@
 use crate::consts::*;
+use crate::layout::config;
 use crate::proclist::list;
 use crate::render::{
   color, cpugraph, cpumanager, inputmeter, memmeter, meter::Meter, processmeter_manager, taskmeter,
@@ -41,6 +42,9 @@ pub struct WinManager {
   // Input meter
   pub inputmeter: Option<inputmeter::InputMeter>,
 
+  // Layout of components
+  layout: Vec<config::Layout>,
+
   // cursor
   pub cur_x: i32,
   pub cur_y: i32,
@@ -61,35 +65,64 @@ impl WinManager {
     mainwin
   }
 
+  // XXX check of layout file should occur before init of screen.
+  // or, should terminate windows before panic to show appropriate message.
   pub fn init_meters(&mut self) {
+    use config::{Height, MeterName::*, Size};
+
     self.cur_x = 0;
     self.cur_y = 0;
-    self.init_cpumanager();
-    self.cur_y += 1;
-    self.init_taskmeter();
-    self.cur_y += 1;
-    self.init_cpugraph();
-    self.init_memmeter();
-    self.init_inputmeter();
-    self.init_process_meters();
+    let mut max_height_in_line = 0;
+
+    let layouts = config::read_layout_config();
+    for layout in &layouts {
+      let mut go_newline = false;
+      let width = match layout.ratio {
+        Size::Ratio(r) => (self.screen_width as f64 * r) as i32,
+        Size::Rest => {
+          go_newline = true;
+          self.screen_width - self.cur_x
+        }
+      };
+      let height = match layout.height {
+        Height::Line(l) => l as i32,
+        Height::Rest => self.screen_height - self.cur_y,
+      };
+      max_height_in_line = std::cmp::max(max_height_in_line, height);
+
+      match layout.name {
+        CpuMeter => self.init_cpumanager(height, width),
+        CpuGraph => self.init_cpugraph(height, width),
+        TaskMeter => self.init_taskmeter(height, width),
+        MemMeter => self.init_memmeter(height, width),
+        Inputs => self.init_inputmeter(height, width),
+        ProcMeter => self.init_process_meters(height, width),
+        Empty => {}
+      }
+
+      self.cur_x += width;
+      if go_newline {
+        self.cur_y += max_height_in_line;
+        max_height_in_line = 0;
+        self.cur_x = 0;
+      }
+    }
+
+    self.layout = layouts;
   }
 
-  fn init_cpumanager(&mut self) {
-    let width = self.screen_width;
+  fn init_cpumanager(&mut self, height: i32, width: i32) {
     self.cpumanager = Some(cpumanager::CPUManager::init_meter(
       self.mainwin,
       self,
-      None,
+      Some(height),
       Some(width),
       self.cur_y,
       self.cur_x,
     ));
-    self.cur_y += self.cpumanager.as_mut().unwrap().height;
   }
 
-  fn init_taskmeter(&mut self) {
-    let height = 3;
-    let width = self.screen_width;
+  fn init_taskmeter(&mut self, height: i32, width: i32) {
     self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
       self.mainwin,
       self,
@@ -98,68 +131,51 @@ impl WinManager {
       self.cur_y,
       self.cur_x,
     ));
-    self.cur_y += height;
   }
 
-  fn init_process_meters(&mut self) {
-    // init entire window for cpumeters.
-    let width = self.screen_width;
-    let height = std::cmp::max(self.screen_height - self.cur_y, 1);
-    let y = self.cur_y;
-    let x = 0;
+  fn init_process_meters(&mut self, height: i32, width: i32) {
     self.processmanager = Some(processmeter_manager::ProcessMeterManager::init_meter(
       self.mainwin,
       self,
       Some(height),
       Some(width),
-      y,
-      x,
+      self.cur_y,
+      self.cur_x,
     ));
     wrefresh(self.processmanager.as_mut().unwrap().win);
-    self.cur_y += self.processmanager.as_mut().unwrap().height;
   }
 
-  fn init_cpugraph(&mut self) {
-    let x = 0;
-    let height = 15;
-    let width = self.screen_width / 6 * 3;
+  fn init_cpugraph(&mut self, height: i32, width: i32) {
     self.cpu_graph = Some(cpugraph::CPUGraph::init_meter(
       self.mainwin,
       self,
       Some(height),
       Some(width),
       self.cur_y,
-      x,
+      self.cur_x,
     ));
   }
 
-  fn init_memmeter(&mut self) {
-    let height = 15;
-    let width = self.screen_width / 6 * 1;
-    let x = self.screen_width / 6 * 3;
+  fn init_memmeter(&mut self, height: i32, width: i32) {
     self.memmeter = Some(memmeter::MemMeter::init_meter(
       self.mainwin,
       self,
       Some(height),
       Some(width),
       self.cur_y,
-      x,
+      self.cur_x,
     ));
   }
 
-  pub fn init_inputmeter(&mut self) {
-    let x = self.screen_width / 6 * 4;
-    let height = 15;
-    let width = self.screen_width / 6 * 2;
+  pub fn init_inputmeter(&mut self, height: i32, width: i32) {
     self.inputmeter = Some(inputmeter::InputMeter::init_meter(
       self.mainwin,
       self,
       Some(height),
       Some(width),
       self.cur_y,
-      x,
+      self.cur_x,
     ));
-    self.cur_y += self.inputmeter.as_ref().unwrap().height;
   }
 
   fn update_cpu_meters(&mut self) {
@@ -206,71 +222,114 @@ impl WinManager {
     inputmeter.render();
   }
 
-  fn resize_cpumanager(&mut self) {
+  fn resize_cpumanager(&mut self, height: i32, width: i32) {
     let cpumanager = self.cpumanager.as_mut().unwrap();
-    cpumanager.resize(self.mainwin, None, Some(self.screen_width), 0, 0);
-    self.cur_y += cpumanager.height;
+    cpumanager.resize(
+      self.mainwin,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      self.cur_x,
+    );
   }
 
-  fn resize_taskmeter(&mut self) {
+  fn resize_taskmeter(&mut self, height: i32, width: i32) {
     let taskmeter = self.taskmeter.as_mut().unwrap();
-    let width = self.screen_width;
-    taskmeter.resize(self.mainwin, None, Some(width), self.cur_y, 0);
-    self.cur_y += taskmeter.height;
+    taskmeter.resize(
+      self.mainwin,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      self.cur_x,
+    );
   }
 
-  fn resize_cpugraph(&mut self) {
+  fn resize_cpugraph(&mut self, height: i32, width: i32) {
     let cpugraph = self.cpu_graph.as_mut().unwrap();
-    let width = self.screen_width / 6 * 3;
-
-    cpugraph.resize(self.mainwin, None, Some(width), self.cur_y, 0);
+    cpugraph.resize(
+      self.mainwin,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      self.cur_x,
+    );
   }
 
-  fn resize_memmeter(&mut self) {
+  fn resize_memmeter(&mut self, height: i32, width: i32) {
     let memmeter = self.memmeter.as_mut().unwrap();
-    let width = self.screen_width / 6 * 1;
-    let x = self.screen_width / 6 * 3;
-
-    memmeter.resize(self.mainwin, None, Some(width), self.cur_y, x);
+    memmeter.resize(
+      self.mainwin,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      self.cur_x,
+    );
   }
 
-  fn resize_inputmeter(&mut self) {
-    let x = self.screen_width / 6 * 4;
+  fn resize_inputmeter(&mut self, height: i32, width: i32) {
     let inputmeter = self.inputmeter.as_mut().unwrap();
-    let width = self.screen_width / 6 * 2;
-    inputmeter.resize(self.mainwin, None, Some(width), self.cur_y, x);
-    self.cur_y += inputmeter.height;
+    inputmeter.resize(
+      self.mainwin,
+      Some(height),
+      Some(width),
+      self.cur_y,
+      self.cur_x,
+    );
   }
 
-  fn resize_process_meters(&mut self) {
+  fn resize_process_meters(&mut self, height: i32, width: i32) {
     let processmanager = self.processmanager.as_mut().unwrap();
-    let mut x = 0;
-    let mut y = 0;
-
-    getbegyx(processmanager.win, &mut y, &mut x);
-    let start_y = y;
-    let height = std::cmp::max(self.screen_height - start_y as i32, 2);
     processmanager.resize(
       self.mainwin,
       Some(height),
-      Some(self.screen_width),
-      start_y,
-      0,
+      Some(width),
+      self.cur_y,
+      self.cur_x,
     );
   }
 
   fn resize_meters(&mut self) {
+    use config::{Height, MeterName::*, Size};
+
     self.cur_x = 0;
     self.cur_y = 0;
+    let layouts = &self.layout.clone();
+    let mut max_height_in_line = 0;
+
     werase(self.mainwin);
-    self.resize_cpumanager();
-    self.cur_y += 1;
-    self.resize_taskmeter();
-    self.cur_y += 1;
-    self.resize_cpugraph();
-    self.resize_memmeter();
-    self.resize_inputmeter();
-    self.resize_process_meters();
+
+    for layout in layouts {
+      let mut go_newline = false;
+      let width = match layout.ratio {
+        Size::Ratio(r) => (self.screen_width as f64 * r) as i32,
+        Size::Rest => {
+          go_newline = true;
+          self.screen_width - self.cur_x
+        }
+      };
+      let height = match layout.height {
+        Height::Line(l) => l as i32,
+        Height::Rest => self.screen_height - self.cur_y,
+      };
+      max_height_in_line = std::cmp::max(max_height_in_line, height);
+
+      match layout.name {
+        CpuMeter => self.resize_cpumanager(height, width),
+        CpuGraph => self.resize_cpugraph(height, width),
+        TaskMeter => self.resize_taskmeter(height, width),
+        MemMeter => self.resize_memmeter(height, width),
+        Inputs => self.resize_inputmeter(height, width),
+        ProcMeter => self.resize_process_meters(height, width),
+        Empty => {}
+      }
+
+      self.cur_x += width;
+      if go_newline {
+        self.cur_y += max_height_in_line;
+        max_height_in_line = 0;
+        self.cur_x = 0;
+      }
+    }
   }
 
   fn finish() {
@@ -420,6 +479,7 @@ impl WinManager {
       processmanager: None,
       cpu_graph: None,
       inputmeter: None,
+      layout: vec![],
       cur_x: 0,
       cur_y: 0,
     }
