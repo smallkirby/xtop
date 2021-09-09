@@ -63,7 +63,7 @@ impl meter::Meter for CPUMeter {
     }
   }
 
-  fn resize(&mut self, parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
     self.height = height;
     self.width = width;
     wresize(self.win, height, width);

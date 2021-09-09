@@ -96,7 +96,7 @@ impl meter::Meter for ProcessMeter {
 
   fn init_meter(
     parent: WINDOW,
-    wm: &mut window::WinManager,
+    _wm: &mut window::WinManager,
     height: i32,
     width: i32,
     y: i32,

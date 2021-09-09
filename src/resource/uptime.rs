@@ -12,6 +12,12 @@ pub struct Uptime {
   pub idle_sum: f64, // total idle time of each cores
 }
 
+impl Default for Uptime {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl Uptime {
   pub fn new() -> Self {
     read_uptime()
@@ -23,7 +29,7 @@ impl Uptime {
     self.idle_sum = new.idle_sum;
   }
 
-  pub fn into_readable_string(&self) -> String {
+  pub fn readable_string(&self) -> String {
     let u = self.uptime as u64;
     let seconds = u % 60;
     let minutes = (u / 60) % 60;
@@ -44,7 +50,7 @@ impl Uptime {
 
 fn read_uptime() -> Uptime {
   let uptime_s = fs::read_to_string("/proc/uptime").unwrap();
-  let tokens: Vec<&str> = uptime_s.split(" ").map(|s| s.trim()).collect();
+  let tokens: Vec<&str> = uptime_s.split(' ').map(|s| s.trim()).collect();
   if tokens.len() != 2 {
     panic!("uouo fish life");
   }

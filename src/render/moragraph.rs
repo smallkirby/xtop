@@ -70,7 +70,9 @@ impl Meter for MoraGraph {
   }
 
   fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
-    wresize(self.win, self.height, self.width);
+    self.height = height;
+    self.width = width;
+    wresize(self.win, height, width);
     werase(self.win);
     mvwin(self.win, y, x);
 

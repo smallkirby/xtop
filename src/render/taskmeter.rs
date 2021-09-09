@@ -79,14 +79,14 @@ impl meter::Meter for TaskMeter {
       win,
       2,
       0,
-      &format!("Uptime: {}", vals.uptime.into_readable_string()),
+      &format!("Uptime: {}", vals.uptime.readable_string()),
     );
     wrefresh(win);
   }
 
   fn init_meter(
     _parent: WINDOW,
-    wm: &mut WinManager,
+    _wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,
