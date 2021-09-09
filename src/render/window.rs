@@ -115,8 +115,8 @@ impl WinManager {
     self.cpumanager = Some(cpumanager::CPUManager::init_meter(
       self.mainwin,
       self,
-      Some(height),
-      Some(width),
+      height,
+      width,
       self.cur_y,
       self.cur_x,
     ));
@@ -126,8 +126,8 @@ impl WinManager {
     self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
       self.mainwin,
       self,
-      Some(height),
-      Some(width),
+      height,
+      width,
       self.cur_y,
       self.cur_x,
     ));
@@ -137,8 +137,8 @@ impl WinManager {
     self.processmanager = Some(processmeter_manager::ProcessMeterManager::init_meter(
       self.mainwin,
       self,
-      Some(height),
-      Some(width),
+      height,
+      width,
       self.cur_y,
       self.cur_x,
     ));
@@ -149,8 +149,8 @@ impl WinManager {
     self.cpu_graph = Some(cpugraph::CPUGraph::init_meter(
       self.mainwin,
       self,
-      Some(height),
-      Some(width),
+      height,
+      width,
       self.cur_y,
       self.cur_x,
     ));
@@ -160,8 +160,8 @@ impl WinManager {
     self.memmeter = Some(memmeter::MemMeter::init_meter(
       self.mainwin,
       self,
-      Some(height),
-      Some(width),
+      height,
+      width,
       self.cur_y,
       self.cur_x,
     ));
@@ -171,8 +171,8 @@ impl WinManager {
     self.inputmeter = Some(inputmeter::InputMeter::init_meter(
       self.mainwin,
       self,
-      Some(height),
-      Some(width),
+      height,
+      width,
       self.cur_y,
       self.cur_x,
     ));
@@ -230,68 +230,32 @@ impl WinManager {
 
   fn resize_cpumanager(&mut self, height: i32, width: i32) -> Option<()> {
     let cpumanager = self.cpumanager.as_mut()?;
-    Some(cpumanager.resize(
-      self.mainwin,
-      Some(height),
-      Some(width),
-      self.cur_y,
-      self.cur_x,
-    ))
+    Some(cpumanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
   }
 
   fn resize_taskmeter(&mut self, height: i32, width: i32) -> Option<()> {
     let taskmeter = self.taskmeter.as_mut()?;
-    Some(taskmeter.resize(
-      self.mainwin,
-      Some(height),
-      Some(width),
-      self.cur_y,
-      self.cur_x,
-    ))
+    Some(taskmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
   }
 
   fn resize_cpugraph(&mut self, height: i32, width: i32) -> Option<()> {
     let cpugraph = self.cpu_graph.as_mut()?;
-    Some(cpugraph.resize(
-      self.mainwin,
-      Some(height),
-      Some(width),
-      self.cur_y,
-      self.cur_x,
-    ))
+    Some(cpugraph.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
   }
 
   fn resize_memmeter(&mut self, height: i32, width: i32) -> Option<()> {
     let memmeter = self.memmeter.as_mut()?;
-    Some(memmeter.resize(
-      self.mainwin,
-      Some(height),
-      Some(width),
-      self.cur_y,
-      self.cur_x,
-    ))
+    Some(memmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
   }
 
   fn resize_inputmeter(&mut self, height: i32, width: i32) -> Option<()> {
     let inputmeter = self.inputmeter.as_mut()?;
-    Some(inputmeter.resize(
-      self.mainwin,
-      Some(height),
-      Some(width),
-      self.cur_y,
-      self.cur_x,
-    ))
+    Some(inputmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
   }
 
   fn resize_process_meters(&mut self, height: i32, width: i32) -> Option<()> {
     let processmanager = self.processmanager.as_mut()?;
-    Some(processmanager.resize(
-      self.mainwin,
-      Some(height),
-      Some(width),
-      self.cur_y,
-      self.cur_x,
-    ))
+    Some(processmanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
   }
 
   fn resize_meters(&mut self) {

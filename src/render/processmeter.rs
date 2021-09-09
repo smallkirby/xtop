@@ -97,37 +97,27 @@ impl meter::Meter for ProcessMeter {
   fn init_meter(
     parent: WINDOW,
     wm: &mut window::WinManager,
-    _height: Option<i32>,
-    width: Option<i32>,
+    height: i32,
+    width: i32,
     y: i32,
     x: i32,
   ) -> Self {
-    let alloc_width = match width {
-      Some(_w) => _w,
-      None => wm.screen_width,
-    };
-    let (win, subwins) = create_meter_win(parent, alloc_width, y, x);
+    let (win, subwins) = create_meter_win(parent, width, y, x);
     ProcessMeter {
-      height: 1,
-      width: alloc_width,
+      height,
+      width,
       win,
       subwins,
       process: None,
     }
   }
 
-  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, _y: i32, _x: i32) {
-    self.width = match width {
-      Some(w) => w,
-      None => self.width,
-    };
-    self.height = match height {
-      Some(h) => h,
-      None => self.height,
-    };
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, _y: i32, _x: i32) {
+    self.width = width;
+    self.height = height;
 
     // resize entire window
-    wresize(self.win, self.height, self.width);
+    wresize(self.win, height, width);
     // resize sub windows
     let comm_win = self.subwins.comm_win;
     let new_width = self.width - (PID_WIDTH + 1 + CPU_WIDTH + 1);

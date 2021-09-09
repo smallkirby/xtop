@@ -49,19 +49,11 @@ impl meter::Meter for CPUMeter {
   fn init_meter(
     parent: WINDOW,
     _wm: &mut WinManager,
-    height: Option<i32>,
-    width: Option<i32>,
+    height: i32,
+    width: i32,
     y: i32,
     x: i32,
   ) -> Self {
-    let height = match height {
-      Some(h) => h,
-      None => 1,
-    };
-    let width = match width {
-      Some(w) => w,
-      None => 1,
-    };
     let win = create_meter_win(parent, height, width, y, x);
     CPUMeter {
       height,
@@ -71,21 +63,12 @@ impl meter::Meter for CPUMeter {
     }
   }
 
-  fn resize(&mut self, parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
-    self.width = match width {
-      Some(w) => w,
-      None => self.width,
-    };
-    self.height = match height {
-      Some(h) => h,
-      None => self.height,
-    };
-
-    wresize(self.win, self.height, self.width);
+  fn resize(&mut self, parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
+    self.height = height;
+    self.width = width;
+    wresize(self.win, height, width);
     werase(self.win);
-    delwin(self.win);
-    self.win = derwin(parent, self.height, self.width, y, x);
-    wrefresh(self.win);
+    mvwin(self.win, y, x);
   }
 }
 

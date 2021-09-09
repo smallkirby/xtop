@@ -17,12 +17,12 @@ pub trait Meter {
   fn init_meter(
     parent: WINDOW,
     wm: &mut WinManager,
-    height: Option<i32>,
-    width: Option<i32>,
+    height: i32,
+    width: i32,
     y: i32,
     x: i32,
   ) -> Self;
 
   // resize the meter.
-  fn resize(&mut self, parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32);
+  fn resize(&mut self, parent: WINDOW, height: i32, width: i32, y: i32, x: i32);
 }

@@ -153,16 +153,11 @@ impl Meter for InputMeter {
   fn init_meter(
     _parent: WINDOW,
     _wm: &mut super::window::WinManager,
-    height: Option<i32>,
-    width: Option<i32>,
+    height: i32,
+    width: i32,
     y: i32,
     x: i32,
   ) -> Self {
-    if height.is_none() || width.is_none() {
-      panic!("height and width must be specified for InputMeter::init_meter().");
-    }
-    let height = height.unwrap();
-    let width = width.unwrap();
     let win = newwin(height, width, y, x);
     wattron(win, COLOR_PAIR(cpair::DEFAULT));
     wbkgd(win, ' ' as chtype | COLOR_PAIR(cpair::DEFAULT) as chtype);
@@ -177,17 +172,10 @@ impl Meter for InputMeter {
     }
   }
 
-  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
-    self.width = match width {
-      Some(w) => w,
-      None => self.width,
-    };
-    self.height = match height {
-      Some(h) => h,
-      None => self.height,
-    };
-
-    wresize(self.win, self.height, self.width);
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
+    self.height = height;
+    self.width = width;
+    wresize(self.win, height, width);
     werase(self.win);
     mvwin(self.win, y, x);
 

@@ -35,21 +35,12 @@ impl Meter for CPUManager {
   fn init_meter(
     _parent: WINDOW,
     wm: &mut super::window::WinManager,
-    height: Option<i32>,
-    width: Option<i32>,
+    height: i32,
+    width: i32,
     y: i32,
     x: i32,
   ) -> Self {
     // init entire window
-    let (_width, _height) = winsize_require(wm.screen_width, wm.plist.cpus.len());
-    let width = match width {
-      Some(w) => w,
-      None => _width,
-    };
-    let height = match height {
-      Some(h) => h,
-      None => _height,
-    };
     let win = newwin(height, width, y, x);
     wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
     wbkgd(
@@ -69,21 +60,15 @@ impl Meter for CPUManager {
     }
   }
 
-  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, _y: i32, _x: i32) {
-    self.width = match width {
-      Some(w) => w,
-      None => self.width,
-    };
-    self.height = match height {
-      Some(h) => h,
-      None => self.height,
-    };
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, _y: i32, _x: i32) {
+    self.width = width;
+    self.height = height;
 
     wresize(self.win, self.height, self.width);
     werase(self.win);
     for i in 0..self.cpumeters.len() {
       let (y, x) = pos_win_start(i as u32, self.width / 2);
-      self.cpumeters[i].resize(self.win, None, Some(self.width / 2), y, x);
+      self.cpumeters[i].resize(self.win, 1, self.width / 2, y, x);
     }
 
     self.render();
@@ -99,21 +84,11 @@ fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CPUMeter> {
 
   for i in 0..num_cpu {
     let (y, x) = pos_win_start(wm.plist.cpus[i].id, width);
-    let meter = cpumeter::CPUMeter::init_meter(parent, wm, Some(height), Some(width), y, x);
+    let meter = cpumeter::CPUMeter::init_meter(parent, wm, height, width, y, x);
     meters.push(meter);
   }
 
   meters
-}
-
-fn winsize_require(screen_width: i32, num_cpu: usize) -> (i32, i32) {
-  let height = if num_cpu % 2 == 0 {
-    num_cpu / 2
-  } else {
-    num_cpu / 2 + 1
-  } as i32;
-
-  (screen_width, height)
 }
 
 // `width` is a width of each cpumeter, not a screen-width (manager width).

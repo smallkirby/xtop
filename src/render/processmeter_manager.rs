@@ -59,21 +59,11 @@ impl Meter for ProcessMeterManager {
   fn init_meter(
     _parent: WINDOW,
     wm: &mut WinManager,
-    height: Option<i32>,
-    width: Option<i32>,
+    height: i32,
+    width: i32,
     y: i32,
     x: i32,
   ) -> Self {
-    let default_width = wm.screen_width;
-    let default_height = 2;
-    let width = match width {
-      Some(w) => w,
-      None => default_width,
-    };
-    let height = match height {
-      Some(h) => h,
-      None => default_height,
-    };
     // entire window for ProcessMeters
     let win = newwin(height, width, y, x);
     wattron(win, COLOR_PAIR(cpair::DEFAULT));
@@ -100,16 +90,10 @@ impl Meter for ProcessMeterManager {
 
   // it doesn NOT resize horizontally.
   // change the size of vertical size and height of processmeters.
-  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
     let old_height = self.height;
-    self.width = match width {
-      Some(w) => w,
-      None => self.width,
-    };
-    self.height = match height {
-      Some(h) => h,
-      None => self.height,
-    };
+    self.width = width;
+    self.height = height;
 
     // resize
     let proc_height = std::cmp::max(self.height - 1, 1);
@@ -121,7 +105,7 @@ impl Meter for ProcessMeterManager {
       let mut x = 0;
       let mut y = 0;
       getbegyx(self.processmeters[i].win, &mut y, &mut x);
-      self.processmeters[i].resize(self.processmeters_win, None, Some(self.width), y, x);
+      self.processmeters[i].resize(self.processmeters_win, 1, self.width, y, x);
     }
 
     werase(self.win);
@@ -153,7 +137,7 @@ fn init_meters(parent: WINDOW, wm: &mut WinManager, height: i32) -> Vec<ProcessM
   let mut meters = vec![];
   let width = wm.screen_width;
   for i in 0..height {
-    let meter = ProcessMeter::init_meter(parent, wm, Some(height), Some(width), i, 0);
+    let meter = ProcessMeter::init_meter(parent, wm, height, width, i, 0);
     meters.push(meter);
   }
 

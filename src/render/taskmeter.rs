@@ -87,12 +87,11 @@ impl meter::Meter for TaskMeter {
   fn init_meter(
     _parent: WINDOW,
     wm: &mut WinManager,
-    _height: Option<i32>,
-    _width: Option<i32>,
+    height: i32,
+    width: i32,
     y: i32,
     x: i32,
   ) -> Self {
-    let (width, height) = winsize_require(wm);
     let win = create_meter_win(height, width, y, x);
     let mut meter = TaskMeter {
       height,
@@ -105,17 +104,10 @@ impl meter::Meter for TaskMeter {
     meter
   }
 
-  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
-    self.width = match width {
-      Some(w) => w,
-      None => self.width,
-    };
-    self.height = match height {
-      Some(h) => h,
-      None => self.height,
-    };
-
-    wresize(self.win, self.height, self.width);
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
+    self.height = height;
+    self.width = width;
+    wresize(self.win, height, width);
     werase(self.win);
     mvwin(self.win, y, x);
 

@@ -47,16 +47,11 @@ impl Meter for MoraGraph {
   fn init_meter(
     _parent: ncurses::WINDOW,
     _wm: &mut super::window::WinManager,
-    height: Option<i32>,
-    width: Option<i32>,
+    height: i32,
+    width: i32,
     y: i32,
     x: i32,
   ) -> Self {
-    if height.is_none() || width.is_none() {
-      panic!("height and width must be specified for MoraGraph::init_meter().");
-    }
-    let height = height.unwrap();
-    let width = width.unwrap();
     let win = newwin(height, width, y, x);
     box_(win, 0, 0);
     wrefresh(win);
@@ -74,16 +69,7 @@ impl Meter for MoraGraph {
     }
   }
 
-  fn resize(&mut self, _parent: WINDOW, height: Option<i32>, width: Option<i32>, y: i32, x: i32) {
-    self.width = match width {
-      Some(w) => w,
-      None => self.width,
-    };
-    self.height = match height {
-      Some(h) => h,
-      None => self.height,
-    };
-
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
     wresize(self.win, self.height, self.width);
     werase(self.win);
     mvwin(self.win, y, x);
