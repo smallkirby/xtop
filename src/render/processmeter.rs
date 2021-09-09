@@ -199,6 +199,7 @@ fn create_meter_win(parent: WINDOW, width: i32, y: i32, x: i32) -> (WINDOW, SubW
 // XXX too dirty
 pub fn _init_meter(parent: WINDOW, width: i32, y: i32, x: i32) -> ProcessMeter {
   let (win, subwins) = create_meter_win(parent, width, y, x);
+
   ProcessMeter {
     height: 1,
     width: width,

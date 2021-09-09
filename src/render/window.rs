@@ -56,6 +56,7 @@ impl WinManager {
     noecho();
     color::initialize_color();
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
+    mousemask((ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION) as u32, None);
     refresh();
     mainwin
   }
@@ -354,6 +355,11 @@ impl WinManager {
       let ch = getch();
       match ch {
         // special inputs
+        KEY_MOUSE => {
+          let mut mevent: MEVENT = unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
+          getmouse(&mut mevent);
+          // XXX
+        }
 
         // normal key input
         _ => {

@@ -42,6 +42,7 @@ impl meter::Meter for CPUMeter {
       .map(|_| " ")
       .collect::<String>();
     mvwprintw(win, 0, 0, &format!("cpu{:>2} [{}{}]", cpu.id, divs, spaces));
+
     wrefresh(win);
   }
 
