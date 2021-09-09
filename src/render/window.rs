@@ -187,7 +187,7 @@ impl WinManager {
   }
 
   fn update_task_meter(&mut self) -> Option<()> {
-    let taskmeter = self.taskmeter.as_mut().unwrap();
+    let taskmeter = self.taskmeter.as_mut()?;
     self.plist.loadaverage.update();
     self.plist.uptime.update();
 
@@ -197,7 +197,7 @@ impl WinManager {
   }
 
   fn update_process_meters(&mut self) -> Option<()> {
-    let processmanager = self.processmanager.as_mut().unwrap();
+    let processmanager = self.processmanager.as_mut()?;
     let sorted_procs = self.plist.get_sorted_by_cpu();
     processmanager.set_sorted_procs(sorted_procs);
     processmanager.render();
@@ -205,7 +205,7 @@ impl WinManager {
   }
 
   fn update_cpugraph(&mut self) -> Option<()> {
-    let cpu_graph = self.cpu_graph.as_mut().unwrap();
+    let cpu_graph = self.cpu_graph.as_mut()?;
     let ave_cpu = &self.plist.aggregated_cpu;
 
     cpu_graph.set_cpu(ave_cpu);
@@ -214,7 +214,7 @@ impl WinManager {
   }
 
   fn update_memmeter(&mut self) -> Option<()> {
-    let memmeter = self.memmeter.as_mut().unwrap();
+    let memmeter = self.memmeter.as_mut()?;
     let usage = mem::MemInfo::new();
     memmeter.set_usage(&usage);
     memmeter.render();
@@ -222,7 +222,7 @@ impl WinManager {
   }
 
   fn update_inputmeter(&mut self) -> Option<()> {
-    let inputmeter = self.inputmeter.as_mut().unwrap();
+    let inputmeter = self.inputmeter.as_mut()?;
     inputmeter.update_inputs();
     inputmeter.render();
     Some(())
