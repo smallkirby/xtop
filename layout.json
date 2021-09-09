@@ -1,0 +1,60 @@
+[
+  {
+    "name": "CpuMeter",
+    "height": {
+      "Line": 4
+    },
+    "ratio": "Rest"
+  },
+  {
+    "name": "Empty",
+    "height": {
+      "Line": 1 
+    },
+    "ratio": "Rest"
+  },
+  {
+    "name": "TaskMeter",
+    "height": {
+      "Line": 3
+    },
+    "ratio": "Rest"
+  },
+  {
+    "name": "Empty",
+    "height": {
+      "Line": 1 
+    },
+    "ratio": "Rest"
+  },
+  {
+    "name": "CpuGraph",
+    "height": {
+      "Line": 15
+    },
+    "ratio": {
+      "Ratio": 0.5 
+    }
+  },
+  {
+    "name": "MemMeter",
+    "height": {
+      "Line": 15
+    },
+    "ratio": {
+      "Ratio": 0.16667 
+    }
+  },
+  {
+    "name": "Inputs",
+    "height": {
+      "Line": 15
+    },
+    "ratio": "Rest"
+  },
+  {
+    "name": "ProcMeter",
+    "height": "Rest",
+    "ratio": "Rest"
+  }
+]
