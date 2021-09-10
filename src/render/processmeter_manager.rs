@@ -18,9 +18,16 @@ pub struct ProcessMeterManager {
   processmeters_win: WINDOW,
   sorted_procs: Vec<process::Process>,
   processmeters: Vec<ProcessMeter>,
+  highlighted_pid: Option<i32>,
 }
 
 impl ProcessMeterManager {
+  fn set_highlighted_pid(&mut self) {
+    for i in 0..self.processmeters.len() {
+      self.processmeters[i].highlighted_pid = self.highlighted_pid;
+    }
+  }
+
   fn set_procs_meter(&mut self) {
     let proc_height = std::cmp::max(self.height - 1, 1) as usize;
     let num_meters = self.processmeters.len();
@@ -84,6 +91,7 @@ impl Meter for ProcessMeterManager {
       processmeters_win,
       processmeters,
       sorted_procs: vec![],
+      highlighted_pid: None,
     }
   }
 
@@ -128,6 +136,26 @@ impl Meter for ProcessMeterManager {
     }
 
     // refresh all
+    self.render();
+  }
+
+  fn handle_click(&mut self, y: i32, x: i32) {
+    use crate::util::clamp;
+    let meter_ix = clamp((y - 1) as f64, 0.0, self.processmeters.len() as f64) as usize;
+    let pid = self.processmeters[meter_ix].process.as_ref().unwrap().pid;
+    match self.highlighted_pid {
+      Some(current_pid) => {
+        if current_pid == pid {
+          self.highlighted_pid = None;
+        } else {
+          self.highlighted_pid = Some(pid);
+        }
+      }
+      None => self.highlighted_pid = Some(pid),
+    }
+
+    self.set_highlighted_pid();
+    self.processmeters[meter_ix].handle_click(0, x);
     self.render();
   }
 }

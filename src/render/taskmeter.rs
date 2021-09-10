@@ -114,6 +114,8 @@ impl meter::Meter for TaskMeter {
     self.render();
     wrefresh(self.win);
   }
+
+  fn handle_click(&mut self, _y: i32, _x: i32) {}
 }
 
 pub fn winsize_require(wm: &WinManager) -> (i32, i32) {

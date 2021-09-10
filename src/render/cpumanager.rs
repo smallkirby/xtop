@@ -79,6 +79,8 @@ impl Meter for CpuManager {
 
     wrefresh(self.win);
   }
+
+  fn handle_click(&mut self, _y: i32, _x: i32) {}
 }
 
 fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CpuMeter> {

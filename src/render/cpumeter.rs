@@ -74,6 +74,8 @@ impl meter::Meter for CpuMeter {
     self.render();
     wrefresh(self.win);
   }
+
+  fn handle_click(&mut self, _y: i32, _x: i32) {}
 }
 
 impl CpuMeter {

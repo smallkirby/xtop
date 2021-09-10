@@ -79,4 +79,6 @@ impl Meter for MoraGraph {
     self.render();
     wrefresh(self.win);
   }
+
+  fn handle_click(&mut self, _y: i32, _x: i32) {}
 }

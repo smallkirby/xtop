@@ -1,3 +1,9 @@
+/********
+
+Implementation of Layout structure and layout config fle.
+
+********/
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

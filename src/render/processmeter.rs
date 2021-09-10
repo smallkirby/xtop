@@ -26,6 +26,7 @@ pub struct ProcessMeter {
   pub win: WINDOW,
   pub subwins: SubWins,
   pub process: Option<process::Process>,
+  pub highlighted_pid: Option<i32>,
 }
 
 impl ProcessMeter {
@@ -64,6 +65,7 @@ impl meter::Meter for ProcessMeter {
   fn render(&mut self) {
     let win = self.win;
     let subwins = &self.subwins;
+    wattroff(subwins.comm_win, A_REVERSE());
     werase(win);
 
     let proc = match self.process.as_ref() {
@@ -79,6 +81,12 @@ impl meter::Meter for ProcessMeter {
         return;
       }
     };
+
+    // reverse the color if clicked
+    if self.highlighted_pid.is_some() && proc.pid == self.highlighted_pid.unwrap() {
+      wattron(subwins.comm_win, A_REVERSE() | A_BOLD());
+      wrefresh(subwins.comm_win);
+    }
 
     mvwprintw(subwins.pid_win, 0, 0, &format!("{:>6}", proc.pid));
     mvwprintw(subwins.cpu_win, 0, 0, &format!("{:>3.2}", proc.percent_cpu));
@@ -103,6 +111,7 @@ impl meter::Meter for ProcessMeter {
       win,
       subwins,
       process: None,
+      highlighted_pid: None,
     }
   }
 
@@ -120,6 +129,8 @@ impl meter::Meter for ProcessMeter {
     wrefresh(comm_win);
     wrefresh(self.win);
   }
+
+  fn handle_click(&mut self, _y: i32, _x: i32) {}
 }
 
 // create header windows inside `parent`.
@@ -190,5 +201,6 @@ pub fn _init_meter(parent: WINDOW, width: i32, y: i32, x: i32) -> ProcessMeter {
     win,
     subwins,
     process: None,
+    highlighted_pid: None,
   }
 }

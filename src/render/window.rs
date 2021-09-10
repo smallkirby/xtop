@@ -1,5 +1,5 @@
 use crate::consts::*;
-use crate::layout::config;
+use crate::layout::{calc, config};
 use crate::proclist::list;
 use crate::render::{
   color, cpugraph, cpumanager, inputmeter, memmeter, meter::Meter, processmeter_manager, taskmeter,
@@ -15,6 +15,7 @@ use std::time::Duration;
 enum ThreadSignal {
   DoUpdate,
   Resize,
+  Mouse(MEVENT),
   Quit,
 }
 
@@ -371,6 +372,37 @@ impl WinManager {
         flushinp();
         false
       }
+
+      Mouse(mevent) => {
+        use config::MeterName::*;
+        let bstate = mevent.bstate;
+        let click_x = mevent.x;
+        let click_y = mevent.y;
+
+        if (bstate & BUTTON1_CLICKED as u32) != 0 {
+          if let Some((layout, (y, x))) = calc::get_layout_from_click(
+            &self.layout,
+            self.screen_height,
+            self.screen_width,
+            click_y,
+            click_x,
+          ) {
+            match layout.name {
+              CpuMeter => self.cpumanager.as_mut().unwrap().handle_click(y, x),
+              CpuGraph => self.cpu_graph.as_mut().unwrap().handle_click(y, x),
+              TaskMeter => self.taskmeter.as_mut().unwrap().handle_click(y, x),
+              MemMeter => self.memmeter.as_mut().unwrap().handle_click(y, x),
+              Inputs => self.inputmeter.as_mut().unwrap().handle_click(y, x),
+              ProcMeter => self.processmanager.as_mut().unwrap().handle_click(y, x),
+              Empty => {}
+            };
+          } else {
+            panic!(""); // XXX
+          }
+        }
+
+        false
+      }
     }
   }
 
@@ -393,6 +425,7 @@ impl WinManager {
         KEY_MOUSE => {
           let mut mevent: MEVENT = unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
           getmouse(&mut mevent);
+          input_sender_tx.send(ThreadSignal::Mouse(mevent)).unwrap();
         }
 
         // normal key input

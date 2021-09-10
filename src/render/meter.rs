@@ -25,4 +25,7 @@ pub trait Meter {
 
   // resize the meter.
   fn resize(&mut self, parent: WINDOW, height: i32, width: i32, y: i32, x: i32);
+
+  // click handler.
+  fn handle_click(&mut self, _y: i32, _x: i32) {}
 }
