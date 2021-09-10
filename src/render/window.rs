@@ -6,16 +6,16 @@ use crate::render::{
 };
 use crate::resource::mem;
 use ncurses::*;
-use signal_hook::{consts::SIGWINCH, iterator::Signals};
+use signal_hook::{consts::*, iterator::Signals};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 
 #[derive(Clone, Copy)]
 enum ThreadSignal {
-  DOUPDATE,
-  RESIZE,
-  QUIT,
+  DoUpdate,
+  Resize,
+  Quit,
 }
 
 pub struct WinManager {
@@ -25,7 +25,7 @@ pub struct WinManager {
   pub plist: list::ProcList,
 
   // CPU meters
-  cpumanager: Option<cpumanager::CPUManager>,
+  cpumanager: Option<cpumanager::CpuManager>,
 
   // Task Meter
   taskmeter: Option<taskmeter::TaskMeter>,
@@ -34,7 +34,7 @@ pub struct WinManager {
   processmanager: Option<processmeter_manager::ProcessMeterManager>,
 
   // CPU graph
-  pub cpu_graph: Option<cpugraph::CPUGraph>,
+  pub cpu_graph: Option<cpugraph::CpuGraph>,
 
   // Memory meter
   pub memmeter: Option<memmeter::MemMeter>,
@@ -112,7 +112,7 @@ impl WinManager {
   }
 
   fn init_cpumanager(&mut self, height: i32, width: i32) {
-    self.cpumanager = Some(cpumanager::CPUManager::init_meter(
+    self.cpumanager = Some(cpumanager::CpuManager::init_meter(
       self.mainwin,
       self,
       height,
@@ -142,11 +142,10 @@ impl WinManager {
       self.cur_y,
       self.cur_x,
     ));
-    wrefresh(self.processmanager.as_mut().unwrap().win);
   }
 
   fn init_cpugraph(&mut self, height: i32, width: i32) {
-    self.cpu_graph = Some(cpugraph::CPUGraph::init_meter(
+    self.cpu_graph = Some(cpugraph::CpuGraph::init_meter(
       self.mainwin,
       self,
       height,
@@ -230,32 +229,38 @@ impl WinManager {
 
   fn resize_cpumanager(&mut self, height: i32, width: i32) -> Option<()> {
     let cpumanager = self.cpumanager.as_mut()?;
-    Some(cpumanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
+    cpumanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
   }
 
   fn resize_taskmeter(&mut self, height: i32, width: i32) -> Option<()> {
     let taskmeter = self.taskmeter.as_mut()?;
-    Some(taskmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
+    taskmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
   }
 
   fn resize_cpugraph(&mut self, height: i32, width: i32) -> Option<()> {
     let cpugraph = self.cpu_graph.as_mut()?;
-    Some(cpugraph.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
+    cpugraph.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
   }
 
   fn resize_memmeter(&mut self, height: i32, width: i32) -> Option<()> {
     let memmeter = self.memmeter.as_mut()?;
-    Some(memmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
+    memmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
   }
 
   fn resize_inputmeter(&mut self, height: i32, width: i32) -> Option<()> {
     let inputmeter = self.inputmeter.as_mut()?;
-    Some(inputmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
+    inputmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
   }
 
   fn resize_process_meters(&mut self, height: i32, width: i32) -> Option<()> {
     let processmanager = self.processmanager.as_mut()?;
-    Some(processmanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x))
+    processmanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
   }
 
   fn resize_meters(&mut self) {
@@ -265,8 +270,6 @@ impl WinManager {
     self.cur_y = 0;
     let layouts = &self.layout.clone();
     let mut max_height_in_line = 0;
-
-    werase(self.mainwin);
 
     for layout in layouts {
       let mut go_newline = false;
@@ -311,7 +314,7 @@ impl WinManager {
   fn handle_thread_signal(&mut self, sig: &ThreadSignal) -> bool {
     use ThreadSignal::*;
     match sig {
-      DOUPDATE => {
+      DoUpdate => {
         self.update_cpu_meters();
         self.update_cpugraph();
         self.update_inputmeter();
@@ -333,7 +336,7 @@ impl WinManager {
         // delete tombed procs
         let mut deleted_pids = vec![];
         for proc in self.plist.plist.values_mut() {
-          if proc.is_updated == false {
+          if !proc.is_updated {
             deleted_pids.push(proc.pid);
           }
         }
@@ -349,11 +352,12 @@ impl WinManager {
         false
       }
 
-      QUIT => true,
+      Quit => true,
 
-      RESIZE => {
+      Resize => {
         flushinp();
         // get new term size
+        endwin();
         refresh();
         getmaxyx(
           self.mainwin,
@@ -363,6 +367,7 @@ impl WinManager {
         wresize(self.mainwin, self.screen_height, self.screen_width);
         // resize/redraw
         self.resize_meters();
+
         flushinp();
         false
       }
@@ -371,11 +376,12 @@ impl WinManager {
 
   pub fn qloop(&mut self) {
     use ThreadSignal::*;
+    // channel to send signal from children.
     let (tx, rx) = mpsc::channel();
 
     let update_timer_tx = tx.clone();
     let _update_timer = thread::spawn(move || loop {
-      update_timer_tx.send(DOUPDATE).unwrap();
+      update_timer_tx.send(DoUpdate).unwrap();
       thread::sleep(Duration::from_millis(UPDATE_INTERVAL));
     });
 
@@ -387,7 +393,6 @@ impl WinManager {
         KEY_MOUSE => {
           let mut mevent: MEVENT = unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
           getmouse(&mut mevent);
-          // XXX
         }
 
         // normal key input
@@ -398,11 +403,11 @@ impl WinManager {
           };
           match c {
             'q' => {
-              input_sender_tx.send(QUIT).unwrap();
+              input_sender_tx.send(Quit).unwrap();
               break;
             }
             'U' => {
-              input_sender_tx.send(DOUPDATE).unwrap();
+              input_sender_tx.send(DoUpdate).unwrap();
             }
             _ => {}
           }
@@ -415,16 +420,23 @@ impl WinManager {
     let _sigwinch_notifier = thread::spawn(move || loop {
       for sig in signals.forever() {
         match sig {
-          SIGWINCH => sigwinch_tx.send(RESIZE).unwrap(),
+          SIGWINCH => sigwinch_tx.send(Resize).unwrap(),
+          SIGKILL | SIGTERM | SIGSTOP | SIGINT => {
+            sigwinch_tx.send(Quit).unwrap();
+            return;
+          }
           _ => {}
         }
       }
     });
 
+    drop(tx);
+
     // main handler
     loop {
       let sig = rx.recv().unwrap();
       if self.handle_thread_signal(&sig) {
+        endwin();
         break;
       }
     }
@@ -459,5 +471,11 @@ impl WinManager {
 impl Drop for WinManager {
   fn drop(&mut self) {
     Self::finish();
+  }
+}
+
+impl Default for WinManager {
+  fn default() -> Self {
+    Self::new()
   }
 }

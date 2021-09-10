@@ -29,7 +29,7 @@ pub fn init_tty_drivers(proc_drivers: &mut Vec<TtyDriver>) {
   proc_drivers.clear();
 
   let drivers_s = fs::read_to_string("/proc/tty/drivers").unwrap();
-  for line in drivers_s.split("\n").into_iter() {
+  for line in drivers_s.split('\n').into_iter() {
     let driver = match parse_drivers_line(line) {
       Some(_driver) => _driver,
       None => continue,
@@ -52,8 +52,8 @@ fn parse_drivers_line(line: &str) -> Option<TtyDriver> {
   let path = String::from(tokens.next().unwrap());
   let major = tokens.next().unwrap().parse().unwrap();
   let minor = tokens.next().unwrap();
-  let (minor_from, minor_to) = if minor.contains("-") {
-    let minors: Vec<&str> = minor.split("-").collect();
+  let (minor_from, minor_to) = if minor.contains('-') {
+    let minors: Vec<&str> = minor.split('-').collect();
     (minors[0].parse().unwrap(), minors[1].parse().unwrap())
   } else {
     let _minor = minor.parse().unwrap();
@@ -74,13 +74,12 @@ fn sort_drivers(drivers: &mut Vec<TtyDriver>) {
 }
 
 // get recent name of TTY device of the proc.
-pub fn get_updated_tty_driver(drivers: &Vec<TtyDriver>, tty_nr: u64) -> String {
+pub fn get_updated_tty_driver(drivers: &[TtyDriver], tty_nr: u64) -> String {
   use crate::util::*;
   let min = minor(tty_nr);
   let maj = major(tty_nr);
 
-  for i in 0..drivers.len() {
-    let driver = &drivers[i];
+  for driver in drivers {
     if driver.path.is_empty() || maj < driver.major {
       break;
     }
@@ -99,25 +98,19 @@ pub fn get_updated_tty_driver(drivers: &Vec<TtyDriver>, tty_nr: u64) -> String {
     loop {
       // step1: check /`tty_path`/idx
       fullpath = format!("{}/{}", driver.path, idx);
-      match get_dev_number(&fullpath) {
-        Some(n) => {
-          if n == maj as u64 && n == min as u64 {
-            return fullpath;
-          }
+      if let Some(n) = get_dev_number(&fullpath) {
+        if n == maj as u64 && n == min as u64 {
+          return fullpath;
         }
-        None => {}
-      };
+      }
 
       // step2: check /`tty_path``idx`
       fullpath = format!("{}{}", driver.path, idx);
-      match get_dev_number(&fullpath) {
-        Some(n) => {
-          if n == maj as u64 && n == min as u64 {
-            return fullpath;
-          }
+      if let Some(n) = get_dev_number(&fullpath) {
+        if n == maj as u64 && n == min as u64 {
+          return fullpath;
         }
-        None => {}
-      };
+      }
 
       if idx == min {
         break;
@@ -126,14 +119,11 @@ pub fn get_updated_tty_driver(drivers: &Vec<TtyDriver>, tty_nr: u64) -> String {
     }
 
     // step3: check simple path
-    fullpath = format!("{}", driver.path);
-    match get_dev_number(&fullpath) {
-      Some(n) => {
-        if tty_nr == n {
-          return fullpath;
-        }
+    fullpath = driver.path.to_string();
+    if let Some(n) = get_dev_number(&fullpath) {
+      if tty_nr == n {
+        return fullpath;
       }
-      None => {}
     };
   }
 

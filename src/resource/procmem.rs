@@ -22,7 +22,7 @@ impl Statm {
   pub fn new(s: &str) -> Self {
     use crate::util::popi64;
 
-    let mut ss: Vec<&str> = s.split(" ").map(|_s| _s.trim()).collect();
+    let mut ss: Vec<&str> = s.split(' ').map(|_s| _s.trim()).collect();
     let m_virt = popi64(&mut ss);
     let m_resident = popi64(&mut ss);
     let m_shared = popi64(&mut ss);
@@ -63,7 +63,7 @@ pub fn read_smaps_rollup(proc: &mut process::Process, parent_dir: &str) {
     Ok(_s) => _s,
     Err(_) => return,
   };
-  for s in smaps.split("\n").into_iter() {
+  for s in smaps.split('\n').into_iter() {
     if s.starts_with("Pss") {
       let ss: Vec<&str> = s.split_whitespace().collect();
       proc.m_pss = ss[1].parse().unwrap();

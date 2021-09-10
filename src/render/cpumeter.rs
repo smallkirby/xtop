@@ -13,14 +13,14 @@ use super::meter::Meter;
 use super::window::WinManager;
 
 #[derive(Debug)]
-pub struct CPUMeter {
+pub struct CpuMeter {
   pub height: i32,
   pub width: i32,
   win: WINDOW,
-  cpu: Option<cpu::CPU>,
+  cpu: Option<cpu::Cpu>,
 }
 
-impl meter::Meter for CPUMeter {
+impl meter::Meter for CpuMeter {
   fn render(&mut self) {
     let win = self.win;
     werase(win);
@@ -28,7 +28,7 @@ impl meter::Meter for CPUMeter {
     let cpu = match self.cpu.as_ref() {
       Some(_cpu) => _cpu,
       None => {
-        mvwprintw(win, 0, 0, &format!("[ERROR] CPU not initialized."));
+        mvwprintw(win, 0, 0, &"[ERROR] CPU not initialized.".to_string());
         wrefresh(win);
         return;
       }
@@ -56,7 +56,7 @@ impl meter::Meter for CPUMeter {
     x: i32,
   ) -> Self {
     let win = create_meter_win(parent, height, width, y, x);
-    CPUMeter {
+    CpuMeter {
       height,
       width,
       win,
@@ -71,13 +71,13 @@ impl meter::Meter for CPUMeter {
     werase(self.win);
     mvwin(self.win, y, x);
 
-    //self.render();
+    self.render();
     wrefresh(self.win);
   }
 }
 
-impl CPUMeter {
-  pub fn set_cpu(&mut self, cpu: cpu::CPU) {
+impl CpuMeter {
+  pub fn set_cpu(&mut self, cpu: cpu::Cpu) {
     self.cpu = Some(cpu);
   }
 

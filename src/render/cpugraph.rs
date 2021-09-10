@@ -13,7 +13,7 @@ use ncurses::*;
 
 static MAXBUFSZ: usize = 300; // XXX should decide dynamically.
 
-pub struct CPUGraph {
+pub struct CpuGraph {
   pub height: i32,
   pub width: i32,
   pub win: WINDOW,
@@ -22,8 +22,8 @@ pub struct CPUGraph {
   max_percent: f64,   // [0.0, 1.0]
 }
 
-impl CPUGraph {
-  pub fn set_cpu(&mut self, acpu: &cpu::CPU) {
+impl CpuGraph {
+  pub fn set_cpu(&mut self, acpu: &cpu::Cpu) {
     self.cur_hist_ix += 1;
     if self.cur_hist_ix >= MAXBUFSZ {
       self.cur_hist_ix %= MAXBUFSZ;
@@ -32,7 +32,7 @@ impl CPUGraph {
     self.history[self.cur_hist_ix] = acpu.percent();
   }
 
-  fn draw_single_bar(&self, bar: &String, y_bottom: i32, x: i32) {
+  fn draw_single_bar(&self, bar: &str, y_bottom: i32, x: i32) {
     let max_height = self.height - 2;
     let threshold = (max_height as f64 * CPUUSAGE_MED_DANGER) as usize;
     // draw from bottom.
@@ -68,13 +68,13 @@ impl CPUGraph {
     lv::get_bar(maxheight, percent / self.max_percent / 100.0)
   }
 
-  fn update_upper_limit(&mut self, recent_hists: &Vec<f64>) {
+  fn update_upper_limit(&mut self, recent_hists: &[f64]) {
     let max_percent = recent_hists.iter().fold(0.0, |a, b| b.max(a));
     self.max_percent = if max_percent >= 50.0 { 1.0 } else { 0.5 }
   }
 }
 
-impl Meter for CPUGraph {
+impl Meter for CpuGraph {
   fn render(&mut self) {
     let win = self.win;
     // erase and draw box
@@ -131,7 +131,7 @@ impl Meter for CPUGraph {
     box_(win, 0, 0);
     wrefresh(win);
 
-    CPUGraph {
+    CpuGraph {
       width,
       height,
       win,

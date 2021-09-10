@@ -17,6 +17,12 @@ pub struct LoadAvg {
   pub last: u32,
 }
 
+impl Default for LoadAvg {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl LoadAvg {
   pub fn new() -> Self {
     read_loadavg()
@@ -33,7 +39,7 @@ impl LoadAvg {
 
 pub fn read_loadavg() -> LoadAvg {
   let s_loadavg = fs::read_to_string("/proc/loadavg").unwrap();
-  let tokens: Vec<&str> = s_loadavg.split(" ").map(|s| s.trim()).collect();
+  let tokens: Vec<&str> = s_loadavg.split(' ').map(|s| s.trim()).collect();
 
   let one = tokens[0].parse().unwrap();
   let five = tokens[1].parse().unwrap();

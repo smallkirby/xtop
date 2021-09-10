@@ -22,7 +22,7 @@ enum InputBlock {
   Pointer(InputHierachy),
 }
 
-fn get_input_blocks(devices: &Vec<InputDevice>) -> Vec<InputBlock> {
+fn get_input_blocks(devices: &[InputDevice]) -> Vec<InputBlock> {
   let mut blocks = vec![];
   let masters = devices.iter().filter(|&d| d.state == input::State::Master);
 
@@ -52,9 +52,7 @@ fn get_input_blocks(devices: &Vec<InputDevice>) -> Vec<InputBlock> {
   let floating_devices = devices
     .iter()
     .filter(|&d| d.state == input::State::Floating);
-  blocks.push(InputBlock::Floating(
-    floating_devices.map(|d| d.clone()).collect(),
-  ));
+  blocks.push(InputBlock::Floating(floating_devices.cloned().collect()));
 
   blocks
 }

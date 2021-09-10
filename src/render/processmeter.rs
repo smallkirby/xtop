@@ -42,7 +42,7 @@ impl ProcessMeter {
     use crate::render::color::{cpair, mvwaddstr_color};
     use crate::util::*;
 
-    let tokens: Vec<&str> = full_comm.split(" ").collect();
+    let tokens: Vec<&str> = full_comm.split(' ').collect();
     let comm_win = self.subwins.comm_win;
     let (exe_path_dir, exe_path_file) = get_dir_file(tokens[0]);
     let args = if tokens.len() > 1 {
@@ -52,15 +52,9 @@ impl ProcessMeter {
     };
 
     let mut cur_x = 0;
-    mvwprintw(comm_win, 0, cur_x, &format!("{}", exe_path_dir));
+    mvwprintw(comm_win, 0, cur_x, &exe_path_dir);
     cur_x += exe_path_dir.len() as i32;
-    mvwaddstr_color(
-      comm_win,
-      0,
-      cur_x,
-      &format!("{}", exe_path_file),
-      cpair::PAIR_COMM,
-    );
+    mvwaddstr_color(comm_win, 0, cur_x, &exe_path_file, cpair::PAIR_COMM);
     cur_x += exe_path_file.len() as i32 + 1;
     mvwprintw(comm_win, 0, cur_x, &args);
   }
@@ -79,7 +73,7 @@ impl meter::Meter for ProcessMeter {
           subwins.comm_win,
           0,
           0,
-          &format!("[ERROR] process not initialized."),
+          &"[ERROR] process not initialized.".to_string(),
         );
         wrefresh(win);
         return;
@@ -192,7 +186,7 @@ pub fn _init_meter(parent: WINDOW, width: i32, y: i32, x: i32) -> ProcessMeter {
 
   ProcessMeter {
     height: 1,
-    width: width,
+    width,
     win,
     subwins,
     process: None,

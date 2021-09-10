@@ -54,7 +54,7 @@ impl meter::Meter for TaskMeter {
     let vals = match self.vals.as_ref() {
       Some(_vals) => _vals,
       None => {
-        mvwprintw(win, 0, 0, &format!("[ERROR] task vals not initialized."));
+        mvwprintw(win, 0, 0, &"[ERROR] task vals not initialized.".to_string());
         wrefresh(win);
         return;
       }

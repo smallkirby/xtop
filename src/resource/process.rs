@@ -10,18 +10,18 @@ use std::fs;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum ProcState {
-  RUNNING,
-  SLEEPING,
-  ZOMBIE,
-  STOPPED,
-  DEAD,
-  WAKING,
-  UNKNOWN,
+  Running,
+  Sleeping,
+  Zombie,
+  Stopped,
+  Dead,
+  Waking,
+  Unknown,
 }
 
 impl Default for ProcState {
   fn default() -> Self {
-    Self::UNKNOWN
+    Self::Unknown
   }
 }
 
@@ -98,13 +98,13 @@ impl Process {
 #[allow(non_snake_case)]
 pub fn Char2ProcState(c: char) -> ProcState {
   match c {
-    'R' => ProcState::RUNNING,
-    'S' => ProcState::SLEEPING,
-    'Z' => ProcState::ZOMBIE,
-    'T' => ProcState::STOPPED,
-    'X' => ProcState::DEAD,
-    'W' => ProcState::WAKING,
-    _ => ProcState::UNKNOWN,
+    'R' => ProcState::Running,
+    'S' => ProcState::Sleeping,
+    'Z' => ProcState::Zombie,
+    'T' => ProcState::Stopped,
+    'X' => ProcState::Dead,
+    'W' => ProcState::Waking,
+    _ => ProcState::Unknown,
   }
 }
 
@@ -134,6 +134,6 @@ mod tests {
   fn char2state_running() {
     use super::{Char2ProcState, ProcState};
     let state = Char2ProcState('R');
-    assert_eq!(state, ProcState::RUNNING);
+    assert_eq!(state, ProcState::Running);
   }
 }

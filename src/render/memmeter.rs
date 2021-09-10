@@ -56,14 +56,14 @@ impl MemMeter {
     res
   }
 
-  fn draw_single_col(&self, bar: &String, y_bottom: i32, x: i32) {
+  fn draw_single_col(&self, bar: &str, y_bottom: i32, x: i32) {
     // draw from bottom.
     for (i, c) in bar.chars().enumerate() {
       mvwaddstr(self.win, y_bottom - i as i32, x, &c.to_string());
     }
   }
 
-  fn update_upper_limit(&mut self, recent_hists: &Vec<f64>) {
+  fn update_upper_limit(&mut self, recent_hists: &[f64]) {
     let max_percent = recent_hists.iter().fold(0.0, |a, b| b.max(a));
     self.max_percent = if max_percent >= 0.5 { 1.0 } else { 0.5 };
   }

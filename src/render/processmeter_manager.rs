@@ -74,7 +74,6 @@ impl Meter for ProcessMeterManager {
                                                                      // process meters
     let processmeters_win = derwin(win, height - 1, width, 1, 0);
     let processmeters = init_meters(processmeters_win, wm, height - 1);
-    refresh();
 
     Self {
       height,

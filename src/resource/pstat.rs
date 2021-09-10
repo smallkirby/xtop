@@ -162,7 +162,7 @@ mod util {
         ss.remove(0);
         break;
       }
-      comm.push_str(&ss[0]);
+      comm.push_str(ss[0]);
       ss.remove(0);
     }
     comm
@@ -181,7 +181,7 @@ mod tests {
     let correct_stat = PStat {
       pid: 1,
       comm: String::from("systemd"),
-      state: ProcState::SLEEPING,
+      state: ProcState::Sleeping,
       ppid: 0,
       pgid: 1,
       sid: 1,

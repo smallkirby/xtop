@@ -32,7 +32,7 @@ impl MemInfo {
       }
     };
 
-    let lines: Vec<&str> = s_meminfo.split("\n").collect();
+    let lines: Vec<&str> = s_meminfo.split('\n').collect();
     let mut mem_total = 0;
     let mut mem_free = 0;
     let mut mem_available = 0;
