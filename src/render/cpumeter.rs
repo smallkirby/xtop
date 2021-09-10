@@ -71,7 +71,7 @@ impl meter::Meter for CPUMeter {
     werase(self.win);
     mvwin(self.win, y, x);
 
-    //self.render();
+    self.render();
     wrefresh(self.win);
   }
 }

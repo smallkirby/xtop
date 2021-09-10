@@ -126,14 +126,11 @@ pub fn get_updated_tty_driver(drivers: &Vec<TtyDriver>, tty_nr: u64) -> String {
     }
 
     // step3: check simple path
-    fullpath = format!("{}", driver.path);
-    match get_dev_number(&fullpath) {
-      Some(n) => {
-        if tty_nr == n {
-          return fullpath;
-        }
+    fullpath = driver.path.to_string();
+    if let Some(n) = get_dev_number(&fullpath) {
+      if tty_nr == n {
+        return fullpath;
       }
-      None => {}
     };
   }
 

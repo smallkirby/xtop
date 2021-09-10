@@ -50,7 +50,6 @@ impl Meter for CPUManager {
 
     // init each windows of cpumeter inside parent window.
     let cpumeters = init_meters(win, wm);
-    refresh();
 
     CPUManager {
       cpumeters,

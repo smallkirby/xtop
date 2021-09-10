@@ -142,7 +142,6 @@ impl WinManager {
       self.cur_y,
       self.cur_x,
     ));
-    wrefresh(self.processmanager.as_mut().unwrap().win);
   }
 
   fn init_cpugraph(&mut self, height: i32, width: i32) {
@@ -266,8 +265,6 @@ impl WinManager {
     let layouts = &self.layout.clone();
     let mut max_height_in_line = 0;
 
-    werase(self.mainwin);
-
     for layout in layouts {
       let mut go_newline = false;
       let width = match layout.ratio {
@@ -352,8 +349,8 @@ impl WinManager {
       QUIT => true,
 
       RESIZE => {
-        flushinp();
         // get new term size
+        endwin();
         refresh();
         getmaxyx(
           self.mainwin,
@@ -363,7 +360,6 @@ impl WinManager {
         wresize(self.mainwin, self.screen_height, self.screen_width);
         // resize/redraw
         self.resize_meters();
-        flushinp();
         false
       }
     }
@@ -371,6 +367,7 @@ impl WinManager {
 
   pub fn qloop(&mut self) {
     use ThreadSignal::*;
+    // channel to send signal from children.
     let (tx, rx) = mpsc::channel();
 
     let update_timer_tx = tx.clone();
@@ -387,7 +384,6 @@ impl WinManager {
         KEY_MOUSE => {
           let mut mevent: MEVENT = unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
           getmouse(&mut mevent);
-          // XXX
         }
 
         // normal key input
@@ -425,6 +421,7 @@ impl WinManager {
     loop {
       let sig = rx.recv().unwrap();
       if self.handle_thread_signal(&sig) {
+        endwin();
         break;
       }
     }
