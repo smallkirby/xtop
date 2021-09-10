@@ -355,6 +355,7 @@ impl WinManager {
       Quit => true,
 
       Resize => {
+        flushinp();
         // get new term size
         endwin();
         refresh();
@@ -366,6 +367,8 @@ impl WinManager {
         wresize(self.mainwin, self.screen_height, self.screen_width);
         // resize/redraw
         self.resize_meters();
+
+        flushinp();
         false
       }
     }
