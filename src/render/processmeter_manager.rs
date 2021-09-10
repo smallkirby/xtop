@@ -19,9 +19,19 @@ pub struct ProcessMeterManager {
   sorted_procs: Vec<process::Process>,
   processmeters: Vec<ProcessMeter>,
   highlighted_pid: Option<i32>,
+  cursor: usize,
 }
 
 impl ProcessMeterManager {
+  // XXX impl as trait method for Meter
+  pub fn handle_scroll(&mut self, y_diff: i32) {
+    use crate::util::clamp;
+    let tmp_cursor = self.cursor as i32 + y_diff;
+    self.cursor = clamp(tmp_cursor as f64, 0.0, self.sorted_procs.len() as f64) as usize;
+    self.set_procs_meter();
+    self.render();
+  }
+
   fn set_highlighted_pid(&mut self) {
     for i in 0..self.processmeters.len() {
       self.processmeters[i].highlighted_pid = self.highlighted_pid;
@@ -32,8 +42,8 @@ impl ProcessMeterManager {
     let proc_height = std::cmp::max(self.height - 1, 1) as usize;
     let num_meters = self.processmeters.len();
     let actual_height = std::cmp::min(proc_height, num_meters);
-    for i in 0..actual_height {
-      self.processmeters[i].set_proc(self.sorted_procs[i].clone());
+    for (i, j) in (self.cursor..(self.cursor + actual_height)).enumerate() {
+      self.processmeters[i].set_proc(self.sorted_procs[j % self.sorted_procs.len()].clone());
     }
   }
 
@@ -92,6 +102,7 @@ impl Meter for ProcessMeterManager {
       processmeters,
       sorted_procs: vec![],
       highlighted_pid: None,
+      cursor: 0,
     }
   }
 

@@ -376,16 +376,17 @@ impl WinManager {
       Mouse(mevent) => {
         use config::MeterName::*;
         let bstate = mevent.bstate;
-        let click_x = mevent.x;
-        let click_y = mevent.y;
+        let pos_x = mevent.x;
+        let pos_y = mevent.y;
+        let mut scroll = 0;
 
         if (bstate & BUTTON1_CLICKED as u32) != 0 {
           if let Some((layout, (y, x))) = calc::get_layout_from_click(
             &self.layout,
             self.screen_height,
             self.screen_width,
-            click_y,
-            click_x,
+            pos_y,
+            pos_x,
           ) {
             match layout.name {
               CpuMeter => self.cpumanager.as_mut().unwrap().handle_click(y, x),
@@ -396,8 +397,28 @@ impl WinManager {
               ProcMeter => self.processmanager.as_mut().unwrap().handle_click(y, x),
               Empty => {}
             };
-          } else {
-            panic!(""); // XXX
+          }
+        } else if (bstate & BUTTON4_PRESSED as u32) != 0 {
+          // wheel up
+          scroll = -1;
+        } else if (bstate & BUTTON5_PRESSED as u32) != 0 {
+          // wheel down
+          scroll = 1;
+        }
+
+        // handle scroll
+        if scroll != 0 {
+          if let Some((layout, (_, _))) = calc::get_layout_from_click(
+            &self.layout,
+            self.screen_height,
+            self.screen_width,
+            pos_y,
+            pos_x,
+          ) {
+            match layout.name {
+              ProcMeter => self.processmanager.as_mut().unwrap().handle_scroll(scroll),
+              _ => {}
+            };
           }
         }
 
