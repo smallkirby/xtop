@@ -57,7 +57,7 @@ impl Meter for MoraGraph {
     wrefresh(win);
 
     let morastring: Vec<String> = String::from(MORA)
-      .split("\n")
+      .split('\n')
       .map(|s| s.to_string())
       .collect();
 

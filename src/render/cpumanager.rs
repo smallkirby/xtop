@@ -10,22 +10,26 @@ use crate::resource::cpu;
 use ncurses::*;
 
 #[derive(Debug)]
-pub struct CPUManager {
-  pub cpumeters: Vec<cpumeter::CPUMeter>,
+pub struct CpuManager {
+  pub cpumeters: Vec<cpumeter::CpuMeter>,
   pub height: i32,
   pub width: i32,
   pub win: WINDOW,
 }
 
-impl CPUManager {
-  pub fn set_cpus(&mut self, cpus: &Vec<cpu::CPU>) {
-    for i in 0..std::cmp::min(self.cpumeters.len(), self.cpumeters.len()) {
-      self.cpumeters[i].set_cpu(cpus[i].clone());
+impl CpuManager {
+  pub fn set_cpus(&mut self, cpus: &[cpu::Cpu]) {
+    for (i, cpu) in cpus
+      .iter()
+      .enumerate()
+      .take(std::cmp::min(self.cpumeters.len(), self.cpumeters.len()))
+    {
+      self.cpumeters[i].set_cpu(*cpu);
     }
   }
 }
 
-impl Meter for CPUManager {
+impl Meter for CpuManager {
   fn render(&mut self) {
     for i in 0..self.cpumeters.len() {
       self.cpumeters[i].render();
@@ -51,7 +55,7 @@ impl Meter for CPUManager {
     // init each windows of cpumeter inside parent window.
     let cpumeters = init_meters(win, wm);
 
-    CPUManager {
+    CpuManager {
       cpumeters,
       width,
       height,
@@ -77,7 +81,7 @@ impl Meter for CPUManager {
   }
 }
 
-fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CPUMeter> {
+fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CpuMeter> {
   let mut meters = vec![];
   let num_cpu = wm.plist.cpus.len();
   let width = wm.screen_width / 2;
@@ -85,7 +89,7 @@ fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CPUMeter> {
 
   for i in 0..num_cpu {
     let (y, x) = pos_win_start(wm.plist.cpus[i].id, width);
-    let meter = cpumeter::CPUMeter::init_meter(parent, wm, height, width, y, x);
+    let meter = cpumeter::CpuMeter::init_meter(parent, wm, height, width, y, x);
     meters.push(meter);
   }
 

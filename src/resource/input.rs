@@ -59,14 +59,14 @@ impl InputDevice {
 
     let st = st.chars().collect::<Vec<_>>();
     let s: String = match state {
-      Floating => st[2..].into_iter().collect(),
+      Floating => st[2..].iter().collect(),
       Attached(_) => {
-        let __s: String = st[2..].into_iter().collect();
+        let __s: String = st[2..].iter().collect();
         let _s = __s.trim().chars().collect::<Vec<_>>();
-        _s[2..].into_iter().collect()
+        _s[2..].iter().collect()
       }
       Master => {
-        let _s: String = st[2..].into_iter().collect();
+        let _s: String = st[2..].iter().collect();
         _s.trim().to_string()
       }
     };
@@ -103,7 +103,7 @@ pub fn get_devices() -> Vec<InputDevice> {
     Err(_) => return devices,
   };
   let mut current_master_id = 0;
-  for s in xinput_output.split("\n") {
+  for s in xinput_output.split('\n') {
     let mut device = match InputDevice::from_line(s) {
       Some(_d) => _d,
       None => break,

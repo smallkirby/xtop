@@ -9,7 +9,7 @@ use std::fs;
 
 #[derive(Debug)]
 pub struct StatCpuTime {
-  pub id: CPUID,
+  pub id: CpuId,
   pub usertime: u64,
   pub nicetime: u64,
   pub systemtime: u64,
@@ -23,32 +23,31 @@ pub struct StatCpuTime {
 }
 
 #[derive(Debug)]
-pub enum CPUID {
+pub enum CpuId {
   Id(u32),
   Average,
 }
 
 pub fn get_btime() -> i64 {
   let stat = fs::read_to_string("/proc/stat").unwrap();
-  for s in stat.split("\n").into_iter() {
+  for s in stat.split('\n').into_iter() {
     if !s.starts_with("btime") {
       continue;
     }
-    let ss: Vec<&str> = s.split(" ").collect();
+    let ss: Vec<&str> = s.split(' ').collect();
     return ss[1].parse().unwrap();
   }
   panic!("failed to fetch btime.");
 }
 
 // scan one cpu and update both its time and period.
-fn _scan_cpu_time(cpu: &mut CPU) {
+fn _scan_cpu_time(cpu: &mut Cpu) {
   let cpu_times = get_cpu_time();
 
-  for i in 0..cpu_times.len() {
-    let info = &cpu_times[i];
+  for info in cpu_times {
     let id = match info.id {
-      CPUID::Average => continue,
-      CPUID::Id(_id) => _id,
+      CpuId::Average => continue,
+      CpuId::Id(_id) => _id,
     };
     if id != cpu.id {
       continue;
@@ -117,8 +116,8 @@ pub fn get_cpu_time() -> Vec<StatCpuTime> {
       let _id = times[0];
       times.remove(0);
       match _id {
-        "cpu" => CPUID::Average,
-        _ => CPUID::Id(_id[3..].parse().unwrap()),
+        "cpu" => CpuId::Average,
+        _ => CpuId::Id(_id[3..].parse().unwrap()),
       }
     };
     let usertime = popi(&mut times);
@@ -153,7 +152,7 @@ pub fn get_cpu_time() -> Vec<StatCpuTime> {
 fn read_stat_string() -> Vec<String> {
   fs::read_to_string("/proc/stat")
     .unwrap()
-    .split("\n")
+    .split('\n')
     .map(|s| s.to_string())
     .collect()
 }
@@ -174,7 +173,7 @@ mod tests {
   #[test]
   fn test_get_cpu_time() {
     let cpu_times = get_cpu_time();
-    assert_eq!(cpu_times.len() >= 1, true);
+    assert_eq!(!cpu_times.is_empty(), true);
     println!("cpu times: {:?}", cpu_times);
   }
 }

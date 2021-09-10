@@ -13,8 +13,8 @@ pub fn read_cmd_files(proc: &mut process::Process, dname: &str) {
     Err(_) => return,
   };
 
-  if cmdline.len() == 0 {
-    if proc.state != process::ProcState::ZOMBIE {
+  if cmdline.is_empty() {
+    if proc.state != process::ProcState::Zombie {
       proc.is_kernel_thread = true;
     }
     proc.cmdline = String::from("[kthread]");

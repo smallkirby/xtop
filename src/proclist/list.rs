@@ -16,8 +16,8 @@ use std::fs;
 pub struct ProcList {
   pub plist: HashMap<pid_t, process::Process>,
   pub tty_drivers: Vec<tty::TtyDriver>,
-  pub cpus: Vec<cpu::CPU>,
-  pub aggregated_cpu: cpu::CPU,
+  pub cpus: Vec<cpu::Cpu>,
+  pub aggregated_cpu: cpu::Cpu,
   pub loadaverage: loadavg::LoadAvg,
   pub kernel_threads: u32,
   pub userland_threads: u32,
@@ -27,12 +27,18 @@ pub struct ProcList {
   pub uptime: up::Uptime,
 }
 
+impl Default for ProcList {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl ProcList {
   pub fn new() -> Self {
     let plist = HashMap::new();
     let mut tty_drivers = vec![];
     let cpus = cpu::init_cpus();
-    let aggregated_cpu = cpu::CPU {
+    let aggregated_cpu = cpu::Cpu {
       ..Default::default()
     };
     init_tty_drivers(&mut tty_drivers);
@@ -80,7 +86,7 @@ impl ProcList {
         Err(_) => continue,
       };
       let name = ent.file_name().into_string().unwrap();
-      if !meta.is_dir() || !name.chars().nth(0).unwrap().is_numeric() {
+      if !meta.is_dir() || !name.chars().next().unwrap().is_numeric() {
         continue;
       }
 
@@ -93,8 +99,9 @@ impl ProcList {
       } else {
         0
       };
-      let pre_existing = if !self.plist.contains_key(&pid) {
-        self.plist.insert(pid, process::Process::new(pid));
+      let pre_existing = if let std::collections::hash_map::Entry::Vacant(e) = self.plist.entry(pid)
+      {
+        e.insert(process::Process::new(pid));
         false
       } else {
         true
@@ -105,7 +112,7 @@ impl ProcList {
         let proc = self.plist.get_mut(&pid).unwrap();
 
         // update process info
-        proc.tgid = if ppid.is_some() { ppid.unwrap() } else { pid };
+        proc.tgid = if let Some(tgid) = ppid { tgid } else { pid };
         proc.is_userland_thread = proc.pid != proc.tgid;
       }
 
@@ -132,7 +139,7 @@ impl ProcList {
       if !proc.is_kernel_thread {
         if ppid.is_none() {
           // root process: reading smas file is high-cost work. so read it once every two times.
-          if proc.is_smaps_read == true {
+          if proc.is_smaps_read {
             proc.is_smaps_read = false;
           } else {
             procmem::read_smaps_rollup(proc, &format!("{}/{}", dname, pid));
@@ -148,8 +155,8 @@ impl ProcList {
       let old_tty_nr = proc.tty_nr;
       pstat::update_with_stat(proc, dname, self.btime, self.jiffy);
 
-      if old_tty_nr != proc.tty_nr && self.tty_drivers.len() != 0 {
-        if proc.is_tty_read == true {
+      if old_tty_nr != proc.tty_nr && !self.tty_drivers.is_empty() {
+        if proc.is_tty_read {
           proc.is_tty_read = false;
         } else {
           proc.tty_name = tty::get_updated_tty_driver(&self.tty_drivers, proc.tty_nr as u64);

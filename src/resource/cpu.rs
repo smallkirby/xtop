@@ -12,13 +12,13 @@ use std::{
 };
 
 #[derive(Copy, Clone)]
-pub enum CPUFREQ {
+pub enum CpuFreq {
   Valid(u64), // kHz
   Absent,
   Offline,
 }
 
-impl fmt::Display for CPUFREQ {
+impl fmt::Display for CpuFreq {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match *self {
       Self::Valid(freq) => write!(f, "{:>4} MHz", freq / 1000),
@@ -28,15 +28,15 @@ impl fmt::Display for CPUFREQ {
   }
 }
 
-impl fmt::Debug for CPUFREQ {
+impl fmt::Debug for CpuFreq {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "{}", self)
   }
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct CPU {
-  pub freq: CPUFREQ,
+pub struct Cpu {
+  pub freq: CpuFreq,
   pub id: u32,
 
   // times
@@ -73,10 +73,10 @@ pub struct CPU {
   pub totaltime: u64,
 }
 
-impl Default for CPU {
+impl Default for Cpu {
   fn default() -> Self {
     Self {
-      freq: CPUFREQ::Absent,
+      freq: CpuFreq::Absent,
       id: 0,
       usertime: 0,
       nicetime: 0,
@@ -107,12 +107,12 @@ impl Default for CPU {
   }
 }
 
-impl CPU {
+impl Cpu {
   pub fn new(id: u32) -> Self {
     let freq = get_cpu_freq(id);
 
     Self {
-      freq: CPUFREQ::Valid(freq),
+      freq: CpuFreq::Valid(freq),
       id,
       ..Default::default()
     }
@@ -120,11 +120,11 @@ impl CPU {
 
   pub fn freq_update(&mut self) {
     let freq = get_cpu_freq(self.id);
-    self.freq = CPUFREQ::Valid(freq);
+    self.freq = CpuFreq::Valid(freq);
   }
 
   pub fn clear_state(&mut self) {
-    self.freq = CPUFREQ::Offline;
+    self.freq = CpuFreq::Offline;
   }
 
   pub fn percent(&self) -> f64 {
@@ -151,11 +151,11 @@ impl CPU {
   }
 }
 
-pub fn init_cpus() -> Vec<CPU> {
+pub fn init_cpus() -> Vec<Cpu> {
   let mut cpus = vec![];
   let avail_cpus = num_available_cpus();
   for i in 0..avail_cpus {
-    cpus.push(CPU::new(i));
+    cpus.push(Cpu::new(i));
   }
 
   cpus
@@ -209,10 +209,10 @@ fn _get_cpu_freq(cpu: u32) -> u64 {
 fn _get_cpu_freq_fallback(cpu: u32) -> u64 {
   let mut is_target = false;
   let _cpuinfo = fs::read_to_string("/proc/cpuinfo").unwrap();
-  let cpuinfo: Vec<&str> = _cpuinfo.split("\n").collect();
+  let cpuinfo: Vec<&str> = _cpuinfo.split('\n').collect();
 
   for l in cpuinfo {
-    let params: Vec<&str> = l.split(":").map(|p| p.trim()).collect();
+    let params: Vec<&str> = l.split(':').map(|p| p.trim()).collect();
     if params.len() != 2 {
       continue;
     }
@@ -240,8 +240,8 @@ fn online_cpus() -> (u32, u32) {
 }
 
 // update information of each cpus.
-pub fn update_time_and_period(cpus: &mut Vec<CPU>, aggregated: &mut CPU) {
-  use crate::resource::stat::CPUID;
+pub fn update_time_and_period(cpus: &mut Vec<Cpu>, aggregated: &mut Cpu) {
+  use crate::resource::stat::CpuId;
   let cpu_times = stat::get_cpu_time(); // index 0 is aggregated CPU
 
   for i in 0..cpu_times.len() {
@@ -252,12 +252,12 @@ pub fn update_time_and_period(cpus: &mut Vec<CPU>, aggregated: &mut CPU) {
     };
     let info = &cpu_times[i];
     match info.id {
-      CPUID::Average => {
+      CpuId::Average => {
         if i != 0 {
           continue;
         }
       } // XXX should panic?
-      CPUID::Id(id) => {
+      CpuId::Id(id) => {
         if cpu.id != id {
           continue;
         }
@@ -338,7 +338,7 @@ mod tests {
   #[allow(dead_code)]
   fn test_update_cpu_time() {
     let mut cpus = init_cpus();
-    let mut aggregated = CPU {
+    let mut aggregated = Cpu {
       ..Default::default()
     };
     println!("{:?}", (cpus[0], aggregated));
@@ -354,7 +354,7 @@ mod tests {
   #[allow(dead_code)]
   fn test_percentage() {
     let mut cpus = init_cpus();
-    let mut aggregated = CPU {
+    let mut aggregated = Cpu {
       ..Default::default()
     };
     let dur = std::time::Duration::from_millis(500);
