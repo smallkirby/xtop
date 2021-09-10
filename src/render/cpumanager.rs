@@ -60,18 +60,20 @@ impl Meter for CPUManager {
     }
   }
 
-  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, _y: i32, _x: i32) {
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
     self.width = width;
     self.height = height;
 
     wresize(self.win, self.height, self.width);
     werase(self.win);
+    mvwin(self.win, y, x);
+    // moving subwindows is not recommended (though i don't know why).
+    // hence, destroy and re-create subwins.
     for i in 0..self.cpumeters.len() {
       let (y, x) = pos_win_start(i as u32, self.width / 2);
-      self.cpumeters[i].resize(self.win, 1, self.width / 2, y, x);
+      self.cpumeters[i].recreate(self.win, 1, self.width / 2, y, x);
     }
 
-    self.render();
     wrefresh(self.win);
   }
 }

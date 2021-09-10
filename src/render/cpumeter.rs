@@ -9,6 +9,7 @@ use crate::render::{color, meter};
 use crate::resource::cpu;
 use ncurses::*;
 
+use super::meter::Meter;
 use super::window::WinManager;
 
 #[derive(Debug)]
@@ -69,12 +70,24 @@ impl meter::Meter for CPUMeter {
     wresize(self.win, height, width);
     werase(self.win);
     mvwin(self.win, y, x);
+
+    //self.render();
+    wrefresh(self.win);
   }
 }
 
 impl CPUMeter {
   pub fn set_cpu(&mut self, cpu: cpu::CPU) {
     self.cpu = Some(cpu);
+  }
+
+  pub fn recreate(&mut self, parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
+    self.width = width;
+    self.height = height;
+    werase(self.win);
+    delwin(self.win);
+    self.win = create_meter_win(parent, height, width, y, x);
+    self.render();
   }
 }
 
