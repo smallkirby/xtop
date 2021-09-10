@@ -23,11 +23,39 @@ pub struct ProcessMeterManager {
 }
 
 impl ProcessMeterManager {
+  pub fn render_scroll_bar(&mut self) {
+    use crate::render::color::cpair::*;
+    let num_procs = self.sorted_procs.len();
+    let proc_height = std::cmp::max(self.height - 1, 1) as usize;
+    let num_meters = self.processmeters.len();
+    let actual_height = std::cmp::min(proc_height, num_meters);
+    let bar_height = std::cmp::max((actual_height / num_procs) as i32, 1);
+
+    let x0 = self.width - 1;
+    let y0 = ((self.cursor as f64 / num_procs as f64) * actual_height as f64) as i32;
+    // erase bar
+    for y in 0..self.height {
+      wattron(self.win, COLOR_PAIR(PAIR_DARK_DEFAULT));
+      mvwaddstr(self.win, y as i32, x0, " ");
+      wattroff(self.win, COLOR_PAIR(PAIR_DARK_DEFAULT));
+    }
+    // draw bar
+    for y in y0..(y0 + bar_height) {
+      mvwaddstr(self.win, y, x0, "▇");
+    }
+
+    wrefresh(self.win);
+  }
+
   // XXX impl as trait method for Meter
   pub fn handle_scroll(&mut self, y_diff: i32) {
     use crate::util::clamp;
     let tmp_cursor = self.cursor as i32 + y_diff;
-    self.cursor = clamp(tmp_cursor as f64, 0.0, self.sorted_procs.len() as f64) as usize;
+    self.cursor = clamp(
+      tmp_cursor as f64,
+      0.0,
+      (self.sorted_procs.len() - self.processmeters.len()) as f64,
+    ) as usize;
     self.set_procs_meter();
     self.render();
   }
@@ -71,6 +99,7 @@ impl Meter for ProcessMeterManager {
     for i in 0..self.processmeters.len() {
       self.processmeters[i].render();
     }
+    self.render_scroll_bar();
   }
 
   fn init_meter(
