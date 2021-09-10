@@ -8,6 +8,7 @@ mod colors {
   pub static RED: i16 = 20;
   pub static ORANGE: i16 = 21;
   pub static DARK_WHITE: i16 = 22;
+  pub static PINK: i16 = 23;
 }
 
 pub mod cpair {
@@ -17,6 +18,7 @@ pub mod cpair {
   pub static PAIR_DANGER: i16 = 4;
   pub static PAIR_MED_DANGER: i16 = 5;
   pub static PAIR_DARK_DEFAULT: i16 = 6;
+  pub static PAIR_CUTE: i16 = 7;
 }
 
 pub fn initialize_color() {
@@ -40,6 +42,7 @@ pub fn define_colors() {
   init_color_rgb_m(RED, 0xCC241D, 4);
   init_color_rgb_m(ORANGE, 0xFE8019, 4);
   init_color_rgb_m(DARK_WHITE, 0x504945, 4);
+  init_color_rgb_m(PINK, 0xd3869b, 4);
 
   // init pairs
   init_pair(DEFAULT, WHITE, BROWN_BLACK);
@@ -48,6 +51,7 @@ pub fn define_colors() {
   init_pair(PAIR_DANGER, RED, BROWN_BLACK);
   init_pair(PAIR_MED_DANGER, ORANGE, BROWN_BLACK);
   init_pair(PAIR_DARK_DEFAULT, RED, DARK_WHITE);
+  init_pair(PAIR_CUTE, PINK, BROWN_BLACK);
 }
 
 pub fn mvwaddstr_color(win: WINDOW, y: i32, x: i32, s: &str, cpair: i16) {

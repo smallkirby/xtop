@@ -1,4 +1,5 @@
 pub mod color;
+pub mod commandbox;
 pub mod cpugraph;
 pub mod cpumanager;
 pub mod cpumeter;

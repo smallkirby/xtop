@@ -30,6 +30,7 @@ pub fn get_layout_from_click(
     let height = match layout.height {
       Height::Line(l) => l as i32,
       Height::Rest => sheight - cy,
+      Height::Minus(l) => (sheight - cy) - l as i32,
     };
     max_height_in_line = std::cmp::max(max_height_in_line, height);
 

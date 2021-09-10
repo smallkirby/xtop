@@ -14,6 +14,7 @@ pub enum MeterName {
   MemMeter,
   Inputs,
   ProcMeter,
+  CommandBox,
   Empty,
 }
 
@@ -21,6 +22,7 @@ pub enum MeterName {
 pub enum Height {
   Rest,
   Line(u64),
+  Minus(u64),
 }
 
 // size of width.
@@ -40,7 +42,7 @@ pub struct Layout {
 use Height::*;
 use Size::*;
 
-static DEFAULT_LAYOUT: [Layout; 8] = [
+static DEFAULT_LAYOUT: [Layout; 9] = [
   Layout {
     name: MeterName::CpuMeter,
     height: Line(4),
@@ -78,6 +80,11 @@ static DEFAULT_LAYOUT: [Layout; 8] = [
   },
   Layout {
     name: MeterName::ProcMeter,
+    height: Height::Minus(1),
+    ratio: Size::Rest,
+  },
+  Layout {
+    name: MeterName::CommandBox,
     height: Height::Rest,
     ratio: Size::Rest,
   },

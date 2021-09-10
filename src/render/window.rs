@@ -2,7 +2,8 @@ use crate::consts::*;
 use crate::layout::{calc, config};
 use crate::proclist::list;
 use crate::render::{
-  color, cpugraph, cpumanager, inputmeter, memmeter, meter::Meter, processmeter_manager, taskmeter,
+  color, commandbox, cpugraph, cpumanager, inputmeter, memmeter, meter::Meter,
+  processmeter_manager, taskmeter,
 };
 use crate::resource::mem;
 use ncurses::*;
@@ -46,6 +47,9 @@ pub struct WinManager {
   // Layout of components
   layout: Vec<config::Layout>,
 
+  // CommandBox
+  pub commandbox: Option<commandbox::CommandBox>,
+
   // cursor
   pub cur_x: i32,
   pub cur_y: i32,
@@ -88,6 +92,7 @@ impl WinManager {
       let height = match layout.height {
         Height::Line(l) => l as i32,
         Height::Rest => self.screen_height - self.cur_y,
+        Height::Minus(l) => (self.screen_height - self.cur_y) - l as i32,
       };
       max_height_in_line = std::cmp::max(max_height_in_line, height);
 
@@ -98,6 +103,10 @@ impl WinManager {
         MemMeter => self.init_memmeter(height, width),
         Inputs => self.init_inputmeter(height, width),
         ProcMeter => self.init_process_meters(height, width),
+        CommandBox => {
+          self.init_commandbox(height, width);
+          eprintln!("height: {}", height)
+        }
         Empty => {}
       }
 
@@ -178,6 +187,17 @@ impl WinManager {
     ));
   }
 
+  pub fn init_commandbox(&mut self, height: i32, width: i32) {
+    self.commandbox = Some(commandbox::CommandBox::init_meter(
+      self.mainwin,
+      self,
+      height,
+      width,
+      self.cur_y,
+      self.cur_x,
+    ));
+  }
+
   fn update_cpu_meters(&mut self) -> Option<()> {
     let cpumanager = self.cpumanager.as_mut()?;
     self.plist.update_cpus();
@@ -228,6 +248,12 @@ impl WinManager {
     Some(())
   }
 
+  fn update_commandbox(&mut self) -> Option<()> {
+    let commandbox = self.commandbox.as_mut()?;
+    commandbox.render();
+    Some(())
+  }
+
   fn resize_cpumanager(&mut self, height: i32, width: i32) -> Option<()> {
     let cpumanager = self.cpumanager.as_mut()?;
     cpumanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
@@ -264,6 +290,12 @@ impl WinManager {
     Some(())
   }
 
+  fn resize_commandbox(&mut self, height: i32, width: i32) -> Option<()> {
+    let commandbox = self.commandbox.as_mut()?;
+    commandbox.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
+  }
+
   fn resize_meters(&mut self) {
     use config::{Height, MeterName::*, Size};
 
@@ -284,6 +316,7 @@ impl WinManager {
       let height = match layout.height {
         Height::Line(l) => l as i32,
         Height::Rest => self.screen_height - self.cur_y,
+        Height::Minus(l) => (self.screen_height - self.cur_y) - l as i32,
       };
       max_height_in_line = std::cmp::max(max_height_in_line, height);
 
@@ -294,6 +327,7 @@ impl WinManager {
         MemMeter => self.resize_memmeter(height, width),
         Inputs => self.resize_inputmeter(height, width),
         ProcMeter => self.resize_process_meters(height, width),
+        CommandBox => self.resize_commandbox(height, width),
         Empty => None,
       };
 
@@ -320,6 +354,7 @@ impl WinManager {
         self.update_cpugraph();
         self.update_inputmeter();
         self.update_memmeter();
+        self.update_commandbox(); // XXX
 
         // update values
         self.plist.total_tasks = 0;
@@ -395,6 +430,7 @@ impl WinManager {
               MemMeter => self.memmeter.as_mut().unwrap().handle_click(y, x),
               Inputs => self.inputmeter.as_mut().unwrap().handle_click(y, x),
               ProcMeter => self.processmanager.as_mut().unwrap().handle_click(y, x),
+              CommandBox => {}
               Empty => {}
             };
           }
@@ -515,6 +551,7 @@ impl WinManager {
       processmanager: None,
       cpu_graph: None,
       inputmeter: None,
+      commandbox: None,
       layout: vec![],
       cur_x: 0,
       cur_y: 0,

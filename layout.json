@@ -54,6 +54,13 @@
   },
   {
     "name": "ProcMeter",
+    "height": {
+      "Minus": 1
+    },
+    "ratio": "Rest"
+  },
+  {
+    "name": "CommandBox",
     "height": "Rest",
     "ratio": "Rest"
   }

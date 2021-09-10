@@ -1,3 +1,4 @@
+pub mod command;
 pub mod consts;
 pub mod layout;
 pub mod proclist;
