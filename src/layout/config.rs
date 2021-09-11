@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum MeterName {
   CpuMeter,
+  NetMeter,
   CpuGraph,
   TaskMeter,
   MemMeter,
@@ -42,7 +43,7 @@ pub struct Layout {
 use Height::*;
 use Size::*;
 
-static DEFAULT_LAYOUT: [Layout; 9] = [
+static DEFAULT_LAYOUT: [Layout; 10] = [
   Layout {
     name: MeterName::CpuMeter,
     height: Line(4),
@@ -66,7 +67,12 @@ static DEFAULT_LAYOUT: [Layout; 9] = [
   Layout {
     name: MeterName::CpuGraph,
     height: Line(15),
-    ratio: Ratio(0.5),
+    ratio: Ratio(0.28),
+  },
+  Layout {
+    name: MeterName::NetMeter,
+    height: Line(15),
+    ratio: Ratio(0.22),
   },
   Layout {
     name: MeterName::MemMeter,

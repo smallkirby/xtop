@@ -88,13 +88,13 @@ impl Meter for CpuGraph {
     let y_bottom = height;
 
     let hists = self.get_recent_history(width as usize);
+    self.update_upper_limit(&hists);
     let current_usage = hists.last().copied().unwrap();
     for (i, hist) in hists.iter().enumerate() {
       let bar = self.get_bar(height, *hist);
       self.draw_single_bar(&bar, y_bottom, x_start + i as i32 + 1);
     }
 
-    self.update_upper_limit(&hists);
     // draw header
     mvwaddstr_color(
       win,

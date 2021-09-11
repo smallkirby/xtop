@@ -33,7 +33,7 @@
       "Line": 15
     },
     "ratio": {
-      "Ratio": 0.5 
+      "Ratio": 0.28
     }
   },
   {
@@ -43,6 +43,15 @@
     },
     "ratio": {
       "Ratio": 0.16667 
+    }
+  },
+  {
+    "name": "NetMeter",
+    "height": {
+      "Line": 15
+    },
+    "ratio": {
+      "Ratio": 0.22
     }
   },
   {

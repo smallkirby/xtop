@@ -3,10 +3,10 @@ use crate::consts::*;
 use crate::layout::{calc, config};
 use crate::proclist::list;
 use crate::render::{
-  color, commandbox, cpugraph, cpumanager, inputmeter, memmeter, meter::Meter,
+  color, commandbox, cpugraph, cpumanager, inputmeter, memmeter, meter::Meter, netmeter,
   processmeter_manager, taskmeter,
 };
-use crate::resource::mem;
+use crate::resource::{mem, net};
 use ncurses::*;
 use signal_hook::{consts::*, iterator::Signals};
 use std::sync::{mpsc, Arc, Mutex};
@@ -40,6 +40,9 @@ pub struct WinManager {
 
   // CPU graph
   pub cpu_graph: Option<cpugraph::CpuGraph>,
+
+  // Net graph
+  pub netmeter: Option<netmeter::NetMeter>,
 
   // Memory meter
   pub memmeter: Option<memmeter::MemMeter>,
@@ -107,6 +110,7 @@ impl WinManager {
         MemMeter => self.init_memmeter(height, width),
         Inputs => self.init_inputmeter(height, width),
         ProcMeter => self.init_process_meters(height, width),
+        NetMeter => self.init_netmeter(height, width),
         CommandBox => self.init_commandbox(height, width),
         Empty => {}
       }
@@ -157,6 +161,17 @@ impl WinManager {
 
   fn init_cpugraph(&mut self, height: i32, width: i32) {
     self.cpu_graph = Some(cpugraph::CpuGraph::init_meter(
+      self.mainwin,
+      self,
+      height,
+      width,
+      self.cur_y,
+      self.cur_x,
+    ));
+  }
+
+  fn init_netmeter(&mut self, height: i32, width: i32) {
+    self.netmeter = Some(netmeter::NetMeter::init_meter(
       self.mainwin,
       self,
       height,
@@ -234,6 +249,15 @@ impl WinManager {
     Some(())
   }
 
+  fn update_netmeter(&mut self) -> Option<()> {
+    let netmeter = self.netmeter.as_mut()?;
+    let statistics = net::get_statistic_all();
+
+    netmeter.set_statistics(&statistics);
+    netmeter.render();
+    Some(())
+  }
+
   fn update_memmeter(&mut self) -> Option<()> {
     let memmeter = self.memmeter.as_mut()?;
     let usage = mem::MemInfo::new();
@@ -270,6 +294,12 @@ impl WinManager {
   fn resize_cpugraph(&mut self, height: i32, width: i32) -> Option<()> {
     let cpugraph = self.cpu_graph.as_mut()?;
     cpugraph.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
+  }
+
+  fn resize_netmeter(&mut self, height: i32, width: i32) -> Option<()> {
+    let netmeter = self.cpu_graph.as_mut()?;
+    netmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
     Some(())
   }
 
@@ -328,6 +358,7 @@ impl WinManager {
         MemMeter => self.resize_memmeter(height, width),
         Inputs => self.resize_inputmeter(height, width),
         ProcMeter => self.resize_process_meters(height, width),
+        NetMeter => self.resize_netmeter(height, width),
         CommandBox => self.resize_commandbox(height, width),
         Empty => None,
       };
@@ -355,6 +386,7 @@ impl WinManager {
         self.update_cpugraph();
         self.update_inputmeter();
         self.update_memmeter();
+        self.update_netmeter();
 
         // update values
         self.plist.total_tasks = 0;
@@ -432,6 +464,7 @@ impl WinManager {
               MemMeter => self.memmeter.as_mut().unwrap().handle_click(y, x),
               Inputs => self.inputmeter.as_mut().unwrap().handle_click(y, x),
               ProcMeter => self.processmanager.as_mut().unwrap().handle_click(y, x),
+              NetMeter => self.netmeter.as_mut().unwrap().handle_click(y, x),
               CommandBox => {}
               Empty => {}
             };
@@ -590,6 +623,7 @@ impl WinManager {
       taskmeter: None,
       processmanager: None,
       cpu_graph: None,
+      netmeter: None,
       inputmeter: None,
       commandbox: None,
       layout: vec![],
