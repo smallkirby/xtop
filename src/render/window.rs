@@ -1,3 +1,4 @@
+use crate::command::commander;
 use crate::consts::*;
 use crate::layout::{calc, config};
 use crate::proclist::list;
@@ -8,7 +9,7 @@ use crate::render::{
 use crate::resource::mem;
 use ncurses::*;
 use signal_hook::{consts::*, iterator::Signals};
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
@@ -17,6 +18,8 @@ enum ThreadSignal {
   DoUpdate,
   Resize,
   Mouse(MEVENT),
+  Command(char),
+  CommandActivate,
   Quit,
 }
 
@@ -49,6 +52,7 @@ pub struct WinManager {
 
   // CommandBox
   pub commandbox: Option<commandbox::CommandBox>,
+  pub commander: Arc<Mutex<commander::Commander>>,
 
   // cursor
   pub cur_x: i32,
@@ -103,10 +107,7 @@ impl WinManager {
         MemMeter => self.init_memmeter(height, width),
         Inputs => self.init_inputmeter(height, width),
         ProcMeter => self.init_process_meters(height, width),
-        CommandBox => {
-          self.init_commandbox(height, width);
-          eprintln!("height: {}", height)
-        }
+        CommandBox => self.init_commandbox(height, width),
         Empty => {}
       }
 
@@ -460,6 +461,25 @@ impl WinManager {
 
         false
       }
+
+      Command(c) => {
+        let mut commander = self.commander.lock().unwrap();
+        let commandbox = self.commandbox.as_mut().unwrap();
+        if *c == '\n' {
+          let command = commandbox.do_enter();
+          commander.execute(&command);
+        } else {
+          commandbox.addstr(&c.to_string());
+        }
+        false
+      }
+
+      CommandActivate => {
+        let mut commander = self.commander.lock().unwrap();
+        commander.start_input();
+
+        false
+      }
     }
   }
 
@@ -475,6 +495,7 @@ impl WinManager {
     });
 
     let input_sender_tx = tx.clone();
+    let input_commander = self.commander.clone();
     let _input_sender = thread::spawn(move || loop {
       let ch = getch();
       match ch {
@@ -484,6 +505,12 @@ impl WinManager {
           getmouse(&mut mevent);
           input_sender_tx.send(ThreadSignal::Mouse(mevent)).unwrap();
         }
+        KEY_BACKSPACE => {
+          if input_commander.lock().unwrap().is_active() {
+            input_sender_tx.send(Command('\x08')).unwrap();
+            continue;
+          }
+        }
 
         // normal key input
         _ => {
@@ -491,6 +518,12 @@ impl WinManager {
             Some(_c) => _c,
             None => continue,
           };
+          // if commander is active, send all normal key as Command signal.
+          if input_commander.lock().unwrap().is_active() {
+            input_sender_tx.send(Command(c)).unwrap();
+            continue;
+          }
+          // otherwise, check the key and send appropriate signal.
           match c {
             'q' => {
               input_sender_tx.send(Quit).unwrap();
@@ -498,6 +531,9 @@ impl WinManager {
             }
             'U' => {
               input_sender_tx.send(DoUpdate).unwrap();
+            }
+            ';' => {
+              input_sender_tx.send(CommandActivate).unwrap();
             }
             _ => {}
           }
@@ -552,6 +588,7 @@ impl WinManager {
       cpu_graph: None,
       inputmeter: None,
       commandbox: None,
+      commander: Arc::new(Mutex::new(commander::Commander::new())),
       layout: vec![],
       cur_x: 0,
       cur_y: 0,

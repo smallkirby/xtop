@@ -18,31 +18,55 @@ pub struct CommandBox {
 }
 
 impl CommandBox {
-  fn draw_header(&self) {
+  pub fn do_enter(&mut self) -> String {
+    let command = self.command_buffer.clone();
+    self.command_buffer.clear();
+    self.render();
+
+    command
+  }
+
+  pub fn addstr(&mut self, s: &str) {
+    match s {
+      // back space
+      "\x08" => {
+        if !self.command_buffer.is_empty() {
+          self.command_buffer = self.command_buffer[0..(self.command_buffer.len() - 1)].to_string();
+        }
+      }
+      // any other key
+      _ => {
+        self.command_buffer += s;
+      }
+    }
+    self.render();
+    wrefresh(self.win);
+  }
+
+  fn draw_header(&self) -> usize {
     use crate::render::color::cpair::*;
-    let mut x = 0;
 
-    let s = "  ❦";
-    wattron(self.win, COLOR_PAIR(PAIR_CUTE));
-    mvwaddstr(self.win, 0, x, s);
-    wattroff(self.win, COLOR_PAIR(PAIR_CUTE));
-    x += s.len() as i32;
+    let s = "  ❦ command ❦";
+    wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+    mvwaddstr(self.win, 0, 0, s);
+    wattroff(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
 
-    let s = &self.command_buffer;
-    mvwaddstr(self.win, 0, x, s);
-    x += s.len() as i32;
-
-    let s = " ❦ ";
-    wattron(self.win, COLOR_PAIR(PAIR_CUTE));
-    mvwaddstr(self.win, 0, x, s);
-    wattroff(self.win, COLOR_PAIR(PAIR_CUTE));
+    s.len()
   }
 }
 
 impl Meter for CommandBox {
   fn render(&mut self) {
+    use crate::render::color::cpair::*;
+    let mut x = 0;
+    werase(self.win);
+
     // draw header
-    self.draw_header();
+    x += self.draw_header() as i32;
+
+    wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+
+    mvwaddstr(self.win, 0, x, &self.command_buffer);
 
     wrefresh(self.win);
   }
@@ -64,7 +88,7 @@ impl Meter for CommandBox {
       width,
       height,
       win,
-      command_buffer: "command".to_string(),
+      command_buffer: "".to_string(),
     }
   }
 
