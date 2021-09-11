@@ -9,6 +9,74 @@ use crate::render::{color::*, meter::*, processmeter::*, window::*};
 use crate::resource::process;
 use ncurses::*;
 
+#[derive(Clone)]
+pub enum FilterType {
+  Cmd(String),
+  Pid(i32),
+  Nothing,
+}
+
+impl Default for FilterType {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
+impl FilterType {
+  pub fn new() -> Self {
+    Self::Nothing
+  }
+}
+
+pub struct ProcFilter {
+  filt: FilterType,
+}
+
+impl Default for ProcFilter {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
+impl ProcFilter {
+  pub fn new() -> Self {
+    Self {
+      filt: FilterType::Nothing,
+    }
+  }
+
+  pub fn set_filter(&mut self, filt: FilterType) {
+    self.filt = filt;
+  }
+
+  pub fn filter_procs(&self, procs: &[process::Process]) -> Vec<process::Process> {
+    use FilterType::*;
+    match &self.filt {
+      Nothing => procs.to_vec(),
+      Pid(pid) => procs
+        .iter()
+        .filter_map(|p| {
+          if p.pid == *pid {
+            Some(p.to_owned())
+          } else {
+            None
+          }
+        })
+        .collect(),
+      Cmd(cmd) => procs
+        .iter()
+        .filter_map(|p| {
+          if p.cmdline.contains(cmd) {
+            Some(p.to_owned())
+          } else {
+            None
+          }
+        })
+        .collect(),
+    }
+  }
+}
+
 pub struct ProcessMeterManager {
   pub height: i32,
   pub width: i32,
@@ -20,21 +88,51 @@ pub struct ProcessMeterManager {
   processmeters: Vec<ProcessMeter>,
   highlighted_pid: Option<i32>,
   cursor: usize,
+  filter: ProcFilter,
 }
 
 impl ProcessMeterManager {
+  pub fn num_active_meters(&self) -> usize {
+    let mut count = 0;
+    for meter in self.processmeters.iter() {
+      if meter.is_shown {
+        count += 1;
+      }
+    }
+
+    count
+  }
+
+  pub fn apply_filter(&mut self) -> Vec<process::Process> {
+    self.filter.filter_procs(&self.sorted_procs)
+  }
+
+  pub fn set_filter(&mut self, filt: FilterType) {
+    self.filter.set_filter(filt);
+    for meter in &mut self.processmeters {
+      meter.is_shown = true;
+    }
+  }
+
   pub fn render_scroll_bar(&mut self) {
     use crate::render::color::cpair::*;
-    let num_procs = self.sorted_procs.len();
+    let num_procs = self.apply_filter().len();
     let proc_height = std::cmp::max(self.height - 1, 1) as usize;
     let num_meters = self.processmeters.len();
     let actual_height = std::cmp::min(proc_height, num_meters);
-    let bar_height = std::cmp::max((actual_height / num_procs) as i32, 1);
+    let bar_height = if actual_height >= num_procs {
+      actual_height as i32
+    } else {
+      std::cmp::max(
+        ((actual_height as f64 / num_procs as f64) * actual_height as f64) as i32,
+        1,
+      )
+    };
 
     let x0 = self.width - 1;
-    let y0 = ((self.cursor as f64 / num_procs as f64) * actual_height as f64) as i32;
+    let y0 = ((self.cursor as f64 / num_procs as f64) * actual_height as f64) as i32 + 1;
     // erase bar
-    for y in 0..self.height {
+    for y in 1..self.height {
       wattron(self.win, COLOR_PAIR(PAIR_DARK_ONLY));
       mvwaddstr(self.win, y as i32, x0, " ");
       wattroff(self.win, COLOR_PAIR(PAIR_DARK_ONLY));
@@ -51,11 +149,16 @@ impl ProcessMeterManager {
   pub fn handle_scroll(&mut self, y_diff: i32) {
     use crate::util::clamp;
     let tmp_cursor = self.cursor as i32 + y_diff;
-    self.cursor = clamp(
-      tmp_cursor as f64,
-      0.0,
-      (self.sorted_procs.len() - self.processmeters.len()) as f64,
-    ) as usize;
+    let sorted_procs = self.apply_filter();
+    self.cursor = if sorted_procs.len() - self.num_active_meters() > 0 {
+      clamp(
+        tmp_cursor as f64,
+        0.0,
+        (self.apply_filter().len() - self.processmeters.len()) as f64,
+      ) as usize
+    } else {
+      0
+    };
     self.set_procs_meter();
     self.render();
   }
@@ -70,8 +173,20 @@ impl ProcessMeterManager {
     let proc_height = std::cmp::max(self.height - 1, 1) as usize;
     let num_meters = self.processmeters.len();
     let actual_height = std::cmp::min(proc_height, num_meters);
+    let filtered_procs = self.apply_filter();
+    let mut num_filled_meters = 0;
     for (i, j) in (self.cursor..(self.cursor + actual_height)).enumerate() {
-      self.processmeters[i].set_proc(self.sorted_procs[j % self.sorted_procs.len()].clone());
+      if i >= filtered_procs.len() {
+        break;
+      }
+      self.processmeters[i].set_proc(filtered_procs[j].clone());
+      num_filled_meters += 1;
+    }
+
+    if num_filled_meters != actual_height {
+      for i in num_filled_meters..actual_height {
+        self.processmeters[i].hide();
+      }
     }
   }
 
@@ -132,6 +247,7 @@ impl Meter for ProcessMeterManager {
       sorted_procs: vec![],
       highlighted_pid: None,
       cursor: 0,
+      filter: ProcFilter::new(),
     }
   }
 
@@ -182,6 +298,10 @@ impl Meter for ProcessMeterManager {
   fn handle_click(&mut self, y: i32, x: i32) {
     use crate::util::clamp;
     let meter_ix = clamp((y - 1) as f64, 0.0, self.processmeters.len() as f64) as usize;
+    if !self.processmeters[meter_ix].is_shown {
+      return;
+    }
+
     let pid = self.processmeters[meter_ix].process.as_ref().unwrap().pid;
     match self.highlighted_pid {
       Some(current_pid) => {

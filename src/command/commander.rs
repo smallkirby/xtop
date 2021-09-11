@@ -1,4 +1,5 @@
-use super::input;
+use super::{input, process};
+use crate::render::processmeter_manager::ProcessMeterManager;
 
 #[derive(Debug)]
 pub enum CommandType {
@@ -30,7 +31,7 @@ impl Commander {
     }
   }
 
-  pub fn execute(&mut self, command: &str) -> String {
+  pub fn execute(&mut self, command: &str, procmanager: &mut ProcessMeterManager) -> String {
     use self::CommandType::*;
     self.is_active = false;
     let tokens = command.split_whitespace().collect::<Vec<&str>>();
@@ -41,7 +42,7 @@ impl Commander {
     let typ = CommandType::from(tokens[0]);
     match typ {
       Input => input::execute(tokens[1..].to_vec()),
-      Process => "command not implemented".into(),
+      Process => process::execute(tokens[1..].to_vec(), procmanager),
       Invalid => "invalid command".into(),
     }
   }

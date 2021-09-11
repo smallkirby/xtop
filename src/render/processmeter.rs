@@ -9,6 +9,8 @@ use crate::render::{color, meter, window};
 use crate::resource::process;
 use ncurses::*;
 
+use super::meter::Meter;
+
 static PID_WIDTH: i32 = 6;
 static CPU_WIDTH: i32 = 6;
 
@@ -27,6 +29,7 @@ pub struct ProcessMeter {
   pub subwins: SubWins,
   pub process: Option<process::Process>,
   pub highlighted_pid: Option<i32>,
+  pub is_shown: bool,
 }
 
 impl ProcessMeter {
@@ -36,6 +39,11 @@ impl ProcessMeter {
 
   pub fn del(&mut self) {
     delwin(self.win);
+  }
+
+  pub fn hide(&mut self) {
+    self.is_shown = false;
+    self.render();
   }
 
   // XXX this is not comm, it's cmdline.
@@ -59,6 +67,15 @@ impl ProcessMeter {
     cur_x += exe_path_file.len() as i32 + 1;
     mvwprintw(comm_win, 0, cur_x, &args);
   }
+
+  fn erase_all(&self) {
+    let subwins = &self.subwins;
+    werase(subwins.comm_win);
+    werase(subwins.pid_win);
+    werase(subwins.cpu_win);
+    werase(self.win);
+    wrefresh(self.win);
+  }
 }
 
 impl meter::Meter for ProcessMeter {
@@ -66,7 +83,11 @@ impl meter::Meter for ProcessMeter {
     let win = self.win;
     let subwins = &self.subwins;
     wattroff(subwins.comm_win, A_REVERSE());
-    werase(win);
+    self.erase_all();
+
+    if !self.is_shown {
+      return;
+    }
 
     let proc = match self.process.as_ref() {
       Some(_proc) => _proc,
@@ -112,6 +133,7 @@ impl meter::Meter for ProcessMeter {
       subwins,
       process: None,
       highlighted_pid: None,
+      is_shown: true,
     }
   }
 
@@ -202,5 +224,6 @@ pub fn _init_meter(parent: WINDOW, width: i32, y: i32, x: i32) -> ProcessMeter {
     subwins,
     process: None,
     highlighted_pid: None,
+    is_shown: true,
   }
 }

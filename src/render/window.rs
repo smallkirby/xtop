@@ -467,7 +467,7 @@ impl WinManager {
         let commandbox = self.commandbox.as_mut().unwrap();
         if *c == '\n' {
           let command = commandbox.do_enter();
-          let result = commander.execute(&command);
+          let result = commander.execute(&command, self.processmanager.as_mut().unwrap());
           commandbox.set_result(&result);
         } else {
           commandbox.addstr(&c.to_string());
