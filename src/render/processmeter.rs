@@ -34,6 +34,7 @@ pub struct ProcessMeter {
 
 impl ProcessMeter {
   pub fn set_proc(&mut self, proc: process::Process) {
+    self.is_shown = true;
     self.process = Some(proc);
   }
 

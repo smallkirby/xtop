@@ -112,6 +112,7 @@ impl ProcessMeterManager {
     for meter in &mut self.processmeters {
       meter.is_shown = true;
     }
+    self.render();
   }
 
   pub fn render_scroll_bar(&mut self) {
