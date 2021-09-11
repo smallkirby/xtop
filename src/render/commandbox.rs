@@ -15,18 +15,34 @@ pub struct CommandBox {
   pub width: i32,
   pub win: WINDOW,
   command_buffer: String,
+  result_buffer: String,
+  is_active: bool,
 }
 
 impl CommandBox {
+  pub fn set_result(&mut self, result: &str) {
+    self.result_buffer = result.into();
+    self.render();
+  }
+
+  pub fn start_input(&mut self) {
+    self.is_active = true;
+    self.command_buffer.clear();
+    self.result_buffer.clear();
+    self.render();
+  }
+
   pub fn do_enter(&mut self) -> String {
     let command = self.command_buffer.clone();
     self.command_buffer.clear();
+    self.is_active = false;
     self.render();
 
     command
   }
 
   pub fn addstr(&mut self, s: &str) {
+    self.result_buffer.clear();
     match s {
       // back space
       "\x08" => {
@@ -45,13 +61,37 @@ impl CommandBox {
 
   fn draw_header(&self) -> usize {
     use crate::render::color::cpair::*;
+    let mut total_len = 0;
 
-    let s = "  ❦ command ❦";
-    wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
-    mvwaddstr(self.win, 0, 0, s);
-    wattroff(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+    let s = " ❦ ";
+    if self.is_active {
+      wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD() | A_BLINK());
+      mvwaddstr(self.win, 0, 0, s);
+      wattroff(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD() | A_BLINK());
+    } else {
+      wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+      mvwaddstr(self.win, 0, 0, s);
+      wattroff(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+    }
+    total_len += s.chars().count();
 
-    s.len()
+    let s = "command";
+    mvwaddstr(self.win, 0, total_len as i32, s);
+    total_len += s.chars().count();
+
+    let s = " ❦  ";
+    if self.is_active {
+      wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD() | A_BLINK());
+      mvwaddstr(self.win, 0, total_len as i32, s);
+      wattroff(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD() | A_BLINK());
+    } else {
+      wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+      mvwaddstr(self.win, 0, total_len as i32, s);
+      wattroff(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+    }
+    total_len += s.chars().count();
+
+    total_len
   }
 }
 
@@ -64,9 +104,15 @@ impl Meter for CommandBox {
     // draw header
     x += self.draw_header() as i32;
 
-    wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
-
-    mvwaddstr(self.win, 0, x, &self.command_buffer);
+    if self.result_buffer.is_empty() {
+      wattron(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+      mvwaddstr(self.win, 0, x, &self.command_buffer);
+      wattroff(self.win, COLOR_PAIR(PAIR_CUTE) | A_BOLD());
+    } else {
+      wattron(self.win, COLOR_PAIR(PAIR_DARK) | A_BOLD());
+      mvwaddstr(self.win, 0, x, &self.result_buffer);
+      wattroff(self.win, COLOR_PAIR(PAIR_DARK) | A_BOLD());
+    }
 
     wrefresh(self.win);
   }
@@ -88,7 +134,9 @@ impl Meter for CommandBox {
       width,
       height,
       win,
-      command_buffer: "".to_string(),
+      command_buffer: "".into(),
+      result_buffer: "".into(),
+      is_active: false,
     }
   }
 

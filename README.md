@@ -4,7 +4,7 @@
 
 extremely-simplified top
 
-![log4](./images/log4.png)
+![log5](./images/log5.png)
 
 
 ## Depends
@@ -30,11 +30,11 @@ Intended only on Linux(Ubuntu).
 | ☀ | task list |
 | ☁ | command window |
 | ⛈ | search process |
-| ⛈ | scrollable process list |
-| ⛈ | modest colorize |
+| 🌤 | scrollable process list |
+| ☁️ | modest colorize |
 | ⛈ | configurable layout |
 | ⛈ | network usage |
-| ⛈ | memory usage |
+| ☁️ | memory usage |
 | ⛈ | kernel config list |
 
 

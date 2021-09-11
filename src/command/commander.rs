@@ -30,19 +30,19 @@ impl Commander {
     }
   }
 
-  pub fn execute(&mut self, command: &str) {
+  pub fn execute(&mut self, command: &str) -> String {
     use self::CommandType::*;
     self.is_active = false;
     let tokens = command.split_whitespace().collect::<Vec<&str>>();
     if tokens.is_empty() {
-      return;
+      return "".into();
     }
 
     let typ = CommandType::from(tokens[0]);
     match typ {
       Input => input::execute(tokens[1..].to_vec()),
-      Process => {}
-      Invalid => {}
+      Process => "command not implemented".into(),
+      Invalid => "invalid command".into(),
     }
   }
 

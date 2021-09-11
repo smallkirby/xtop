@@ -17,8 +17,9 @@ pub mod cpair {
   pub static PAIR_HEAD: i16 = 3;
   pub static PAIR_DANGER: i16 = 4;
   pub static PAIR_MED_DANGER: i16 = 5;
-  pub static PAIR_DARK_DEFAULT: i16 = 6;
+  pub static PAIR_DARK_ONLY: i16 = 6;
   pub static PAIR_CUTE: i16 = 7;
+  pub static PAIR_DARK: i16 = 8;
 }
 
 pub fn initialize_color() {
@@ -50,8 +51,9 @@ pub fn define_colors() {
   init_pair(PAIR_HEAD, LIGHT_GREEN, BROWN_BLACK);
   init_pair(PAIR_DANGER, RED, BROWN_BLACK);
   init_pair(PAIR_MED_DANGER, ORANGE, BROWN_BLACK);
-  init_pair(PAIR_DARK_DEFAULT, RED, DARK_WHITE);
+  init_pair(PAIR_DARK_ONLY, RED, DARK_WHITE);
   init_pair(PAIR_CUTE, PINK, BROWN_BLACK);
+  init_pair(PAIR_DARK, DARK_WHITE, BROWN_BLACK);
 }
 
 pub fn mvwaddstr_color(win: WINDOW, y: i32, x: i32, s: &str, cpair: i16) {

@@ -467,7 +467,8 @@ impl WinManager {
         let commandbox = self.commandbox.as_mut().unwrap();
         if *c == '\n' {
           let command = commandbox.do_enter();
-          commander.execute(&command);
+          let result = commander.execute(&command);
+          commandbox.set_result(&result);
         } else {
           commandbox.addstr(&c.to_string());
         }
@@ -476,7 +477,9 @@ impl WinManager {
 
       CommandActivate => {
         let mut commander = self.commander.lock().unwrap();
+        let commandbox = self.commandbox.as_mut().unwrap();
         commander.start_input();
+        commandbox.start_input();
 
         false
       }

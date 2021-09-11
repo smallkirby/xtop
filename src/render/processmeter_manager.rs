@@ -35,9 +35,9 @@ impl ProcessMeterManager {
     let y0 = ((self.cursor as f64 / num_procs as f64) * actual_height as f64) as i32;
     // erase bar
     for y in 0..self.height {
-      wattron(self.win, COLOR_PAIR(PAIR_DARK_DEFAULT));
+      wattron(self.win, COLOR_PAIR(PAIR_DARK_ONLY));
       mvwaddstr(self.win, y as i32, x0, " ");
-      wattroff(self.win, COLOR_PAIR(PAIR_DARK_DEFAULT));
+      wattroff(self.win, COLOR_PAIR(PAIR_DARK_ONLY));
     }
     // draw bar
     for y in y0..(y0 + bar_height) {
