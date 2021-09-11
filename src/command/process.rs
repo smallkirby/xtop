@@ -21,6 +21,36 @@ impl ProcCommand {
       _ => Invalid,
     }
   }
+
+  pub fn to_usage(&self) -> String {
+    use ProcCommand::*;
+    match self {
+      Search => "s <pid | cmd>: filter processes".into(),
+      UnsetFilter => "u: unset all filters".into(),
+      Invalid => "".into(),
+    }
+  }
+
+  pub fn all_usage() -> Vec<String> {
+    use ProcCommand::*;
+    let subs = [Search, UnsetFilter];
+    subs.iter().map(|s| s.to_usage()).collect()
+  }
+}
+
+#[derive(Default)]
+pub struct ProcUsage {}
+
+impl ProcUsage {
+  pub fn complete(part: &str) -> Option<String> {
+    let tokens: Vec<&str> = part.split_whitespace().collect();
+    if tokens.is_empty() {
+      return None;
+    }
+    let subcommand = ProcCommand::from(tokens[0]);
+
+    Some(subcommand.to_usage())
+  }
 }
 
 pub fn execute(_command: Vec<&str>, procmanager: &mut ProcessMeterManager) -> String {

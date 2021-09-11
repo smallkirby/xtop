@@ -355,7 +355,6 @@ impl WinManager {
         self.update_cpugraph();
         self.update_inputmeter();
         self.update_memmeter();
-        self.update_commandbox(); // XXX
 
         // update values
         self.plist.total_tasks = 0;
@@ -383,6 +382,8 @@ impl WinManager {
 
         self.update_task_meter();
         self.update_process_meters();
+
+        self.update_commandbox(); // should be at last
 
         refresh();
 
@@ -470,7 +471,7 @@ impl WinManager {
           let result = commander.execute(&command, self.processmanager.as_mut().unwrap());
           commandbox.set_result(&result);
         } else {
-          commandbox.addstr(&c.to_string());
+          commandbox.addstr(&c.to_string(), &mut commander);
         }
         false
       }
@@ -479,7 +480,7 @@ impl WinManager {
         let mut commander = self.commander.lock().unwrap();
         let commandbox = self.commandbox.as_mut().unwrap();
         commander.start_input();
-        commandbox.start_input();
+        commandbox.start_input(&mut commander);
 
         false
       }
@@ -591,10 +592,10 @@ impl WinManager {
       cpu_graph: None,
       inputmeter: None,
       commandbox: None,
-      commander: Arc::new(Mutex::new(commander::Commander::new())),
       layout: vec![],
       cur_x: 0,
       cur_y: 0,
+      commander: Arc::new(Mutex::new(commander::Commander::new())),
     }
   }
 }

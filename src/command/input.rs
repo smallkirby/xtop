@@ -8,31 +8,46 @@ use crate::resource::input::{get_devices, InputDevice, State};
 
 use std::process::Command;
 
-pub enum InputSubcommand {
+pub enum InputCommand {
   Kill,
   ReattachAll,
   Invalid,
 }
 
-impl InputSubcommand {
+impl InputCommand {
   pub fn from(s: &str) -> Self {
-    use InputSubcommand::*;
+    use InputCommand::*;
     match s {
       "k" | "kill" => Kill,
       "r" => ReattachAll,
       _ => Invalid,
     }
   }
+
+  pub fn to_usage(&self) -> String {
+    use InputCommand::*;
+    match self {
+      Kill => "k <ID>: float slave device".into(),
+      ReattachAll => "r: reattach all slaves to its master".into(),
+      Invalid => "".into(),
+    }
+  }
+
+  pub fn all_usage() -> Vec<String> {
+    use InputCommand::*;
+    let subs = [Kill, ReattachAll];
+    subs.iter().map(|s| s.to_usage()).collect()
+  }
 }
 
 pub fn execute(_command: Vec<&str>) -> String {
-  use InputSubcommand::*;
+  use InputCommand::*;
   if _command.is_empty() {
     return "invalid subcommand".into();
   }
   let mut command = _command.iter();
 
-  let subcommand = InputSubcommand::from(command.next().unwrap());
+  let subcommand = InputCommand::from(command.next().unwrap());
   match subcommand {
     Kill => {
       if command.len() == 1 {
