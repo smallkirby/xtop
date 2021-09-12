@@ -235,7 +235,7 @@ impl Meter for ProcessMeterManager {
     let header_subwins = create_header_win(header_win, width, 0, 0); // XXX should hold subwins?
                                                                      // process meters
     let processmeters_win = derwin(win, height - 1, width, 1, 0);
-    let processmeters = init_meters(processmeters_win, wm, height - 1);
+    let processmeters = init_meters(processmeters_win, wm, height - 1, width);
 
     Self {
       height,
@@ -321,9 +321,8 @@ impl Meter for ProcessMeterManager {
   }
 }
 
-fn init_meters(parent: WINDOW, wm: &mut WinManager, height: i32) -> Vec<ProcessMeter> {
+fn init_meters(parent: WINDOW, wm: &mut WinManager, height: i32, width: i32) -> Vec<ProcessMeter> {
   let mut meters = vec![];
-  let width = wm.screen_width;
   for i in 0..height {
     let meter = ProcessMeter::init_meter(parent, wm, height, width, i, 0);
     meters.push(meter);

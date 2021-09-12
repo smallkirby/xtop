@@ -3,6 +3,7 @@ pub mod commandbox;
 pub mod cpugraph;
 pub mod cpumanager;
 pub mod cpumeter;
+pub mod dmesglist;
 pub mod inputmeter;
 pub mod memmeter;
 pub mod meter;

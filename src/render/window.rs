@@ -3,10 +3,10 @@ use crate::consts::*;
 use crate::layout::{calc, config};
 use crate::proclist::list;
 use crate::render::{
-  color, commandbox, cpugraph, cpumanager, inputmeter, memmeter, meter::Meter, netmeter,
+  color, commandbox, cpugraph, cpumanager, dmesglist, inputmeter, memmeter, meter::Meter, netmeter,
   processmeter_manager, taskmeter,
 };
-use crate::resource::{mem, net};
+use crate::resource::{dmesg, mem, net};
 use ncurses::*;
 use signal_hook::{consts::*, iterator::Signals};
 use std::sync::{mpsc, Arc, Mutex};
@@ -49,6 +49,9 @@ pub struct WinManager {
 
   // Input meter
   pub inputmeter: Option<inputmeter::InputMeter>,
+
+  // Dmesg list
+  pub dmesglist: Option<dmesglist::DmesgList>,
 
   // Layout of components
   layout: Vec<config::Layout>,
@@ -109,6 +112,7 @@ impl WinManager {
         TaskMeter => self.init_taskmeter(height, width),
         MemMeter => self.init_memmeter(height, width),
         Inputs => self.init_inputmeter(height, width),
+        DmesgList => self.init_dmesglist(height, width),
         ProcMeter => self.init_process_meters(height, width),
         NetMeter => self.init_netmeter(height, width),
         CommandBox => self.init_commandbox(height, width),
@@ -183,6 +187,17 @@ impl WinManager {
 
   fn init_memmeter(&mut self, height: i32, width: i32) {
     self.memmeter = Some(memmeter::MemMeter::init_meter(
+      self.mainwin,
+      self,
+      height,
+      width,
+      self.cur_y,
+      self.cur_x,
+    ));
+  }
+
+  fn init_dmesglist(&mut self, height: i32, width: i32) {
+    self.dmesglist = Some(dmesglist::DmesgList::init_meter(
       self.mainwin,
       self,
       height,
@@ -273,6 +288,14 @@ impl WinManager {
     Some(())
   }
 
+  fn update_dmesglist(&mut self) -> Option<()> {
+    let dmesglist = self.dmesglist.as_mut()?;
+    let dmesgs = dmesg::get_kmsgs();
+    dmesglist.set_dmesg(dmesgs);
+    dmesglist.render();
+    Some(())
+  }
+
   fn update_commandbox(&mut self) -> Option<()> {
     let commandbox = self.commandbox.as_mut()?;
     commandbox.render();
@@ -306,6 +329,12 @@ impl WinManager {
   fn resize_memmeter(&mut self, height: i32, width: i32) -> Option<()> {
     let memmeter = self.memmeter.as_mut()?;
     memmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
+  }
+
+  fn resize_dmesglist(&mut self, height: i32, width: i32) -> Option<()> {
+    let dmesglist = self.dmesglist.as_mut()?;
+    dmesglist.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
     Some(())
   }
 
@@ -358,6 +387,7 @@ impl WinManager {
         MemMeter => self.resize_memmeter(height, width),
         Inputs => self.resize_inputmeter(height, width),
         ProcMeter => self.resize_process_meters(height, width),
+        DmesgList => self.resize_dmesglist(height, width),
         NetMeter => self.resize_netmeter(height, width),
         CommandBox => self.resize_commandbox(height, width),
         Empty => None,
@@ -387,6 +417,7 @@ impl WinManager {
         self.update_inputmeter();
         self.update_memmeter();
         self.update_netmeter();
+        self.update_dmesglist();
 
         // update values
         self.plist.total_tasks = 0;
@@ -464,6 +495,7 @@ impl WinManager {
               MemMeter => self.memmeter.as_mut().unwrap().handle_click(y, x),
               Inputs => self.inputmeter.as_mut().unwrap().handle_click(y, x),
               ProcMeter => self.processmanager.as_mut().unwrap().handle_click(y, x),
+              DmesgList => self.dmesglist.as_mut().unwrap().handle_click(y, x),
               NetMeter => self.netmeter.as_mut().unwrap().handle_click(y, x),
               CommandBox => {}
               Empty => {}
@@ -625,6 +657,7 @@ impl WinManager {
       cpu_graph: None,
       netmeter: None,
       inputmeter: None,
+      dmesglist: None,
       commandbox: None,
       layout: vec![],
       cur_x: 0,

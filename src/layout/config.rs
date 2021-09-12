@@ -14,6 +14,7 @@ pub enum MeterName {
   TaskMeter,
   MemMeter,
   Inputs,
+  DmesgList,
   ProcMeter,
   CommandBox,
   Empty,
@@ -43,7 +44,7 @@ pub struct Layout {
 use Height::*;
 use Size::*;
 
-static DEFAULT_LAYOUT: [Layout; 10] = [
+static DEFAULT_LAYOUT: [Layout; 11] = [
   Layout {
     name: MeterName::CpuMeter,
     height: Line(4),
@@ -86,6 +87,11 @@ static DEFAULT_LAYOUT: [Layout; 10] = [
   },
   Layout {
     name: MeterName::ProcMeter,
+    height: Height::Minus(1),
+    ratio: Ratio(0.75),
+  },
+  Layout {
+    name: MeterName::DmesgList,
     height: Height::Minus(1),
     ratio: Size::Rest,
   },
