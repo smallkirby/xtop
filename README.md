@@ -1,5 +1,3 @@
-# 🚧 UNDER CONSTRUCTION 🚧
-
 # xtop 
 
 extremely-simplified top
@@ -51,11 +49,11 @@ todo
 | 🌤 | process list |
 | ☀ | task list |
 | ☁ | command window |
-| ⛈ | search process |
-| 🌤 | scrollable process list |
-| ☁️ | modest colorize |
-| ⛈ | configurable layout |
-| ⛈ | network usage |
+| ☀ | search process |
+| ☀ | scrollable process list |
+| 🌤 | modest colorize |
+| 🌤 | configurable layout |
+| ☁️ | network usage |
 | ☁️ | memory usage |
 | ⛈ | kernel config list |
 
