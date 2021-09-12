@@ -70,14 +70,14 @@ static DEFAULT_LAYOUT: [Layout; 10] = [
     ratio: Ratio(0.28),
   },
   Layout {
-    name: MeterName::NetMeter,
-    height: Line(15),
-    ratio: Ratio(0.22),
-  },
-  Layout {
     name: MeterName::MemMeter,
     height: Line(15),
     ratio: Ratio(0.16667),
+  },
+  Layout {
+    name: MeterName::NetMeter,
+    height: Line(15),
+    ratio: Ratio(0.22),
   },
   Layout {
     name: MeterName::Inputs,
