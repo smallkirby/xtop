@@ -4,6 +4,15 @@
     "height": {
       "Line": 4
     },
+    "ratio": {
+      "Ratio": 0.75
+    }
+  },
+  {
+    "name": "IoMeter",
+    "height": {
+      "Line": 4 
+    },
     "ratio": "Rest"
   },
   {

@@ -5,6 +5,7 @@ pub mod cpumanager;
 pub mod cpumeter;
 pub mod dmesglist;
 pub mod inputmeter;
+pub mod iometer;
 pub mod memmeter;
 pub mod meter;
 pub mod netmeter;

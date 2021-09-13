@@ -53,7 +53,7 @@ impl Meter for CpuManager {
     );
 
     // init each windows of cpumeter inside parent window.
-    let cpumeters = init_meters(win, wm);
+    let cpumeters = init_meters(win, wm, height, width);
 
     CpuManager {
       cpumeters,
@@ -83,10 +83,15 @@ impl Meter for CpuManager {
   fn handle_click(&mut self, _y: i32, _x: i32) {}
 }
 
-fn init_meters(parent: WINDOW, wm: &mut WinManager) -> Vec<cpumeter::CpuMeter> {
+fn init_meters(
+  parent: WINDOW,
+  wm: &mut WinManager,
+  height: i32,
+  width: i32,
+) -> Vec<cpumeter::CpuMeter> {
   let mut meters = vec![];
   let num_cpu = wm.plist.cpus.len();
-  let width = wm.screen_width / 2;
+  let width = width / 2;
   let height = 1;
 
   for i in 0..num_cpu {
