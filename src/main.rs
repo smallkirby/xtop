@@ -11,7 +11,7 @@ fn main() {
 #[cfg(not(all(target_os = "linux")))]
 fn main() {
   println!("xtop needs below:");
-  println!(" - Linux (intended on Ubuntu only)");
+  println!(" - Linux environment (intended on Ubuntu only)");
   println!(" - ncursesw is installed and wide feature is enabled.");
-  println!("Any conditions are not fulfilled in your environment.");
+  println!("Some conditions are not fulfilled in your environment.");
 }

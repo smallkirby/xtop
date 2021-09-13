@@ -1,6 +1,6 @@
 use crate::command::commander;
 use crate::consts::*;
-use crate::layout::{calc, config};
+use crate::layout::{calc, config, config::MeterName};
 use crate::proclist::list;
 use crate::render::{
   color, commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter, meter::Meter,
@@ -84,11 +84,7 @@ impl WinManager {
     mainwin
   }
 
-  // XXX check of layout file should occur before init of screen.
-  // or, should terminate windows before panic to show appropriate message.
   pub fn init_meters(&mut self) {
-    use config::MeterName::*;
-
     let layouts = config::read_layout_config();
     let fixed_layouts = calc::get_fixed_layouts(&layouts, self.screen_height, self.screen_width);
 
@@ -97,132 +93,137 @@ impl WinManager {
       let width = layout.width;
       self.cur_y = layout.y;
       self.cur_x = layout.x;
-      match layout.name {
-        CpuMeter => self.init_cpumanager(height, width),
-        CpuGraph => self.init_cpugraph(height, width),
-        TaskMeter => self.init_taskmeter(height, width),
-        MemMeter => self.init_memmeter(height, width),
-        Inputs => self.init_inputmeter(height, width),
-        DmesgList => self.init_dmesglist(height, width),
-        ProcMeter => self.init_process_meters(height, width),
-        NetMeter => self.init_netmeter(height, width),
-        IoMeter => self.init_iometer(height, width),
-        CommandBox => self.init_commandbox(height, width),
-        Empty => {}
-      }
+      self.init_meter_general(layout.name.clone(), height, width);
     }
 
     self.layout = layouts;
   }
 
-  fn init_cpumanager(&mut self, height: i32, width: i32) {
-    self.cpumanager = Some(cpumanager::CpuManager::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
+  fn init_meter_general(&mut self, name: MeterName, height: i32, width: i32) {
+    use crate::layout::config::MeterName::*;
+    match name {
+      CpuMeter => {
+        self.cpumanager = Some(cpumanager::CpuManager::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      CpuGraph => {
+        self.cpu_graph = Some(cpugraph::CpuGraph::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      TaskMeter => {
+        self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      MemMeter => {
+        self.memmeter = Some(memmeter::MemMeter::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      Inputs => {
+        self.inputmeter = Some(inputmeter::InputMeter::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      DmesgList => {
+        self.dmesglist = Some(dmesglist::DmesgList::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      ProcMeter => {
+        self.processmanager = Some(processmeter_manager::ProcessMeterManager::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      NetMeter => {
+        self.netmeter = Some(netmeter::NetMeter::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      IoMeter => {
+        self.iometer = Some(iometer::IoMeter::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      CommandBox => {
+        self.commandbox = Some(commandbox::CommandBox::init_meter(
+          self.mainwin,
+          self,
+          height,
+          width,
+          self.cur_y,
+          self.cur_x,
+        ))
+      }
+      Empty => return,
+    };
   }
 
-  fn init_taskmeter(&mut self, height: i32, width: i32) {
-    self.taskmeter = Some(taskmeter::TaskMeter::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
-  }
+  fn resize_meter_general(&mut self, name: MeterName, height: i32, width: i32) -> Option<()> {
+    use crate::layout::config::MeterName::*;
 
-  fn init_process_meters(&mut self, height: i32, width: i32) {
-    self.processmanager = Some(processmeter_manager::ProcessMeterManager::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
-  }
-
-  fn init_cpugraph(&mut self, height: i32, width: i32) {
-    self.cpu_graph = Some(cpugraph::CpuGraph::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
-  }
-
-  fn init_netmeter(&mut self, height: i32, width: i32) {
-    self.netmeter = Some(netmeter::NetMeter::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
-  }
-
-  fn init_iometer(&mut self, height: i32, width: i32) {
-    self.iometer = Some(iometer::IoMeter::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
-  }
-
-  fn init_memmeter(&mut self, height: i32, width: i32) {
-    self.memmeter = Some(memmeter::MemMeter::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
-  }
-
-  fn init_dmesglist(&mut self, height: i32, width: i32) {
-    self.dmesglist = Some(dmesglist::DmesgList::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
-  }
-
-  pub fn init_inputmeter(&mut self, height: i32, width: i32) {
-    self.inputmeter = Some(inputmeter::InputMeter::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
-  }
-
-  pub fn init_commandbox(&mut self, height: i32, width: i32) {
-    self.commandbox = Some(commandbox::CommandBox::init_meter(
-      self.mainwin,
-      self,
-      height,
-      width,
-      self.cur_y,
-      self.cur_x,
-    ));
+    let meter: Box<&mut dyn Meter> = match name {
+      CpuMeter => Box::new(self.cpumanager.as_mut()?),
+      CpuGraph => Box::new(self.cpu_graph.as_mut()?),
+      TaskMeter => Box::new(self.taskmeter.as_mut()?),
+      MemMeter => Box::new(self.memmeter.as_mut()?),
+      Inputs => Box::new(self.inputmeter.as_mut()?),
+      DmesgList => Box::new(self.dmesglist.as_mut()?),
+      ProcMeter => Box::new(self.processmanager.as_mut()?),
+      NetMeter => Box::new(self.netmeter.as_mut()?),
+      IoMeter => Box::new(self.iometer.as_mut()?),
+      CommandBox => Box::new(self.commandbox.as_mut()?),
+      Empty => return Some(()),
+    };
+    meter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
+    Some(())
   }
 
   fn update_cpu_meters(&mut self) -> Option<()> {
@@ -304,69 +305,7 @@ impl WinManager {
     Some(())
   }
 
-  fn resize_cpumanager(&mut self, height: i32, width: i32) -> Option<()> {
-    let cpumanager = self.cpumanager.as_mut()?;
-    cpumanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_taskmeter(&mut self, height: i32, width: i32) -> Option<()> {
-    let taskmeter = self.taskmeter.as_mut()?;
-    taskmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_cpugraph(&mut self, height: i32, width: i32) -> Option<()> {
-    let cpugraph = self.cpu_graph.as_mut()?;
-    cpugraph.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_netmeter(&mut self, height: i32, width: i32) -> Option<()> {
-    let netmeter = self.cpu_graph.as_mut()?;
-    netmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_iometer(&mut self, height: i32, width: i32) -> Option<()> {
-    let iometer = self.iometer.as_mut()?;
-    iometer.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_memmeter(&mut self, height: i32, width: i32) -> Option<()> {
-    let memmeter = self.memmeter.as_mut()?;
-    memmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_dmesglist(&mut self, height: i32, width: i32) -> Option<()> {
-    let dmesglist = self.dmesglist.as_mut()?;
-    dmesglist.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_inputmeter(&mut self, height: i32, width: i32) -> Option<()> {
-    let inputmeter = self.inputmeter.as_mut()?;
-    inputmeter.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_process_meters(&mut self, height: i32, width: i32) -> Option<()> {
-    let processmanager = self.processmanager.as_mut()?;
-    processmanager.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
-  fn resize_commandbox(&mut self, height: i32, width: i32) -> Option<()> {
-    let commandbox = self.commandbox.as_mut()?;
-    commandbox.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
-    Some(())
-  }
-
   fn resize_meters(&mut self) {
-    use config::MeterName::*;
-
     let layouts = config::read_layout_config();
     let fixed_layouts = calc::get_fixed_layouts(&layouts, self.screen_height, self.screen_width);
 
@@ -375,19 +314,7 @@ impl WinManager {
       let width = layout.width;
       self.cur_y = layout.y;
       self.cur_x = layout.x;
-      match layout.name {
-        CpuMeter => self.resize_cpumanager(height, width),
-        CpuGraph => self.resize_cpugraph(height, width),
-        TaskMeter => self.resize_taskmeter(height, width),
-        MemMeter => self.resize_memmeter(height, width),
-        Inputs => self.resize_inputmeter(height, width),
-        DmesgList => self.resize_dmesglist(height, width),
-        ProcMeter => self.resize_process_meters(height, width),
-        NetMeter => self.resize_netmeter(height, width),
-        IoMeter => self.resize_iometer(height, width),
-        CommandBox => self.resize_commandbox(height, width),
-        Empty => None,
-      };
+      self.resize_meter_general(layout.name.clone(), height, width);
     }
   }
 
@@ -628,12 +555,31 @@ impl WinManager {
     }
   }
 
+  fn check_validity() -> Result<(), String> {
+    // check validity of layout file
+    let layout = config::read_layout_config();
+    match calc::check_layout_validity(&layout) {
+      Ok(()) => {}
+      Err(s) => return Err(s),
+    }
+
+    Ok(())
+  }
+
   pub fn new() -> Self {
+    // before initialize, check some validity
+    if let Err(s) = Self::check_validity() {
+      eprintln!("Error: {}", s);
+      std::process::exit(1);
+    }
+
+    // create windows
     let mainwin = Self::initialize();
     let mut screen_height = 0;
     let mut screen_width = 0;
     getmaxyx(stdscr(), &mut screen_height, &mut screen_width);
 
+    // init process list
     let plist = list::ProcList::new();
 
     Self {
