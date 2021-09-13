@@ -10,7 +10,6 @@ use crate::render::{color::*, executer::manager::WinManager, meter::*};
 use ncurses::*;
 
 static MAXBUFSZ: usize = 300; // XXX should decide dynamically.
-static THRESHOLD: u64 = 500;
 
 pub struct IoMeter {
   pub height: i32,
@@ -32,8 +31,8 @@ impl Meter for IoMeter {
   }
 
   fn init_meter(
-    parent: WINDOW,
-    wm: &mut WinManager,
+    _parent: WINDOW,
+    _wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,
@@ -49,7 +48,7 @@ impl Meter for IoMeter {
     IoMeter { width, height, win }
   }
 
-  fn resize(&mut self, parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
+  fn resize(&mut self, _parent: WINDOW, height: i32, width: i32, y: i32, x: i32) {
     self.height = height;
     self.width = width;
     wresize(self.win, height, width);

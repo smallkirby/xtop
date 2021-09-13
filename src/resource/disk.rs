@@ -98,7 +98,7 @@ pub fn get_diskstats() -> Vec<DiskStat> {
     Err(_) => return result,
   };
 
-  let lines: Vec<&str> = diskstat_s.split("\n").collect();
+  let lines: Vec<&str> = diskstat_s.split('\n').collect();
   for line in lines {
     let stat = DiskStat::from(line);
     if stat.eq(&invalid_stat) {

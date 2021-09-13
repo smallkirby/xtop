@@ -4,7 +4,8 @@
 
 *******/
 
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Duration;
 use std::{
@@ -47,14 +48,14 @@ impl KmsgLine {
     /* ignore flags  */
 
     let _rest = tokens[3..].to_vec().join(",");
-    let rest: Vec<&str> = _rest.split(";").collect();
+    let rest: Vec<&str> = _rest.split(';').collect();
     let log = rest[1..].join(";");
 
     Self {
       level,
       id,
       timestamp,
-      log: log,
+      log,
     }
   }
 }
@@ -78,7 +79,7 @@ fn read_kmsg_lines_noblock() -> Result<Vec<String>, String> {
     Ok(f) => f,
     Err(_) => return Err("failed to open /dev/kmsg.".into()),
   };
-  let must_kill = Arc::new(Mutex::new(false));
+  let must_kill = Arc::new(AtomicBool::new(false));
   let (value_tx, value_rx) = mpsc::channel();
   let mut result = vec![];
 
@@ -86,7 +87,7 @@ fn read_kmsg_lines_noblock() -> Result<Vec<String>, String> {
   let line_read_must_kill = must_kill.clone();
   let _line_read_handler = thread::spawn(move || {
     for line in lines {
-      if *line_read_must_kill.lock().unwrap() {
+      if line_read_must_kill.load(Ordering::Relaxed) {
         break;
       }
       match line {
@@ -105,7 +106,7 @@ fn read_kmsg_lines_noblock() -> Result<Vec<String>, String> {
         match value_rx.try_recv() {
           Ok(v) => result.push(v),
           Err(_) => {
-            *must_kill.lock().unwrap() = true;
+            must_kill.store(true, Ordering::Relaxed);
             break;
           }
         }

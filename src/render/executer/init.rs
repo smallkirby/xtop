@@ -1,8 +1,7 @@
 use super::manager::WinManager;
 use crate::layout::{calc, config::*};
-use crate::render::meter::*;
 use crate::render::{
-  color, commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter, meter::Meter,
+  commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter, meter::Meter,
   netmeter, processmeter_manager, taskmeter,
 };
 
@@ -74,6 +73,6 @@ pub fn init_meter_general(wm: &mut WinManager, name: MeterName, height: i32, wid
         wm.mainwin, wm, height, width, wm.cur_y, wm.cur_x,
       ))
     }
-    Empty => return,
+    Empty => {}
   };
 }

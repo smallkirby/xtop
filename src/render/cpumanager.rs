@@ -86,7 +86,7 @@ impl Meter for CpuManager {
 fn init_meters(
   parent: WINDOW,
   wm: &mut WinManager,
-  height: i32,
+  _height: i32,
   width: i32,
 ) -> Vec<cpumeter::CpuMeter> {
   let mut meters = vec![];
