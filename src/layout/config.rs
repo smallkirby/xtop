@@ -21,10 +21,12 @@ pub enum MeterName {
   Empty,
 }
 
+// If Multiple is specified, the height is determined by the largest component except for Multiple attributed component in the line.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum Height {
   Rest,
   Line(u64),
+  Multiple(u64),
   Minus(u64),
 }
 
@@ -53,7 +55,7 @@ static DEFAULT_LAYOUT: [Layout; 12] = [
   },
   Layout {
     name: MeterName::IoMeter,
-    height: Line(4),
+    height: Multiple(3),
     ratio: Size::Rest,
   },
   Layout {

@@ -18,6 +18,7 @@ enum ThreadSignal {
   DoUpdate,
   Resize,
   Mouse(MEVENT),
+
   Command(char),
   CommandActivate,
   Quit,
@@ -86,29 +87,16 @@ impl WinManager {
   // XXX check of layout file should occur before init of screen.
   // or, should terminate windows before panic to show appropriate message.
   pub fn init_meters(&mut self) {
-    use config::{Height, MeterName::*, Size};
-
-    self.cur_x = 0;
-    self.cur_y = 0;
-    let mut max_height_in_line = 0;
+    use config::MeterName::*;
 
     let layouts = config::read_layout_config();
-    for layout in &layouts {
-      let mut go_newline = false;
-      let width = match layout.ratio {
-        Size::Ratio(r) => (self.screen_width as f64 * r) as i32,
-        Size::Rest => {
-          go_newline = true;
-          self.screen_width - self.cur_x
-        }
-      };
-      let height = match layout.height {
-        Height::Line(l) => l as i32,
-        Height::Rest => self.screen_height - self.cur_y,
-        Height::Minus(l) => (self.screen_height - self.cur_y) - l as i32,
-      };
-      max_height_in_line = std::cmp::max(max_height_in_line, height);
+    let fixed_layouts = calc::get_fixed_layouts(&layouts, self.screen_height, self.screen_width);
 
+    for layout in &fixed_layouts {
+      let height = layout.height;
+      let width = layout.width;
+      self.cur_y = layout.y;
+      self.cur_x = layout.x;
       match layout.name {
         CpuMeter => self.init_cpumanager(height, width),
         CpuGraph => self.init_cpugraph(height, width),
@@ -121,13 +109,6 @@ impl WinManager {
         IoMeter => self.init_iometer(height, width),
         CommandBox => self.init_commandbox(height, width),
         Empty => {}
-      }
-
-      self.cur_x += width;
-      if go_newline {
-        self.cur_y += max_height_in_line;
-        max_height_in_line = 0;
-        self.cur_x = 0;
       }
     }
 
@@ -348,7 +329,7 @@ impl WinManager {
   }
 
   fn resize_iometer(&mut self, height: i32, width: i32) -> Option<()> {
-    let iometer = self.cpu_graph.as_mut()?;
+    let iometer = self.iometer.as_mut()?;
     iometer.resize(self.mainwin, height, width, self.cur_y, self.cur_x);
     Some(())
   }
@@ -384,49 +365,29 @@ impl WinManager {
   }
 
   fn resize_meters(&mut self) {
-    use config::{Height, MeterName::*, Size};
+    use config::MeterName::*;
 
-    self.cur_x = 0;
-    self.cur_y = 0;
-    let layouts = &self.layout.clone();
-    let mut max_height_in_line = 0;
+    let layouts = config::read_layout_config();
+    let fixed_layouts = calc::get_fixed_layouts(&layouts, self.screen_height, self.screen_width);
 
-    for layout in layouts {
-      let mut go_newline = false;
-      let width = match layout.ratio {
-        Size::Ratio(r) => (self.screen_width as f64 * r) as i32,
-        Size::Rest => {
-          go_newline = true;
-          self.screen_width - self.cur_x
-        }
-      };
-      let height = match layout.height {
-        Height::Line(l) => l as i32,
-        Height::Rest => self.screen_height - self.cur_y,
-        Height::Minus(l) => (self.screen_height - self.cur_y) - l as i32,
-      };
-      max_height_in_line = std::cmp::max(max_height_in_line, height);
-
+    for layout in &fixed_layouts {
+      let height = layout.height;
+      let width = layout.width;
+      self.cur_y = layout.y;
+      self.cur_x = layout.x;
       match layout.name {
         CpuMeter => self.resize_cpumanager(height, width),
         CpuGraph => self.resize_cpugraph(height, width),
         TaskMeter => self.resize_taskmeter(height, width),
         MemMeter => self.resize_memmeter(height, width),
         Inputs => self.resize_inputmeter(height, width),
-        ProcMeter => self.resize_process_meters(height, width),
         DmesgList => self.resize_dmesglist(height, width),
+        ProcMeter => self.resize_process_meters(height, width),
         NetMeter => self.resize_netmeter(height, width),
         IoMeter => self.resize_iometer(height, width),
         CommandBox => self.resize_commandbox(height, width),
         Empty => None,
       };
-
-      self.cur_x += width;
-      if go_newline {
-        self.cur_y += max_height_in_line;
-        max_height_in_line = 0;
-        self.cur_x = 0;
-      }
     }
   }
 
@@ -510,14 +471,14 @@ impl WinManager {
         let mut scroll = 0;
 
         if (bstate & BUTTON1_CLICKED as u32) != 0 {
-          if let Some((layout, (y, x))) = calc::get_layout_from_click(
+          if let Some((layout_name, (y, x))) = calc::get_layout_from_click(
             &self.layout,
             self.screen_height,
             self.screen_width,
             pos_y,
             pos_x,
           ) {
-            match layout.name {
+            match layout_name {
               CpuMeter => self.cpumanager.as_mut().unwrap().handle_click(y, x),
               CpuGraph => self.cpu_graph.as_mut().unwrap().handle_click(y, x),
               TaskMeter => self.taskmeter.as_mut().unwrap().handle_click(y, x),
@@ -541,14 +502,14 @@ impl WinManager {
 
         // handle scroll
         if scroll != 0 {
-          if let Some((layout, (_, _))) = calc::get_layout_from_click(
+          if let Some((layout_name, (_, _))) = calc::get_layout_from_click(
             &self.layout,
             self.screen_height,
             self.screen_width,
             pos_y,
             pos_x,
           ) {
-            match layout.name {
+            match layout_name {
               ProcMeter => self.processmanager.as_mut().unwrap().handle_scroll(scroll),
               _ => {}
             };
