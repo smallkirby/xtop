@@ -5,7 +5,7 @@ InputMeter shows the list of X input devices and their hierachy.
 
 *******/
 
-use crate::render::{color::*, meter::*};
+use crate::render::{color::*, executer::manager::WinManager, meter::*};
 use crate::resource::input::{self, InputDevice};
 use ncurses::*;
 
@@ -150,7 +150,7 @@ impl Meter for InputMeter {
 
   fn init_meter(
     _parent: WINDOW,
-    _wm: &mut super::window::WinManager,
+    _wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,

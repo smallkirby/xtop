@@ -10,7 +10,7 @@ use crate::resource::mem;
 use crate::symbol::brail::b32;
 use ncurses::*;
 
-use crate::render::{meter::Meter, window::WinManager};
+use crate::render::{executer::manager::WinManager, meter::Meter};
 
 static UNIT_MB: u64 = 1024;
 #[allow(dead_code)]

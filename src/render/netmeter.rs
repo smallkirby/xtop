@@ -5,7 +5,7 @@ NetGraph shows the transition of net usage.
 
 *******/
 
-use crate::render::{color::*, meter::*};
+use crate::render::{color::*, executer::manager::WinManager, meter::*};
 use crate::resource::net;
 use crate::symbol::block::lv;
 
@@ -142,7 +142,7 @@ impl Meter for NetMeter {
 
   fn init_meter(
     _parent: WINDOW,
-    _wm: &mut super::window::WinManager,
+    _wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,

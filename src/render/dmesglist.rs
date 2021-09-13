@@ -5,11 +5,9 @@ DmesgList just shows the output from /dev/kmsg
 
 *******/
 
-use crate::render::{color::*, meter};
+use crate::render::{color::*, executer::manager::WinManager, meter::*};
 use crate::resource::dmesg;
 use ncurses::*;
-
-use super::window::WinManager;
 
 static MAXBUFSZ: usize = 300; // XXX should decide dynamically.
 
@@ -50,7 +48,7 @@ impl DmesgList {
   }
 }
 
-impl meter::Meter for DmesgList {
+impl Meter for DmesgList {
   fn render(&mut self) {
     let win = self.win;
     // erase and draw box

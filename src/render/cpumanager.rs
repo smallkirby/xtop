@@ -5,7 +5,7 @@ CPUManager manages CPUMeters.
 
 *******/
 
-use crate::render::{color, cpumeter, meter::*, window::*};
+use crate::render::{color, cpumeter, executer::manager::*, meter::*};
 use crate::resource::cpu;
 use ncurses::*;
 
@@ -38,7 +38,7 @@ impl Meter for CpuManager {
 
   fn init_meter(
     _parent: WINDOW,
-    wm: &mut super::window::WinManager,
+    wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,

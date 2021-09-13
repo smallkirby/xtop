@@ -5,7 +5,7 @@ ProcessMeter shows the list of processes.
 
 *******/
 
-use crate::render::{color, meter, window};
+use crate::render::{color, executer::manager::WinManager, meter};
 use crate::resource::process;
 use ncurses::*;
 
@@ -120,7 +120,7 @@ impl meter::Meter for ProcessMeter {
 
   fn init_meter(
     parent: WINDOW,
-    _wm: &mut window::WinManager,
+    _wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,

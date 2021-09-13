@@ -164,7 +164,7 @@ impl Meter for CommandBox {
 
   fn init_meter(
     _parent: WINDOW,
-    _wm: &mut super::window::WinManager,
+    _wm: &mut super::executer::manager::WinManager,
     height: i32,
     width: i32,
     y: i32,

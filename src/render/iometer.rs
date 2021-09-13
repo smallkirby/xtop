@@ -5,9 +5,7 @@ IoMeter shows the IO usages.
 
 *******/
 
-use crate::render::{color::*, meter::*};
-use crate::resource::disk;
-use crate::symbol::block::lv;
+use crate::render::{color::*, executer::manager::WinManager, meter::*};
 
 use ncurses::*;
 
@@ -35,7 +33,7 @@ impl Meter for IoMeter {
 
   fn init_meter(
     parent: WINDOW,
-    wm: &mut super::window::WinManager,
+    wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,

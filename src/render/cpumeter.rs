@@ -5,12 +5,9 @@ CPUMeter shows information about each CPUs.
 
 *******/
 
-use crate::render::{color, meter};
+use super::{color, executer::manager::WinManager, meter::*};
 use crate::resource::cpu;
 use ncurses::*;
-
-use super::meter::Meter;
-use super::window::WinManager;
 
 #[derive(Debug)]
 pub struct CpuMeter {
@@ -20,7 +17,7 @@ pub struct CpuMeter {
   cpu: Option<cpu::Cpu>,
 }
 
-impl meter::Meter for CpuMeter {
+impl Meter for CpuMeter {
   fn render(&mut self) {
     let win = self.win;
     werase(win);

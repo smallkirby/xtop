@@ -5,7 +5,7 @@ Meter trait decides the necessary funcs for each meters.
 
 *******/
 
-use super::window::WinManager;
+use super::executer::manager::WinManager;
 use ncurses::*;
 
 pub trait Meter {

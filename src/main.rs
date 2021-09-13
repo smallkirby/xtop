@@ -1,8 +1,8 @@
-use xtop::render::window;
+use xtop::render::executer::manager;
 
 #[cfg(all(target_os = "linux"))]
 fn main() {
-  let mut wm = window::WinManager::new();
+  let mut wm = manager::WinManager::new();
 
   wm.init_meters();
   wm.qloop();

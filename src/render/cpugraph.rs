@@ -118,7 +118,7 @@ impl Meter for CpuGraph {
 
   fn init_meter(
     _parent: ncurses::WINDOW,
-    _wm: &mut super::window::WinManager,
+    _wm: &mut super::executer::manager::WinManager,
     height: i32,
     width: i32,
     y: i32,

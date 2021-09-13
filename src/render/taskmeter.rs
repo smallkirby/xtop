@@ -6,11 +6,9 @@ TaskMeter shows the statistics of task/threads.
 *******/
 
 use crate::proclist::list;
-use crate::render::{color, meter};
+use crate::render::{color, executer::manager::WinManager, meter::*};
 use crate::resource::{loadavg, uptime};
 use ncurses::*;
-
-use super::window::WinManager;
 
 static HEIGHT: i32 = 3;
 
@@ -46,7 +44,7 @@ impl TaskMeter {
   }
 }
 
-impl meter::Meter for TaskMeter {
+impl Meter for TaskMeter {
   fn render(&mut self) {
     let win = self.win;
     werase(win);
