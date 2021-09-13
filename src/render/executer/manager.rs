@@ -11,12 +11,10 @@ use crate::consts::*;
 use crate::layout::{calc, config};
 use crate::proclist::list;
 use crate::render::component::{
-  commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter,
-  netmeter, processmeter_manager, taskmeter,
+  commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter, netmeter,
+  processmeter_manager, taskmeter,
 };
-use crate::render::{
-  color, meter::Meter,
-};
+use crate::render::{color, meter::Meter};
 use ncurses::*;
 use signal_hook::{consts::*, iterator::Signals};
 use std::sync::{mpsc, Arc, Mutex};

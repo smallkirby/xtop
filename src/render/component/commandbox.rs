@@ -7,7 +7,7 @@ And it shows help box.
 *********/
 
 use crate::command::commander;
-use crate::render::{color::*, meter::*, executer::manager::WinManager};
+use crate::render::{color::*, executer::manager::WinManager, meter::*};
 
 use ncurses::*;
 

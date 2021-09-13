@@ -6,7 +6,7 @@ CPUGraph shows the transition of CPU usage.
 *******/
 
 use crate::consts::*;
-use crate::render::{color::*, meter::*, executer::manager::*};
+use crate::render::{color::*, executer::manager::*, meter::*};
 use crate::resource::cpu;
 use crate::symbol::block::lv;
 use ncurses::*;
