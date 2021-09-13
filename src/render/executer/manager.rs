@@ -1,11 +1,21 @@
+/************************
+
+Implementation of WinManager.
+WinManager is the main object of `xtop` and manages all the components.
+
+************************/
+
 use super::{init::*, resize::*, update::*};
 use crate::command::commander;
 use crate::consts::*;
 use crate::layout::{calc, config};
 use crate::proclist::list;
-use crate::render::{
-  color, commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter, meter::Meter,
+use crate::render::component::{
+  commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter,
   netmeter, processmeter_manager, taskmeter,
+};
+use crate::render::{
+  color, meter::Meter,
 };
 use ncurses::*;
 use signal_hook::{consts::*, iterator::Signals};

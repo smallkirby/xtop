@@ -4,7 +4,7 @@ Process subcommands
 
 *********/
 
-use crate::render::processmeter_manager::{FilterType, ProcessMeterManager};
+use crate::render::component::processmeter_manager::{FilterType, ProcessMeterManager};
 
 pub enum ProcCommand {
   Search,

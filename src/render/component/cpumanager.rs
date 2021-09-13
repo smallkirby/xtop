@@ -5,7 +5,8 @@ CPUManager manages CPUMeters.
 
 *******/
 
-use crate::render::{color, cpumeter, executer::manager::*, meter::*};
+use crate::render::{color, executer::manager::*, meter::*};
+use super::cpumeter;
 use crate::resource::cpu;
 use ncurses::*;
 

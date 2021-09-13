@@ -1,3 +1,9 @@
+/**************************
+
+functions which resize components.
+
+**************************/
+
 use super::manager::WinManager;
 use crate::layout::config::MeterName;
 use crate::layout::{calc, config};

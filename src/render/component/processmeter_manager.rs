@@ -5,7 +5,8 @@ ProcessMeterManager manages ProcessMeter and directly communicaste with WinManag
 
 *******/
 
-use crate::render::{color::*, executer::manager::WinManager, meter::*, processmeter::*};
+use crate::render::{color::*, executer::manager::WinManager, meter::*};
+use super::processmeter::*;
 use crate::resource::process;
 use ncurses::*;
 

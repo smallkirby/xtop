@@ -7,7 +7,7 @@ And it shows help box.
 *********/
 
 use crate::command::commander;
-use crate::render::{color::*, meter::*};
+use crate::render::{color::*, meter::*, executer::manager::WinManager};
 
 use ncurses::*;
 
@@ -164,7 +164,7 @@ impl Meter for CommandBox {
 
   fn init_meter(
     _parent: WINDOW,
-    _wm: &mut super::executer::manager::WinManager,
+    _wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,

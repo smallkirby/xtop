@@ -1,3 +1,9 @@
+/**************************
+
+functions which update components.
+
+**************************/
+
 use super::manager::WinManager;
 use crate::render::meter::*;
 use crate::resource::{dmesg, mem, net};

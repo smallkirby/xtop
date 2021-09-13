@@ -1,5 +1,5 @@
 use super::{input, process};
-use crate::render::processmeter_manager::ProcessMeterManager;
+use crate::render::component::processmeter_manager::ProcessMeterManager;
 
 #[derive(Debug)]
 pub enum CommandType {

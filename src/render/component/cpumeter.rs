@@ -5,7 +5,7 @@ CPUMeter shows information about each CPUs.
 
 *******/
 
-use super::{color, executer::manager::WinManager, meter::*};
+use crate::render::{color, executer::manager::WinManager, meter::*};
 use crate::resource::cpu;
 use ncurses::*;
 

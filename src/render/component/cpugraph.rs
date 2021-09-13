@@ -6,7 +6,7 @@ CPUGraph shows the transition of CPU usage.
 *******/
 
 use crate::consts::*;
-use crate::render::{color::*, meter::*};
+use crate::render::{color::*, meter::*, executer::manager::*};
 use crate::resource::cpu;
 use crate::symbol::block::lv;
 use ncurses::*;
@@ -118,7 +118,7 @@ impl Meter for CpuGraph {
 
   fn init_meter(
     _parent: ncurses::WINDOW,
-    _wm: &mut super::executer::manager::WinManager,
+    _wm: &mut WinManager,
     height: i32,
     width: i32,
     y: i32,

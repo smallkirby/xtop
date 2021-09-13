@@ -1,9 +1,16 @@
+/**************************
+
+functions which initialize components.
+
+**************************/
+
 use super::manager::WinManager;
 use crate::layout::{calc, config::*};
-use crate::render::{
-  commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter, meter::Meter,
+use crate::render::component::{
+  commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter,
   netmeter, processmeter_manager, taskmeter,
 };
+use crate::render::meter::Meter;
 
 pub fn init_meters(wm: &mut WinManager) {
   let layouts = read_layout_config();

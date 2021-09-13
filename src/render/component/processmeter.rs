@@ -5,11 +5,9 @@ ProcessMeter shows the list of processes.
 
 *******/
 
-use crate::render::{color, executer::manager::WinManager, meter};
+use crate::render::{color, executer::manager::WinManager, meter::*};
 use crate::resource::process;
 use ncurses::*;
-
-use super::meter::Meter;
 
 static PID_WIDTH: i32 = 6;
 static CPU_WIDTH: i32 = 6;
@@ -79,7 +77,7 @@ impl ProcessMeter {
   }
 }
 
-impl meter::Meter for ProcessMeter {
+impl Meter for ProcessMeter {
   fn render(&mut self) {
     let win = self.win;
     let subwins = &self.subwins;
