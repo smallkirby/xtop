@@ -13,7 +13,6 @@ pub trait Meter {
   fn render(&mut self);
 
   // init a meter and returns created meter.
-  // if @height or @width is None, the meter can allocate window of any size as it wants.
   fn init_meter(
     parent: WINDOW,
     wm: &mut WinManager,
