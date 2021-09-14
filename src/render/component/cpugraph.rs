@@ -76,6 +76,7 @@ impl CpuGraph {
 
 impl Meter for CpuGraph {
   fn render(&mut self) {
+    use crate::symbol::brail;
     let win = self.win;
     // erase and draw box
     werase(win);
@@ -90,9 +91,21 @@ impl Meter for CpuGraph {
     let hists = self.get_recent_history(width as usize);
     self.update_upper_limit(&hists);
     let current_usage = hists.last().copied().unwrap();
-    for (i, hist) in hists.iter().enumerate() {
-      let bar = self.get_bar(height, *hist);
-      self.draw_single_bar(&bar, y_bottom, x_start + i as i32 + 1);
+    // XXX
+    //for (i, hist) in hists.iter().enumerate() {
+    //  let bar = self.get_bar(height, *hist);
+    //  self.draw_single_bar(&bar, y_bottom, x_start + i as i32 + 1);
+    //}
+    let brails = brail::b32::get_brails_complement(height, 0.0, self.max_percent * 100.0, hists);
+    for (i, brail) in brails.iter().enumerate() {
+      for (j, c) in brail.chars().enumerate() {
+        mvwaddstr(
+          self.win,
+          y_bottom - j as i32,
+          x_start + i as i32,
+          &c.to_string(),
+        );
+      }
     }
 
     // draw header

@@ -101,10 +101,10 @@ impl Meter for MemMeter {
     let x0 = 4;
     let width = self.width - 1 - x0;
     let height = self.height - 1 - cy;
-    let hists = self.get_recent_history(width as usize * 2);
+    let hists = self.get_recent_history(width as usize);
     self.update_upper_limit(&hists);
 
-    let brails = b32::get_brails(height, 0.0, self.max_percent, hists);
+    let brails = b32::get_brails_complement(height, 0.0, self.max_percent, hists);
     for (i, brail) in brails.iter().enumerate() {
       self.draw_single_col(brail, cy + height - 1, x0 + i as i32);
     }
