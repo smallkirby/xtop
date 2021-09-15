@@ -12,6 +12,7 @@ use crate::symbol::block::lv;
 use ncurses::*;
 
 static MAXBUFSZ: usize = 300; // XXX should decide dynamically.
+static GRAPH_STYLE: &str = "brail"; // XXX should be configurable.
 
 pub struct CpuGraph {
   pub height: i32,
@@ -51,6 +52,12 @@ impl CpuGraph {
     }
   }
 
+  fn draw_single_brail(&self, brail: &str, y_bottom: i32, x: i32) {
+    for (j, c) in brail.chars().enumerate() {
+      mvwaddstr(self.win, y_bottom - j as i32, x, &c.to_string());
+    }
+  }
+
   // returns latest history whose size is decided by self.width.
   // oldest entry is at index 0.
   fn get_recent_history(&self, size: usize) -> Vec<f64> {
@@ -76,6 +83,7 @@ impl CpuGraph {
 
 impl Meter for CpuGraph {
   fn render(&mut self) {
+    use crate::symbol::brail;
     let win = self.win;
     // erase and draw box
     werase(win);
@@ -90,9 +98,22 @@ impl Meter for CpuGraph {
     let hists = self.get_recent_history(width as usize);
     self.update_upper_limit(&hists);
     let current_usage = hists.last().copied().unwrap();
-    for (i, hist) in hists.iter().enumerate() {
-      let bar = self.get_bar(height, *hist);
-      self.draw_single_bar(&bar, y_bottom, x_start + i as i32 + 1);
+    match GRAPH_STYLE {
+      // line-chart
+      "brail" => {
+        let brails =
+          brail::b32::get_brails_complement(height, 0.0, self.max_percent * 100.0, hists);
+        for (i, brail) in brails.iter().enumerate() {
+          self.draw_single_brail(brail, y_bottom, x_start + i as i32 + 1);
+        }
+      }
+      // bar-chart
+      _ => {
+        for (i, hist) in hists.iter().enumerate() {
+          let bar = self.get_bar(height, *hist);
+          self.draw_single_bar(&bar, y_bottom, x_start + i as i32 + 1);
+        }
+      }
     }
 
     // draw header

@@ -7,7 +7,7 @@ NetGraph shows the transition of net usage.
 
 use crate::render::{color::*, executer::manager::WinManager, meter::*};
 use crate::resource::net;
-use crate::symbol::block::lv;
+use crate::symbol::brail::b32::*;
 
 use ncurses::*;
 
@@ -18,10 +18,9 @@ pub struct NetMeter {
   pub height: i32,
   pub width: i32,
   pub win: WINDOW,
-  history: Vec<(u64, u64)>, // ring-buffer for history of (rx, tx)
+  history: Vec<(u64, u64)>, // ring-buffer for history of (rx, tx) [KBytes]
   cur_hist_ix: usize,       // always points to newly recorded value of history
-  max_kb_rx: u64,
-  max_kb_tx: u64,
+  max_kb: u64,
   total_rx: u64, // Bytes
   total_tx: u64, // Bytes
   diff_rx: u64,  // Bytes
@@ -32,18 +31,20 @@ impl NetMeter {
   fn update_upper_limit(&mut self, recent_hists: &[(u64, u64)]) {
     let recent_rx: Vec<u64> = recent_hists.iter().map(|(r, _t)| *r).collect();
     let recent_tx: Vec<u64> = recent_hists.iter().map(|(_r, t)| *t).collect();
-    let max_rx = recent_rx.into_iter().fold(0_u64, |a, b| b.max(a)) / 1024;
-    let max_tx = recent_tx.into_iter().fold(0_u64, |a, b| b.max(a)) / 1024;
-    self.max_kb_rx = if max_rx > THRESHOLD {
+    let max_rx = recent_rx.into_iter().fold(0_u64, |a, b| b.max(a));
+    let max_tx = recent_tx.into_iter().fold(0_u64, |a, b| b.max(a));
+    let max_kb_rx = if max_rx > THRESHOLD {
       (max_rx + THRESHOLD) / THRESHOLD * THRESHOLD
     } else {
       THRESHOLD
     };
-    self.max_kb_tx = if max_tx > THRESHOLD {
+    let max_kb_tx = if max_tx > THRESHOLD {
       (max_tx + THRESHOLD) / THRESHOLD * THRESHOLD
     } else {
       THRESHOLD
     };
+
+    self.max_kb = std::cmp::max(max_kb_rx, max_kb_tx);
   }
 
   // returns latest history whose size is decided by self.width.
@@ -81,18 +82,14 @@ impl NetMeter {
     self.total_rx = total_rx;
     self.total_tx = total_tx;
 
-    self.history[self.cur_hist_ix] = (self.diff_rx, self.diff_tx);
+    self.history[self.cur_hist_ix] = (self.diff_rx / 1024, self.diff_tx / 1024);
   }
 
-  fn draw_single_bar(&self, bar: &str, y_bottom: i32, x: i32) {
+  fn draw_single_col(&self, bar: &[Cc], y_bottom: i32, x: i32) {
     // draw from bottom.
-    for (i, c) in bar.chars().enumerate() {
-      mvwaddstr(self.win, y_bottom - i as i32, x, &c.to_string());
+    for (i, cc) in bar.iter().enumerate() {
+      mvwaddstr_color(self.win, y_bottom - i as i32, x, &cc.ch.to_string(), cc.co);
     }
-  }
-
-  fn get_bar(&self, maxheight: i32, value: u64) -> String {
-    lv::get_bar(maxheight, value as f64 / self.max_kb_rx as f64)
   }
 }
 
@@ -110,11 +107,18 @@ impl Meter for NetMeter {
     let y_bottom = height;
     let hists = self.get_recent_history(width as usize);
     self.update_upper_limit(&hists);
+    let rx_hists: Vec<f64> = hists.iter().map(|(rx, _tx)| *rx as f64).collect();
+    let tx_hists: Vec<f64> = hists.iter().map(|(_rx, tx)| *tx as f64).collect();
+    let brails = get_brails_complement_2axes_color(
+      height - 1,
+      0.0,
+      self.max_kb as f64,
+      (rx_hists, cpair::DEFAULT),
+      (tx_hists, cpair::PAIR_COMM),
+    );
 
-    for (i, hist) in hists.iter().enumerate() {
-      let (rx, _tx) = hist;
-      let bar = self.get_bar(height, *rx / 1024);
-      self.draw_single_bar(&bar, y_bottom, x_start + i as i32 + 1);
+    for (i, col) in brails.iter().enumerate() {
+      self.draw_single_col(col, y_bottom, x_start + i as i32 + 1);
     }
 
     // draw header
@@ -129,12 +133,12 @@ impl Meter for NetMeter {
     );
 
     // draw y-axes
-    mvwaddstr(win, 1, 1, &format!("{:>5}", self.max_kb_rx));
+    mvwaddstr(win, 1, 1, &format!("{:>5}", self.max_kb));
     mvwaddstr(
       win,
       self.height / 2,
       1,
-      &format!("{:>5}", (self.max_kb_rx as f64 * 0.5) as u64),
+      &format!("{:>5}", (self.max_kb as f64 * 0.5) as u64),
     );
 
     wrefresh(win);
@@ -161,8 +165,7 @@ impl Meter for NetMeter {
       win,
       history: vec![(0, 0); MAXBUFSZ],
       cur_hist_ix: 0,
-      max_kb_rx: 1000,
-      max_kb_tx: 1000,
+      max_kb: 1000,
       total_rx: 0,
       total_tx: 0,
       diff_rx: 0,

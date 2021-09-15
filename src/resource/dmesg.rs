@@ -36,7 +36,7 @@ impl Default for KmsgLine {
 
 impl KmsgLine {
   pub fn from(s: &str) -> Self {
-    let tokens: Vec<&str> = s.split(",").collect();
+    let tokens: Vec<&str> = s.split(',').collect();
     if tokens.len() < 3 {
       return Self::default();
     }
