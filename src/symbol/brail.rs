@@ -364,7 +364,8 @@ pub mod b32 {
         Some(d1[i + 1])
       };
 
-      let col = get_single_col_complement_2axes(maxheight, (v0, a0, b0, color0), (v1, a1, b1, color1));
+      let col =
+        get_single_col_complement_2axes(maxheight, (v0, a0, b0, color0), (v1, a1, b1, color1));
       res.push(col);
     }
 
