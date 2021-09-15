@@ -158,6 +158,7 @@ pub mod b32 {
     ["⠇", "⠧", "⠗", "⠷", "⠏", "⠯", "⠟", "⠿"],
   ];
 
+  // convert dots into index.
   fn dots_to_index(dots: Vec<i32>) -> usize {
     let dots = if dots.len() > 3 { vec![] } else { dots };
 
@@ -170,6 +171,7 @@ pub mod b32 {
     }) as usize
   }
 
+  // convert single value into dots.
   fn value_to_dots(v: i32) -> Vec<i32> {
     if !(0..3).contains(&v) {
       vec![-1]
@@ -178,12 +180,14 @@ pub mod b32 {
     }
   }
 
+  // convert index into a brail.
   fn get_brail(d0: i32) -> &'static str {
     let dot = value_to_dots(d0);
     let i = dots_to_index(dot);
     DOTS[i][0]
   }
 
+  // convert one data into brails.
   fn get_single_col(d0: i32) -> String {
     let mut d0 = d0;
     let mut res = String::new();
@@ -201,6 +205,7 @@ pub mod b32 {
     res
   }
 
+  // convert one data into brails, which is complemented by back/forward data.
   fn get_single_col_complement(maxheight: i32, v: i32, a: Option<i32>, b: Option<i32>) -> String {
     let is_dot_on_line_right = |x: i32, y: i32| {
       let r_right = (b.unwrap() as f32 - v as f32) / 2.0;
@@ -243,6 +248,7 @@ pub mod b32 {
     brails
   }
 
+  // convert data pair into single line of colorized brails.
   fn get_single_col_complement_2axes(
     maxheight: i32,
     ent0: (i32, Option<i32>, Option<i32>, i16), // y0, y1, y2, color
@@ -327,6 +333,7 @@ pub mod b32 {
     res
   }
 
+  // convert two data into colorized line-chart.
   pub fn get_brails_complement_2axes_color(
     maxheight: i32,
     min: f64,
@@ -372,6 +379,7 @@ pub mod b32 {
     res
   }
 
+  // convert goven data into vec of braills, which are complemented.
   pub fn get_brails_complement(maxheight: i32, min: f64, max: f64, d0: Vec<f64>) -> Vec<String> {
     let maxheight = maxheight * 3;
     let mut res = vec![];
@@ -395,7 +403,7 @@ pub mod b32 {
     res
   }
 
-  // convert givent data into vec of braills
+  // convert given data into vec of braills
   pub fn get_brails(maxheight: i32, min: f64, max: f64, d0: Vec<f64>) -> Vec<String> {
     let maxheight = (maxheight * 3) as u64;
     let mut res = vec![];

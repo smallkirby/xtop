@@ -113,8 +113,8 @@ impl Meter for NetMeter {
       height - 1,
       0.0,
       self.max_kb as f64,
-      (rx_hists, cpair::PAIR_CUTE),
-      (tx_hists, cpair::PAIR_DANGER),
+      (rx_hists, cpair::DEFAULT),
+      (tx_hists, cpair::PAIR_COMM),
     );
 
     for (i, col) in brails.iter().enumerate() {
