@@ -136,7 +136,7 @@ pub mod b32 {
     }
   }
 
-  static COMPLEMENT_THRESHOLD: f32 = 0.6;
+  static COMPLEMENT_THRESHOLD: f32 = 0.8;
 
   // 3x2 dot is named as below:
   //  - dot in left col is called ax. at right is called bx.
@@ -221,21 +221,45 @@ pub mod b32 {
       lx.is_nan() || (lx - x as f32).abs() <= COMPLEMENT_THRESHOLD
     };
 
+    let is_dot_not_overrun = |v: i32, a: i32, b: i32| {
+      if b >= a {
+        v <= b
+      } else {
+        v >= b
+      }
+    };
+
     let mut dots0 = HashSet::new();
     let mut dots1 = HashSet::new();
     let mut brails = String::new();
     for y in 0..maxheight {
-      if b.is_some() && is_dot_on_line_right(0, y) {
+      if b.is_some() && is_dot_on_line_right(0, y) && is_dot_not_overrun(y, v, b.unwrap()) {
         dots0.insert(y % 3);
       }
-      if b.is_some() && is_dot_on_line_right(1, y) {
+      if b.is_some() && is_dot_on_line_right(1, y) && is_dot_not_overrun(y, v, b.unwrap()) {
         dots1.insert(y % 3);
       }
-      if a.is_some() && is_dot_on_line_left(0, y) {
+      if a.is_some()
+        && is_dot_on_line_left(0, y)
+        && b.is_some()
+        && is_dot_not_overrun(y, v, b.unwrap())
+      {
+        dots0.insert(y % 3);
+      }
+      if a.is_none() && b.is_none() && y == v {
         dots0.insert(y % 3);
       }
 
       if y % 3 == 2 {
+        if let Some(_b) = b {
+          if dots1.is_empty() && dots0.len() == 1 {
+            if _b > v && !dots0.contains(&2) {
+              dots1.insert((v + 1) % 3);
+            } else if _b < v && !dots0.contains(&0) {
+              dots1.insert((v - 1) % 3);
+            }
+          }
+        }
         let li = dots_to_index(dots0.clone().into_iter().collect());
         let ri = dots_to_index(dots1.clone().into_iter().collect());
         let brail = DOTS[li][ri];
@@ -285,6 +309,14 @@ pub mod b32 {
       lx.is_nan() || (lx - x as f32).abs() <= COMPLEMENT_THRESHOLD
     };
 
+    let is_dot_not_overrun = |v: i32, a: i32, b: i32| {
+      if b >= a {
+        v <= b
+      } else {
+        v >= b
+      }
+    };
+
     let mut dots00 = HashSet::new();
     let mut dots01 = HashSet::new();
     let mut dots10 = HashSet::new();
@@ -292,27 +324,59 @@ pub mod b32 {
 
     let mut res = vec![];
     for y in 0..maxheight {
-      if b0.is_some() && is_dot_on_line_right0(0, y) {
+      if b0.is_some() && is_dot_on_line_right0(0, y) && is_dot_not_overrun(y, v0, b0.unwrap()) {
         dots00.insert(y % 3);
       }
-      if b0.is_some() && is_dot_on_line_right0(1, y) {
+      if b0.is_some() && is_dot_on_line_right0(1, y) && is_dot_not_overrun(y, v0, b0.unwrap()) {
         dots01.insert(y % 3);
       }
-      if a0.is_some() && is_dot_on_line_left0(0, y) {
+      if a0.is_some()
+        && is_dot_on_line_left0(0, y)
+        && b0.is_some()
+        && is_dot_not_overrun(y, v0, b0.unwrap())
+      {
+        dots00.insert(y % 3);
+      }
+      if a0.is_none() && b0.is_none() && y == v0 {
         dots00.insert(y % 3);
       }
 
-      if b1.is_some() && is_dot_on_line_right1(0, y) {
+      if b1.is_some() && is_dot_on_line_right1(0, y) && is_dot_not_overrun(y, v1, b1.unwrap()) {
         dots10.insert(y % 3);
       }
-      if b1.is_some() && is_dot_on_line_right1(1, y) {
+      if b1.is_some() && is_dot_on_line_right1(1, y) && is_dot_not_overrun(y, v1, b1.unwrap()) {
         dots11.insert(y % 3);
       }
-      if a1.is_some() && is_dot_on_line_left1(0, y) {
+      if a1.is_some()
+        && is_dot_on_line_left1(0, y)
+        && b1.is_some()
+        && is_dot_not_overrun(y, v1, b1.unwrap())
+      {
+        dots10.insert(y % 3);
+      }
+      if a1.is_none() && b1.is_none() && y == v1 {
         dots10.insert(y % 3);
       }
 
       if y % 3 == 2 {
+        if let Some(_b0) = b0 {
+          if dots01.is_empty() && dots00.len() == 1 {
+            if _b0 > v0 && !dots00.contains(&2) {
+              dots01.insert((v0 + 1) % 3);
+            } else if _b0 < v0 && !dots00.contains(&0) {
+              dots01.insert((v0 - 1) % 3);
+            }
+          }
+        }
+        if let Some(_b1) = b1 {
+          if dots11.is_empty() && dots10.len() == 1 {
+            if _b1 > v1 && !dots10.contains(&2) {
+              dots11.insert((v1 + 1) % 3);
+            } else if _b1 < v1 && !dots10.contains(&0) {
+              dots11.insert((v1 - 1) % 3);
+            }
+          }
+        }
         let li0 = dots_to_index(dots00.clone().into_iter().collect());
         let ri0 = dots_to_index(dots01.clone().into_iter().collect());
         let li1 = dots_to_index(dots10.clone().into_iter().collect());
@@ -532,16 +596,34 @@ mod test {
   fn test_show_brail32() {
     let d0: Vec<u32> = vec![0, 1, 2, 3];
     let d0: Vec<f64> = d0.into_iter().map(|d| d as f64).collect();
-
     let height = 4;
     let brail = b32::get_brails_complement(height, 0.0, 4.0, d0);
     show_brail(brail, height);
 
     let d0: Vec<u32> = vec![2, 8, 9, 9, 10, 5, 1, 2];
     let d0: Vec<f64> = d0.into_iter().map(|d| d as f64).collect();
-
     let height = 12;
     let brail = b32::get_brails_complement(height, 0.0, 11.0, d0);
+    show_brail(brail, height);
+
+    // watch if 0-3 line doesn't overrun
+    let d0: Vec<u32> = vec![0, 3, 3, 3, 3, 3];
+    let d0: Vec<f64> = d0.into_iter().map(|d| d as f64).collect();
+    let height = 4;
+    let brail = b32::get_brails_complement(height, 0.0, 4.0, d0);
+    show_brail(brail, height);
+
+    // watch if 0-3 line is well complemented
+    let d0: Vec<u32> = vec![0, 3, 0, 0, 0, 3, 0, 0, 9, 0];
+    let d0: Vec<f64> = d0.into_iter().map(|d| d as f64).collect();
+    let height = 6;
+    let brail = b32::get_brails_complement(height, 0.0, 30.0, d0);
+    show_brail(brail, height);
+
+    let d0: Vec<u32> = vec![0, 3, 0, 0, 0, 3, 0, 0, 9, 0, 19, 3];
+    let d0: Vec<f64> = d0.into_iter().map(|d| d as f64).collect();
+    let height = 6;
+    let brail = b32::get_brails_complement(height, 0.0, 30.0, d0);
     show_brail(brail, height);
   }
 }
