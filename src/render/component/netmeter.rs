@@ -15,6 +15,9 @@ use ncurses::*;
 static MAXBUFSZ: usize = 300; // XXX should decide dynamically.
 static THRESHOLD: u64 = 500;
 
+static RXCOLOR: i16 = cpair::DEFAULT;
+static TXCOLOR: i16 = cpair::PAIR_COMM;
+
 pub struct NetMeter {
   pub height: i32,
   pub width: i32,
@@ -121,14 +124,14 @@ impl NetMeter {
 
     // right y-axe (tx)
     let s = &format!("{:>3.0}", self.max_tx_kb.convert(tx_unit));
-    mvwaddstr_color(win, 1, self.width - 1 - s.len() as i32, s, cpair::PAIR_COMM);
+    mvwaddstr_color(win, 1, self.width - 1 - s.len() as i32, s, TXCOLOR);
     let s = &format!("{:>3.0}", self.max_tx_kb.convert(tx_unit) as f64 * 0.5);
     mvwaddstr_color(
       win,
       self.height / 2,
       self.width - 1 - s.len() as i32,
       s,
-      cpair::PAIR_COMM,
+      TXCOLOR,
     );
     let s = &format!("[{}]", tx_unit);
     mvwaddstr_color(
@@ -136,7 +139,7 @@ impl NetMeter {
       self.height - 2,
       self.width - 1 - s.len() as i32,
       s,
-      cpair::PAIR_COMM,
+      TXCOLOR,
     );
   }
 }
@@ -167,8 +170,8 @@ impl Meter for NetMeter {
       height - 1,
       (0.0, self.max_rx_kb.convert(Kb) as f64),
       (0.0, self.max_tx_kb.convert(Kb) as f64),
-      (rx_hists, cpair::DEFAULT),
-      (tx_hists, cpair::PAIR_COMM),
+      (rx_hists, RXCOLOR),
+      (tx_hists, TXCOLOR),
     );
 
     for (i, col) in brails.iter().enumerate() {

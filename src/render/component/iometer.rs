@@ -15,6 +15,9 @@ use ncurses::*;
 static MAXBUFSZ: usize = 300; // XXX should decide dynamically.
 static THRESHOLD: u64 = 500;
 
+static RDCOLOR: i16 = cpair::DEFAULT;
+static WRCOLOR: i16 = cpair::PAIR_COMM;
+
 pub struct IoMeter {
   pub height: i32,
   pub width: i32,
@@ -133,7 +136,7 @@ impl IoMeter {
       Kb
     };
 
-    // left y-axe (rx)
+    // left y-axe (rd)
     let s = &format!("{:>3.0}", self.max_r_kb.convert(r_unit));
     mvwaddstr(win, 1, 1, s);
     let s = &format!("{:>3.0}", self.max_r_kb.convert(r_unit) as f64 * 0.5);
@@ -141,16 +144,16 @@ impl IoMeter {
     let s = &format!("[{}]", r_unit);
     mvwaddstr(win, self.height - 2, 1, s);
 
-    // right y-axe (tx)
+    // right y-axe (wr)
     let s = &format!("{:>3.0}", self.max_w_kb.convert(w_unit));
-    mvwaddstr_color(win, 1, self.width - 1 - s.len() as i32, s, cpair::PAIR_COMM);
+    mvwaddstr_color(win, 1, self.width - 1 - s.len() as i32, s, WRCOLOR);
     let s = &format!("{:>3.0}", self.max_w_kb.convert(w_unit) as f64 * 0.5);
     mvwaddstr_color(
       win,
       self.height / 2,
       self.width - 1 - s.len() as i32,
       s,
-      cpair::PAIR_COMM,
+      WRCOLOR,
     );
     let s = &format!("[{}]", w_unit);
     mvwaddstr_color(
@@ -158,7 +161,7 @@ impl IoMeter {
       self.height - 2,
       self.width - 1 - s.len() as i32,
       s,
-      cpair::PAIR_COMM,
+      WRCOLOR,
     );
   }
 }
@@ -189,8 +192,8 @@ impl Meter for IoMeter {
       height - 1,
       (0.0, self.max_r_kb.convert(Kb) as f64),
       (0.0, self.max_w_kb.convert(Kb) as f64),
-      (rd_hists, cpair::DEFAULT),
-      (wr_hists, cpair::PAIR_COMM),
+      (rd_hists, RDCOLOR),
+      (wr_hists, WRCOLOR),
     );
 
     for (i, col) in brails.iter().enumerate() {
