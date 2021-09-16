@@ -5,8 +5,23 @@ functions which update components.
 **************************/
 
 use super::manager::WinManager;
+use crate::proclist::list::ProcList;
 use crate::render::meter::*;
-use crate::resource::{dmesg, mem, net};
+use crate::resource::{disk, dmesg, mem, net};
+
+// update uptime and return interval.
+pub fn update_uptime(plist: &mut ProcList) -> f64 {
+  let prev_uptime = plist.uptime.clone();
+  plist.uptime.update();
+  let current_uptime = &plist.uptime;
+
+  let interval = current_uptime.uptime - prev_uptime.uptime;
+  if interval <= 0.0 {
+    1.0
+  } else {
+    interval
+  }
+}
 
 pub fn update_cpu_meters(wm: &mut WinManager) -> Option<()> {
   let cpumanager = wm.cpumanager.as_mut()?;
@@ -54,6 +69,8 @@ pub fn update_netmeter(wm: &mut WinManager) -> Option<()> {
 
 pub fn update_iometer(wm: &mut WinManager) -> Option<()> {
   let iometer = wm.iometer.as_mut()?;
+  let statistics = disk::get_diskstats();
+  iometer.set_statistics(statistics, wm.update_interval);
   iometer.render();
   Some(())
 }

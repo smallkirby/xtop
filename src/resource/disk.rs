@@ -7,9 +7,9 @@ xtop assumes only kernel 5.5+.
 
 *******/
 
-use std::fs;
+use std::{fs, ops};
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub struct DiskStat {
   pub major: u32,      // major number
   pub minor: u32,      // minor number
@@ -31,6 +31,41 @@ pub struct DiskStat {
   pub dc_tick: u64,    // time spent discarding
   pub fl_io: u64,      // # of flush operations toward the dev
   pub fl_tick: u64,    // time spent flushing
+}
+
+impl ops::AddAssign for DiskStat {
+  fn add_assign(&mut self, rhs: Self) {
+    *self = self.clone() + rhs;
+  }
+}
+
+impl ops::Add for DiskStat {
+  type Output = Self;
+
+  fn add(self, other: Self) -> Self {
+    Self {
+      major: 0,
+      minor: 0,
+      name: "sum".into(),
+      rd_io: self.rd_io + other.rd_io,
+      rd_merge: self.rd_merge + other.rd_merge,
+      rd_sector: self.rd_sector + other.rd_sector,
+      rd_tick: self.rd_tick + other.rd_tick,
+      wr_io: self.wr_io + other.wr_io,
+      wr_merge: self.wr_merge + other.wr_merge,
+      wr_sector: self.wr_sector + other.wr_sector,
+      wr_tick: self.wr_tick + other.wr_tick,
+      io_pgr: self.io_pgr + other.io_pgr,
+      total_tick: self.total_tick + other.total_tick,
+      req_tick: self.req_tick + other.req_tick,
+      dc_io: self.dc_io + other.dc_io,
+      dc_merge: self.dc_merge + other.dc_merge,
+      dc_sector: self.dc_sector + other.dc_sector,
+      dc_tick: self.dc_tick + other.dc_tick,
+      fl_io: self.fl_io + other.fl_io,
+      fl_tick: self.fl_tick + other.fl_tick,
+    }
+  }
 }
 
 impl DiskStat {
@@ -87,6 +122,23 @@ impl DiskStat {
         fl_tick,
       }
     }
+  }
+
+  pub fn tps(&self, rhs: &Self, update_interval: f64) -> f64 {
+    ((self.rd_io + self.wr_io + self.dc_io) - (rhs.rd_io + rhs.wr_io + rhs.dc_io)) as f64
+      / update_interval
+  }
+
+  pub fn kb_read_persec(&self, rhs: &Self, update_interval: f64) -> f64 {
+    // 1 sector is 2048-Bytes. So dividing by 2 means conversion into kB.
+    let rsectors = self.rd_sector - rhs.rd_sector;
+    (rsectors as f64 / update_interval) / 2.0
+  }
+
+  pub fn kb_write_persec(&self, rhs: &Self, update_interval: f64) -> f64 {
+    // 1 sector is 2048-Bytes. So dividing by 2 means conversion into kB.
+    let wsectors = self.wr_sector - rhs.wr_sector;
+    (wsectors as f64 / update_interval) / 2.0
   }
 }
 

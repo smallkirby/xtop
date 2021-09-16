@@ -11,14 +11,14 @@
   {
     "name": "IoMeter",
     "height": {
-      "Multiple": 3
+      "Multiple": 4
     },
     "ratio": "Rest"
   },
   {
     "name": "Empty",
     "height": {
-      "Line": 1 
+      "Line": 2 
     },
     "ratio": "Rest"
   },

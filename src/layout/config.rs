@@ -55,12 +55,12 @@ static DEFAULT_LAYOUT: [Layout; 12] = [
   },
   Layout {
     name: MeterName::IoMeter,
-    height: Multiple(3),
+    height: Multiple(4),
     ratio: Size::Rest,
   },
   Layout {
     name: MeterName::Empty,
-    height: Line(1),
+    height: Line(2),
     ratio: Size::Rest,
   },
   Layout {

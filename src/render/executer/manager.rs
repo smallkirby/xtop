@@ -75,6 +75,9 @@ pub struct WinManager {
   // cursor
   pub cur_x: i32,
   pub cur_y: i32,
+
+  // uptime interval
+  pub update_interval: f64,
 }
 
 impl WinManager {
@@ -101,6 +104,7 @@ impl WinManager {
   }
 
   fn handle_update_signal(&mut self) {
+    self.update_interval = update_uptime(&mut self.plist);
     update_cpu_meters(self);
     update_cpugraph(self);
     update_inputmeter(self);
@@ -390,6 +394,7 @@ impl WinManager {
       cur_x: 0,
       cur_y: 0,
       commander: Arc::new(Mutex::new(commander::Commander::new())),
+      update_interval: 1.0,
     }
   }
 }
