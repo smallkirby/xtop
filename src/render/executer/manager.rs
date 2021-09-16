@@ -104,6 +104,7 @@ impl WinManager {
   }
 
   fn handle_update_signal(&mut self) {
+    self.plist.update_cpus();
     self.update_interval = update_uptime(&mut self.plist);
     update_cpu_meters(self);
     update_cpugraph(self);

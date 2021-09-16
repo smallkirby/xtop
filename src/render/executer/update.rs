@@ -25,7 +25,6 @@ pub fn update_uptime(plist: &mut ProcList) -> f64 {
 
 pub fn update_cpu_meters(wm: &mut WinManager) -> Option<()> {
   let cpumanager = wm.cpumanager.as_mut()?;
-  wm.plist.update_cpus();
   cpumanager.set_cpus(&wm.plist.cpus);
   cpumanager.render();
   Some(())
