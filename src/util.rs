@@ -5,10 +5,69 @@ Utility functions used globally.
 *******/
 
 use std::cmp::Ordering;
+use std::fmt;
 use std::os::unix::fs::MetadataExt;
 use std::{fs, path};
 
-/* number processing funcs*/
+/* data unit funcs */
+#[derive(Clone, Copy)]
+pub enum DataUnit {
+  B,
+  Kb,
+  Mb,
+  Gb,
+}
+
+impl fmt::Display for DataUnit {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    use DataUnit::*;
+    match self {
+      B => write!(f, "B"),
+      Kb => write!(f, "KB"),
+      Mb => write!(f, "MB"),
+      Gb => write!(f, "GB"),
+    }
+  }
+}
+
+#[derive(Clone, Copy)]
+pub struct DataSize<T> {
+  pub val: T,
+  pub unit: DataUnit,
+}
+
+impl<T> DataSize<T>
+where
+  T: std::ops::Mul<Output = T> + std::ops::Div<Output = T> + From<u64> + Copy,
+{
+  pub fn new(val: T, unit: DataUnit) -> Self {
+    Self { val, unit }
+  }
+
+  pub fn convert(&self, unit: DataUnit) -> T {
+    use DataUnit::*;
+    match (unit, self.unit) {
+      (B, B) => self.val,
+      (B, Kb) => self.val * (1024).into(),
+      (B, Mb) => self.val * (1024 * 1024).into(),
+      (B, Gb) => self.val * (1024 * 1024 * 1024).into(),
+      (Kb, B) => self.val / (1024).into(),
+      (Kb, Kb) => self.val,
+      (Kb, Mb) => self.val * (1024).into(),
+      (Kb, Gb) => self.val * (1024 * 1024).into(),
+      (Mb, B) => self.val / (1024 * 1024).into(),
+      (Mb, Kb) => self.val / (1024).into(),
+      (Mb, Mb) => self.val,
+      (Mb, Gb) => self.val * (1024).into(),
+      (Gb, B) => self.val / (1024 * 1024 * 1024).into(),
+      (Gb, Kb) => self.val / (1024 * 1024).into(),
+      (Gb, Mb) => self.val / (1024).into(),
+      (Gb, Gb) => self.val,
+    }
+  }
+}
+
+/* number processing funcs */
 
 // round @v to fit in from..=to
 pub fn clamp(v: f64, from: f64, to: f64) -> f64 {
