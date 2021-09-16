@@ -20,7 +20,8 @@ pub struct NetMeter {
   pub win: WINDOW,
   history: Vec<(u64, u64)>, // ring-buffer for history of (rx, tx) [KBytes]
   cur_hist_ix: usize,       // always points to newly recorded value of history
-  max_kb: u64,
+  max_rx_kb: u64,
+  max_tx_kb: u64,
   total_rx: u64, // Bytes
   total_tx: u64, // Bytes
   diff_rx: u64,  // Bytes
@@ -44,7 +45,8 @@ impl NetMeter {
       THRESHOLD
     };
 
-    self.max_kb = std::cmp::max(max_kb_rx, max_kb_tx);
+    self.max_rx_kb = max_kb_rx;
+    self.max_tx_kb = max_kb_tx;
   }
 
   // returns latest history whose size is decided by self.width.
@@ -109,10 +111,10 @@ impl Meter for NetMeter {
     self.update_upper_limit(&hists);
     let rx_hists: Vec<f64> = hists.iter().map(|(rx, _tx)| *rx as f64).collect();
     let tx_hists: Vec<f64> = hists.iter().map(|(_rx, tx)| *tx as f64).collect();
-    let brails = get_brails_complement_2axes_color(
+    let brails = get_brails_complement_2sep_axes_color(
       height - 1,
-      0.0,
-      self.max_kb as f64,
+      (0.0, self.max_rx_kb as f64),
+      (0.0, self.max_tx_kb as f64),
       (rx_hists, cpair::DEFAULT),
       (tx_hists, cpair::PAIR_COMM),
     );
@@ -133,12 +135,19 @@ impl Meter for NetMeter {
     );
 
     // draw y-axes
-    mvwaddstr(win, 1, 1, &format!("{:>5}", self.max_kb));
-    mvwaddstr(
+    let s = &format!("{:>5}", self.max_rx_kb);
+    mvwaddstr(win, 1, 1, s);
+    let s = &format!("{:>5}", self.max_rx_kb as f64 * 0.5);
+    mvwaddstr(win, self.height / 2, 1, s);
+    let s = &format!("{:>5}", self.max_tx_kb);
+    mvwaddstr_color(win, 1, self.width - 1 - s.len() as i32, s, cpair::PAIR_COMM);
+    let s = &format!("{:>5}", self.max_tx_kb as f64 * 0.5);
+    mvwaddstr_color(
       win,
       self.height / 2,
-      1,
-      &format!("{:>5}", (self.max_kb as f64 * 0.5) as u64),
+      self.width - 1 - s.len() as i32,
+      s,
+      cpair::PAIR_COMM,
     );
 
     wrefresh(win);
@@ -165,7 +174,8 @@ impl Meter for NetMeter {
       win,
       history: vec![(0, 0); MAXBUFSZ],
       cur_hist_ix: 0,
-      max_kb: 1000,
+      max_rx_kb: THRESHOLD,
+      max_tx_kb: THRESHOLD,
       total_rx: 0,
       total_tx: 0,
       diff_rx: 0,
