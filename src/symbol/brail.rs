@@ -333,6 +333,41 @@ pub mod b32 {
     res
   }
 
+  // convert two data into colorized line-chart, using two independent range.
+  pub fn get_brails_complement_2sep_axes_color(
+    maxheight: i32,
+    range0: (f64, f64),
+    range1: (f64, f64),
+    d0: (Vec<f64>, i16),
+    d1: (Vec<f64>, i16),
+  ) -> Vec<Vec<Cc>> {
+    let (min0, max0) = range0;
+    let (min1, max1) = range1;
+    let (data0, color0) = d0;
+    let (data1, color1) = d1;
+
+    // normalize data to positive
+    let normalize = |data: Vec<f64>, min: f64, max: f64| {
+      let zero_diff = 0.0 - min;
+      let normalized_data: Vec<f64> = data.into_iter().map(|d| d + zero_diff).collect();
+      (normalized_data, 0.0, max + zero_diff)
+    };
+    let (data0, min0, max0) = normalize(data0, min0, max0);
+    let (data1, _min1, max1) = normalize(data1, min1, max1);
+
+    // use (min0, max0) for range and apply linear-transformation for data1
+    let trans_ratio = max0 / max1;
+    let aligned_data1: Vec<f64> = data1.into_iter().map(|d| d * trans_ratio).collect();
+
+    get_brails_complement_2axes_color(
+      maxheight,
+      min0,
+      max0,
+      (data0, color0),
+      (aligned_data1, color1),
+    )
+  }
+
   // convert two data into colorized line-chart.
   pub fn get_brails_complement_2axes_color(
     maxheight: i32,

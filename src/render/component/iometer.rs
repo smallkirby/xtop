@@ -22,7 +22,8 @@ pub struct IoMeter {
   history: Vec<(f64, f64)>, // ring-buffer for history of (R[kB/s], W[kB/s])
   tps: f64,                 // current TPS (# of transfer requests toward any of device per sec.)
   current_stat: Option<disk::DiskStat>,
-  max_kb: u64,
+  max_r_kb: u64,
+  max_w_kb: u64,
 }
 
 impl IoMeter {
@@ -99,7 +100,8 @@ impl IoMeter {
       THRESHOLD
     };
 
-    self.max_kb = std::cmp::max(max_kb_rd, max_kb_wr);
+    self.max_r_kb = max_kb_rd;
+    self.max_w_kb = max_kb_wr;
   }
 
   fn draw_single_col(&self, bar: &[Cc], y_bottom: i32, x: i32) {
@@ -126,10 +128,10 @@ impl Meter for IoMeter {
     self.update_upper_limit(&hists);
     let rd_hists: Vec<f64> = hists.iter().map(|(rd, _wr)| *rd as f64).collect();
     let wr_hists: Vec<f64> = hists.iter().map(|(_rd, wr)| *wr as f64).collect();
-    let brails = get_brails_complement_2axes_color(
+    let brails = get_brails_complement_2sep_axes_color(
       height - 1,
-      0.0,
-      self.max_kb as f64,
+      (0.0, self.max_r_kb as f64),
+      (0.0, self.max_w_kb as f64),
       (rd_hists, cpair::DEFAULT),
       (wr_hists, cpair::PAIR_COMM),
     );
@@ -139,12 +141,22 @@ impl Meter for IoMeter {
     }
 
     // draw y-axes
-    mvwaddstr(win, 1, 1, &format!("{:>5}", self.max_kb));
+    mvwaddstr(win, 1, 1, &format!("{:>5}", self.max_r_kb));
     mvwaddstr(
       win,
       self.height / 2,
       1,
-      &format!("{:>5}", (self.max_kb as f64 * 0.5) as u64),
+      &format!("{:>5}", (self.max_r_kb as f64 * 0.5) as u64),
+    );
+    let s = &format!("{:>5}", self.max_w_kb);
+    mvwaddstr_color(win, 1, self.width - 1 - s.len() as i32, s, cpair::PAIR_COMM);
+    let s = &format!("{:>5}", (self.max_w_kb as f64 * 0.5) as u64);
+    mvwaddstr_color(
+      win,
+      self.height / 2,
+      self.width - 1 - s.len() as i32,
+      s,
+      cpair::PAIR_COMM,
     );
 
     // draw header
@@ -176,7 +188,8 @@ impl Meter for IoMeter {
       tps: 0.0,
       cur_hist_ix: 0,
       history: vec![(0.0, 0.0); MAXBUFSZ],
-      max_kb: THRESHOLD,
+      max_r_kb: THRESHOLD,
+      max_w_kb: THRESHOLD,
     }
   }
 
