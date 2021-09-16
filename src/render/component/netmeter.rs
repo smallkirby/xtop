@@ -100,12 +100,12 @@ impl NetMeter {
 
   fn draw_yaxes(&self) {
     let win = self.win;
-    let rx_unit = if self.max_rx_kb.convert(Mb) >= 1 {
+    let rx_unit = if self.max_rx_kb.convert(Mb) >= 2 {
       Mb
     } else {
       Kb
     };
-    let tx_unit = if self.max_tx_kb.convert(Mb) >= 1 {
+    let tx_unit = if self.max_tx_kb.convert(Mb) >= 2 {
       Mb
     } else {
       Kb
@@ -131,7 +131,13 @@ impl NetMeter {
       cpair::PAIR_COMM,
     );
     let s = &format!("[{}]", tx_unit);
-    mvwaddstr(win, self.height - 2, self.width - 1 - s.len() as i32, s);
+    mvwaddstr_color(
+      win,
+      self.height - 2,
+      self.width - 1 - s.len() as i32,
+      s,
+      cpair::PAIR_COMM,
+    );
   }
 }
 

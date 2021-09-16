@@ -38,7 +38,7 @@ pub struct DataSize<T> {
 
 impl<T> DataSize<T>
 where
-  T: std::ops::Mul<Output = T> + std::ops::Div<Output = T> + From<u64> + Copy,
+  T: std::ops::Mul<Output = T> + std::ops::Div<Output = T> + From<u32> + Copy,
 {
   pub fn new(val: T, unit: DataUnit) -> Self {
     Self { val, unit }
