@@ -1,8 +1,8 @@
 [
   {
-    "name": "CpuMeter",
+    "name": "TaskMeter",
     "height": {
-      "Line": 4
+      "Line": 11
     },
     "ratio": {
       "Ratio": 0.75
@@ -11,28 +11,7 @@
   {
     "name": "IoMeter",
     "height": {
-      "Multiple": 4
-    },
-    "ratio": "Rest"
-  },
-  {
-    "name": "Empty",
-    "height": {
-      "Line": 2 
-    },
-    "ratio": "Rest"
-  },
-  {
-    "name": "TaskMeter",
-    "height": {
-      "Line": 3
-    },
-    "ratio": "Rest"
-  },
-  {
-    "name": "Empty",
-    "height": {
-      "Line": 1 
+      "Line": 11
     },
     "ratio": "Rest"
   },

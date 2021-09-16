@@ -6,7 +6,7 @@ TaskMeter shows the statistics of task/threads.
 *******/
 
 use crate::proclist::list;
-use crate::render::{color, executer::manager::WinManager, meter::*};
+use crate::render::{color::*, executer::manager::WinManager, meter::*};
 use crate::resource::{loadavg, uptime};
 use ncurses::*;
 
@@ -47,38 +47,45 @@ impl TaskMeter {
 impl Meter for TaskMeter {
   fn render(&mut self) {
     let win = self.win;
+    let x_start = 1;
+    let y_start = 1;
+    let mut cy = y_start;
+    // erase and draw box
     werase(win);
+    box_(win, 0, 0);
 
     let vals = match self.vals.as_ref() {
       Some(_vals) => _vals,
       None => {
-        mvwprintw(win, 0, 0, &"[ERROR] task vals not initialized.".to_string());
+        mvwprintw(
+          win,
+          y_start,
+          x_start,
+          &"[ERROR] task vals not initialized.".to_string(),
+        );
         wrefresh(win);
         return;
       }
     };
+
     let ave = &vals.loadaverage;
-    mvwprintw(
-      win,
-      0,
-      0,
-      &format!(
-        "Tasks: {}, {} thr; {} kthr",
-        vals.tasks, vals.uthr, vals.kthr
-      ),
+    let s = &format!(
+      "Tasks: {}, {} thr; {} kthr",
+      vals.tasks, vals.uthr, vals.kthr
     );
-    mvwprintw(
-      win,
-      1,
-      0,
-      &format!("Load Average: {} {} {}", ave.one, ave.five, ave.fifteen),
-    );
-    mvwprintw(
-      win,
-      2,
-      0,
-      &format!("Uptime: {}", vals.uptime.readable_string()),
-    );
+    mvwprintw(win, cy, x_start, s);
+    cy += 1;
+
+    let s = &format!("Load Average: {} {} {}", ave.one, ave.five, ave.fifteen);
+    mvwprintw(win, cy, x_start, s);
+    cy += 1;
+
+    let s = &format!("Uptime: {}", vals.uptime.readable_string());
+    mvwprintw(win, cy, x_start, s);
+
+    // draw header
+    mvwaddstr_color(win, 0, 1, " Tasks ", cpair::PAIR_HEAD);
+
     wrefresh(win);
   }
 
@@ -91,6 +98,7 @@ impl Meter for TaskMeter {
     x: i32,
   ) -> Self {
     let win = create_meter_win(height, width, y, x);
+    box_(win, 0, 0);
     let mut meter = TaskMeter {
       height,
       width,
@@ -125,11 +133,8 @@ pub fn winsize_require(wm: &WinManager) -> (i32, i32) {
 
 fn create_meter_win(height: i32, width: i32, y: i32, x: i32) -> WINDOW {
   let win = newwin(height, width, y, x);
-  wattron(win, COLOR_PAIR(color::cpair::DEFAULT));
-  wbkgd(
-    win,
-    ' ' as chtype | COLOR_PAIR(color::cpair::DEFAULT) as chtype,
-  );
+  wattron(win, COLOR_PAIR(cpair::DEFAULT));
+  wbkgd(win, ' ' as chtype | COLOR_PAIR(cpair::DEFAULT) as chtype);
   wrefresh(win);
   win
 }

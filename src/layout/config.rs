@@ -47,30 +47,15 @@ pub struct Layout {
 use Height::*;
 use Size::*;
 
-static DEFAULT_LAYOUT: [Layout; 12] = [
+static DEFAULT_LAYOUT: [Layout; 9] = [
   Layout {
-    name: MeterName::CpuMeter,
-    height: Line(4),
+    name: MeterName::TaskMeter,
+    height: Line(11),
     ratio: Ratio(0.75),
   },
   Layout {
     name: MeterName::IoMeter,
-    height: Multiple(4),
-    ratio: Size::Rest,
-  },
-  Layout {
-    name: MeterName::Empty,
-    height: Line(2),
-    ratio: Size::Rest,
-  },
-  Layout {
-    name: MeterName::TaskMeter,
-    height: Line(3),
-    ratio: Size::Rest,
-  },
-  Layout {
-    name: MeterName::Empty,
-    height: Line(1),
+    height: Line(11),
     ratio: Size::Rest,
   },
   Layout {
