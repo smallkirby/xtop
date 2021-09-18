@@ -15,7 +15,7 @@ use crate::util::popfirst;
 use std::fs;
 use std::process::Command;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum DockerUptimeUnit {
   Second,
   Minute,
@@ -58,7 +58,7 @@ impl std::fmt::Display for DockerUptimeUnit {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DockerUptime {
   val: u32,
   unit: DockerUptimeUnit,
@@ -86,25 +86,32 @@ impl DockerUptime {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DockerExtInfo {
   pub psinfo: DockerPsInfo,
-  cpuuser: u64,   // total jiffies spent on user procs in container
-  cpusystem: u64, // total jiffies spent on kernel
-  uptime: f64,
+  pub cputime: u64,  // [nano seconds] consumed by all the tasks under this cgroups.
+  pub cpuusage: f64, //
+  pub uptime: f64,
+}
+
+impl std::cmp::PartialEq for DockerExtInfo {
+  fn eq(&self, other: &Self) -> bool {
+    self.psinfo == other.psinfo
+  }
 }
 
 impl DockerExtInfo {
   pub fn from(psinfo: DockerPsInfo) -> Self {
     Self {
       psinfo,
-      cpuuser: 0,
-      cpusystem: 0,
+      cputime: 0,
+      cpuusage: 0.0,
       uptime: 0.0,
     }
   }
 
   pub fn update(&mut self) {
+    // update current uptime
     let uptime: f64 = match fs::read_to_string("/proc/uptime") {
       Ok(o) => {
         let tokens: Vec<&str> = o.split_whitespace().collect();
@@ -115,18 +122,27 @@ impl DockerExtInfo {
     let prev_uptime = self.uptime;
     self.uptime = uptime;
 
+    // update CPU usage
     self.update_cpu(prev_uptime);
   }
 
   fn update_cpu(&mut self, prev_uptime: f64) {
-    if let Some((u, s)) = read_cpustat(&self.psinfo.full_id) {
-      self.cpuuser = u;
-      self.cpusystem = s;
+    let prev_cputime = self.cputime;
+    if let Some(t) = read_cpustat(&self.psinfo.full_id) {
+      self.cputime = t;
+    } else {
+      self.cputime = prev_cputime;
     }
+
+    self.cpuusage = (self.cputime - prev_cputime) as f64
+      / 1000.0
+      / 1000.0
+      / 1000.0
+      / (self.uptime - prev_uptime) as f64;
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DockerPsInfo {
   pub full_id: String,
   pub short_id: String,
@@ -136,6 +152,12 @@ pub struct DockerPsInfo {
   pub uptime: DockerUptime,
   pub ports: Vec<String>,
   pub name: String,
+}
+
+impl std::cmp::PartialEq for DockerPsInfo {
+  fn eq(&self, other: &Self) -> bool {
+    self.full_id == other.full_id
+  }
 }
 
 impl DockerPsInfo {
@@ -263,20 +285,16 @@ fn get_full_id(name: &str) -> String {
   }
 }
 
-fn read_cpustat(cgroup_id: &str) -> Option<(u64, u64)> {
+fn read_cpustat(cgroup_id: &str) -> Option<u64> {
   let stat_str = match fs::read_to_string(format!(
-    "/sys/fs/cgroup/cpuacct/docker/{}/cpuacct.stat",
+    "/sys/fs/cgroup/cpuacct/docker/{}/cpuacct.usage",
     cgroup_id
   )) {
     Ok(o) => o,
     Err(_) => return None,
   };
 
-  let lines: Vec<&str> = stat_str.split("\n").collect();
-  let user = lines[0].split_whitespace().collect::<Vec<&str>>()[1];
-  let system = lines[1].split_whitespace().collect::<Vec<&str>>()[1];
-
-  Some((user.parse().unwrap(), system.parse().unwrap()))
+  Some(stat_str.trim().parse().unwrap())
 }
 
 #[cfg(test)]

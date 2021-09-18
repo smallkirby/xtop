@@ -11,6 +11,7 @@ use crate::resource::docker::DockerExtInfo;
 use ncurses::*;
 
 static NAME_MAXLEN: usize = 20;
+static CPU_MAXLEN: usize = 7;
 
 pub struct DockerMeter {
   pub height: i32,
@@ -21,7 +22,19 @@ pub struct DockerMeter {
 
 impl DockerMeter {
   pub fn set_containers(&mut self, containers: Vec<DockerExtInfo>) {
-    self.containers = containers;
+    let mut new_containers = vec![];
+    for container in containers.iter() {
+      if !self.containers.contains(container) {
+        new_containers.push(container);
+      }
+    }
+
+    self
+      .containers
+      .append(&mut new_containers.into_iter().map(|c| c.clone()).collect());
+    for container in &mut self.containers {
+      container.update();
+    }
   }
 }
 
@@ -47,6 +60,11 @@ impl Meter for DockerMeter {
 
       let uptime = container.psinfo.uptime.to_string();
       mvwaddstr(win, cy, cx, &uptime);
+      cx += uptime.len() as i32 + 1;
+
+      let cpuusage = &format!("{:>3.2}%", &container.cpuusage * 100.0);
+      mvwaddstr(win, cy, cx, &cpuusage);
+      cx += CPU_MAXLEN as i32 + 1;
 
       cx = 1 + NAME_MAXLEN as i32 + 1;
       cy += 1;
