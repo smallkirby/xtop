@@ -1,13 +1,13 @@
 /**************************
 
-functions which update components.
+functions which updates components.
 
 **************************/
 
 use super::manager::WinManager;
 use crate::proclist::list::ProcList;
 use crate::render::meter::*;
-use crate::resource::{disk, dmesg, mem, net};
+use crate::resource::{disk, dmesg, docker, mem, net};
 
 // update uptime and return interval.
 pub fn update_uptime(plist: &mut ProcList) -> f64 {
@@ -100,5 +100,13 @@ pub fn update_dmesglist(wm: &mut WinManager) -> Option<()> {
 pub fn update_commandbox(wm: &mut WinManager) -> Option<()> {
   let commandbox = wm.commandbox.as_mut()?;
   commandbox.render();
+  Some(())
+}
+
+pub fn update_dockermeter(wm: &mut WinManager) -> Option<()> {
+  let dockermeter = wm.dockermeter.as_mut()?;
+  let containers = docker::get_docker_ps_up_ext();
+  dockermeter.set_containers(containers);
+  dockermeter.render();
   Some(())
 }

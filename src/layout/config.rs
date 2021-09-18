@@ -17,6 +17,7 @@ pub enum MeterName {
   DmesgList,
   ProcMeter,
   CommandBox,
+  DockerMeter,
   IoMeter,
   Empty,
 }
@@ -47,11 +48,16 @@ pub struct Layout {
 use Height::*;
 use Size::*;
 
-static DEFAULT_LAYOUT: [Layout; 9] = [
+static DEFAULT_LAYOUT: [Layout; 10] = [
   Layout {
     name: MeterName::TaskMeter,
     height: Line(11),
-    ratio: Ratio(0.75),
+    ratio: Ratio(0.25),
+  },
+  Layout {
+    name: MeterName::DockerMeter,
+    height: Line(11),
+    ratio: Ratio(0.5),
   },
   Layout {
     name: MeterName::IoMeter,

@@ -2,6 +2,7 @@ pub mod cmdline;
 pub mod cpu;
 pub mod disk;
 pub mod dmesg;
+pub mod docker;
 pub mod input;
 pub mod loadavg;
 pub mod mem;

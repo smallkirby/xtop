@@ -24,6 +24,7 @@ pub fn resize_meter_general(
     MemMeter => Box::new(wm.memmeter.as_mut()?),
     Inputs => Box::new(wm.inputmeter.as_mut()?),
     DmesgList => Box::new(wm.dmesglist.as_mut()?),
+    DockerMeter => Box::new(wm.dockermeter.as_mut()?),
     ProcMeter => Box::new(wm.processmanager.as_mut()?),
     NetMeter => Box::new(wm.netmeter.as_mut()?),
     IoMeter => Box::new(wm.iometer.as_mut()?),

@@ -7,8 +7,8 @@ functions which initialize components.
 use super::manager::WinManager;
 use crate::layout::{calc, config::*};
 use crate::render::component::{
-  commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter, netmeter,
-  processmeter_manager, taskmeter,
+  commandbox, cpugraph, cpumanager, dmesglist, dockermeter, inputmeter, iometer, memmeter,
+  netmeter, processmeter_manager, taskmeter,
 };
 use crate::render::meter::Meter;
 
@@ -57,6 +57,11 @@ pub fn init_meter_general(wm: &mut WinManager, name: MeterName, height: i32, wid
     }
     DmesgList => {
       wm.dmesglist = Some(dmesglist::DmesgList::init_meter(
+        wm.mainwin, wm, height, width, wm.cur_y, wm.cur_x,
+      ))
+    }
+    DockerMeter => {
+      wm.dockermeter = Some(dockermeter::DockerMeter::init_meter(
         wm.mainwin, wm, height, width, wm.cur_y, wm.cur_x,
       ))
     }

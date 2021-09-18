@@ -108,6 +108,18 @@ pub fn popc(ss: &mut Vec<&str>) -> char {
   c
 }
 
+pub fn popfirst<T>(v: &mut Vec<T>) -> Option<T>
+where
+  T: Copy,
+{
+  if v.is_empty() {
+    return None;
+  }
+  let f: Vec<T> = v.drain(0..=0).collect();
+
+  Some(f[0])
+}
+
 /* dev related funcs */
 
 // receive dev_t like number and return major
@@ -148,6 +160,16 @@ pub fn get_dir_file(full_path: &str) -> (String, String) {
     };
 
     (exe_path_dir.into(), exe_path_file.into())
+  }
+}
+
+/* string related funcs */
+
+pub fn firstn(s: &str, n: usize) -> String {
+  if s.len() <= n {
+    s.into()
+  } else {
+    s[0..n].into()
   }
 }
 

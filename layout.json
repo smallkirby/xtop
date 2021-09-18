@@ -5,7 +5,16 @@
       "Line": 11
     },
     "ratio": {
-      "Ratio": 0.75
+      "Ratio": 0.25
+    }
+  },
+  {
+    "name": "DockerMeter",
+    "height": {
+      "Line": 11
+    },
+    "ratio": {
+      "Ratio": 0.50
     }
   },
   {

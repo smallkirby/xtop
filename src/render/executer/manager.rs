@@ -11,8 +11,8 @@ use crate::consts::*;
 use crate::layout::{calc, config};
 use crate::proclist::list;
 use crate::render::component::{
-  commandbox, cpugraph, cpumanager, dmesglist, inputmeter, iometer, memmeter, netmeter,
-  processmeter_manager, taskmeter,
+  commandbox, cpugraph, cpumanager, dmesglist, dockermeter, inputmeter, iometer, memmeter,
+  netmeter, processmeter_manager, taskmeter,
 };
 use crate::render::{color, meter::Meter};
 use ncurses::*;
@@ -65,6 +65,9 @@ pub struct WinManager {
   // Dmesg list
   pub dmesglist: Option<dmesglist::DmesgList>,
 
+  // Docker meter
+  pub dockermeter: Option<dockermeter::DockerMeter>,
+
   // Layout of components
   pub layout: Vec<config::Layout>,
 
@@ -113,6 +116,7 @@ impl WinManager {
     update_netmeter(self);
     update_iometer(self);
     update_dmesglist(self);
+    update_dockermeter(self); // XXX should reta-limit
 
     // update values
     self.plist.total_tasks = 0;
@@ -188,6 +192,7 @@ impl WinManager {
           DmesgList => self.dmesglist.as_mut().unwrap().handle_click(y, x),
           NetMeter => self.netmeter.as_mut().unwrap().handle_click(y, x),
           IoMeter => self.iometer.as_mut().unwrap().handle_click(y, x),
+          DockerMeter => self.dockermeter.as_mut().unwrap().handle_click(y, x),
           CommandBox => {}
           Empty => {}
         };
@@ -390,6 +395,7 @@ impl WinManager {
       iometer: None,
       inputmeter: None,
       dmesglist: None,
+      dockermeter: None,
       commandbox: None,
       layout: vec![],
       cur_x: 0,
