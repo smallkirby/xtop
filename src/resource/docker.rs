@@ -10,7 +10,8 @@ cf: https://docs.docker.com/config/containers/runmetrics/
 
 *******/
 
-use crate::util::popfirst;
+use crate::resource::mem;
+use crate::util::{popfirst, DataSize, DataUnit::*};
 
 use std::fs;
 use std::process::Command;
@@ -90,8 +91,10 @@ impl DockerUptime {
 pub struct DockerExtInfo {
   pub psinfo: DockerPsInfo,
   pub cputime: u64,  // [nano seconds] consumed by all the tasks under this cgroups.
-  pub cpuusage: f64, //
-  pub uptime: f64,
+  pub cpuusage: f64, // total CPU usage including user/sys.
+  pub uptime: f64,   // uptime the last update is performed.
+  pub mem_limit: DataSize<u64>, // memory limit in bytes.
+  pub mem_inuse: DataSize<u64>, // memory in use in bytes.
 }
 
 impl std::cmp::PartialEq for DockerExtInfo {
@@ -107,6 +110,8 @@ impl DockerExtInfo {
       cputime: 0,
       cpuusage: 0.0,
       uptime: 0.0,
+      mem_inuse: DataSize::new(0, B),
+      mem_limit: DataSize::new(0, B),
     }
   }
 
@@ -122,8 +127,8 @@ impl DockerExtInfo {
     let prev_uptime = self.uptime;
     self.uptime = uptime;
 
-    // update CPU usage
     self.update_cpu(prev_uptime);
+    self.update_memory();
   }
 
   fn update_cpu(&mut self, prev_uptime: f64) {
@@ -139,6 +144,21 @@ impl DockerExtInfo {
       / 1000.0
       / 1000.0
       / (self.uptime - prev_uptime) as f64;
+  }
+
+  fn update_memory(&mut self) {
+    let (limit, inuse) = match read_memstat(&self.psinfo.full_id) {
+      Some((l, i)) => (l, i),
+      None => (0, 0),
+    };
+    let total = DataSize::new(mem::MemInfo::new().total, Kb);
+
+    self.mem_inuse = DataSize::new(inuse, B);
+    self.mem_limit = if limit >= total.convert(B) {
+      DataSize::new(total.convert(B), B)
+    } else {
+      DataSize::new(limit, B)
+    }
   }
 }
 
@@ -171,12 +191,15 @@ impl DockerPsInfo {
     loop {
       let t = popfirst(&mut tokens)?;
       if t.starts_with('"') && t.ends_with('"') {
+        #[allow(clippy::manual_strip)]
         command.push_str(&t[1..(t.len() - 1)]);
         break;
       } else if t.ends_with('"') {
+        #[allow(clippy::manual_strip)]
         command.push_str(&t[..(t.len() - 1)]);
         break;
       } else if t.starts_with('"') {
+        #[allow(clippy::manual_strip)]
         command.push_str(&t[1..]);
       } else {
         command.push_str(&t);
@@ -211,7 +234,7 @@ impl DockerPsInfo {
     if tokens.len() != 1 {
       loop {
         let t = popfirst(&mut tokens)?;
-        if t.ends_with(",") {
+        if t.ends_with(',') {
           ports.push(t.replace(",", ""));
         } else {
           ports.push(t.into());
@@ -255,11 +278,11 @@ fn get_docker_ps_up() -> Vec<DockerPsInfo> {
     Err(_) => return result,
   };
 
-  let ps_result_lines: Vec<&str> = ps_result.split("\n").collect();
+  let ps_result_lines: Vec<&str> = ps_result.split('\n').collect();
   if ps_result_lines.len() == 1 {
     return result;
   }
-  for line in ps_result_lines[1..].into_iter() {
+  for line in ps_result_lines[1..].iter() {
     match DockerPsInfo::try_from(line) {
       Some(container) => result.push(container),
       _ => {}
@@ -295,6 +318,28 @@ fn read_cpustat(cgroup_id: &str) -> Option<u64> {
   };
 
   Some(stat_str.trim().parse().unwrap())
+}
+
+fn read_memstat(cgroup_id: &str) -> Option<(u64, u64)> {
+  let stat_str = match fs::read_to_string(format!(
+    "/sys/fs/cgroup/memory/docker/{}/memory.usage_in_bytes",
+    cgroup_id,
+  )) {
+    Ok(output) => output,
+    Err(_) => return None,
+  };
+  let inuse = stat_str.trim().parse().unwrap();
+
+  let stat_str = match fs::read_to_string(format!(
+    "/sys/fs/cgroup/memory/docker/{}/memory.limit_in_bytes",
+    cgroup_id,
+  )) {
+    Ok(output) => output,
+    Err(_) => return None,
+  };
+  let limit = stat_str.trim().parse().unwrap();
+
+  Some((limit, inuse))
 }
 
 #[cfg(test)]

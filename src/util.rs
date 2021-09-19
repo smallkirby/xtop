@@ -10,7 +10,7 @@ use std::os::unix::fs::MetadataExt;
 use std::{fs, path};
 
 /* data unit funcs */
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum DataUnit {
   B,
   Kb,
@@ -30,10 +30,36 @@ impl fmt::Display for DataUnit {
   }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct DataSize<T> {
   pub val: T,
   pub unit: DataUnit,
+}
+
+impl<T: 'static> DataSize<T>
+where
+  T: std::ops::Mul<Output = T> + std::ops::Div<Output = T> + From<u32> + Copy + Into<u64>,
+{
+  pub fn convert_f64_lossy(&self, unit: DataUnit) -> f64 {
+    let val_u64: u64 = self.val.into();
+    let val_f64 = val_u64 as f64;
+    let tmp_size = DataSize::new(val_f64, self.unit);
+
+    tmp_size.convert(unit)
+  }
+
+  pub fn good_unit_lossy(&self, floor: f64) -> DataUnit {
+    use DataUnit::*;
+    let units = vec![Gb, Mb, Kb, B];
+    for unit in units {
+      let val = self.convert_f64_lossy(unit);
+      if val >= floor {
+        return unit;
+      }
+    }
+
+    B
+  }
 }
 
 impl<T> DataSize<T>
