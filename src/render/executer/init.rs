@@ -16,6 +16,8 @@ pub fn init_meters(wm: &mut WinManager) {
   let layouts = read_layout_config();
   let fixed_layouts = calc::get_fixed_layouts(&layouts, wm.screen_height, wm.screen_width);
 
+  wm.cur_y = 1;
+  wm.cur_x = 0;
   for layout in &fixed_layouts {
     let height = layout.height;
     let width = layout.width;

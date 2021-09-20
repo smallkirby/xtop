@@ -13,3 +13,4 @@ pub mod pstat;
 pub mod stat;
 pub mod tty;
 pub mod uptime;
+pub mod version;

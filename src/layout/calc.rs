@@ -40,7 +40,7 @@ fn get_fixed_layouts_may_error(
   let mut multiline_waiting_queue = None;
   let mut x_start = 0;
   let mut cur_x = x_start;
-  let mut cur_y = 0;
+  let mut cur_y = 1;
 
   for layout in layouts {
     let mut go_newline = false;

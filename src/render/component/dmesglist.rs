@@ -37,6 +37,7 @@ impl DmesgList {
   fn get_recent_history(&self, size: usize) -> Vec<&dmesg::KmsgLine> {
     let mut res = vec![];
     let start = self.cur_hist_ix;
+    eprintln!("{}", size);
     for i in (0..size).rev() {
       match &self.history[(start + MAXBUFSZ - i) % MAXBUFSZ] {
         Some(h) => res.push(h),
@@ -59,6 +60,9 @@ impl Meter for DmesgList {
     let x_start = 1;
     let width = self.width - x_start - 1;
     let height = self.height - 2;
+    if height < 0 {
+      return;
+    }
     let y_bottom = height;
     let hists = self.get_recent_history(height as usize);
     for (i, hist) in hists.iter().enumerate() {

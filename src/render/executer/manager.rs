@@ -15,6 +15,7 @@ use crate::render::component::{
   netmeter, processmeter_manager, taskmeter,
 };
 use crate::render::{color, meter::Meter};
+use crate::resource::version;
 use ncurses::*;
 use signal_hook::{consts::*, iterator::Signals};
 use std::sync::{mpsc, Arc, Mutex};
@@ -81,10 +82,20 @@ pub struct WinManager {
 
   // uptime interval
   pub update_interval: f64,
+
+  // version info
+  pub version: String,
 }
 
 impl WinManager {
   pub fn init_meters(&mut self) {
+    // draw header
+    let os_version = version::get_os_version();
+    let kernel_version = version::get_kernel_version();
+    self.version = format!("{} {}", os_version, kernel_version);
+    mvwaddstr(self.mainwin, 0, 0, &self.version);
+
+    // init each component
     init_meters(self);
   }
 
@@ -402,6 +413,7 @@ impl WinManager {
       cur_y: 0,
       commander: Arc::new(Mutex::new(commander::Commander::new())),
       update_interval: 1.0,
+      version: "".into(),
     }
   }
 }
