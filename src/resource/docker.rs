@@ -72,18 +72,21 @@ impl std::fmt::Display for DockerUptime {
 }
 
 impl DockerUptime {
-  pub fn from(s: &str) -> Self {
+  pub fn try_from(s: &str) -> Option<Self> {
     let mut tokens: Vec<&str> = s.split_whitespace().collect();
     if tokens[0].contains("About") {
       popfirst(&mut tokens);
     };
     let val = match tokens[0] {
       "a" | "an" => 1,
-      _ => tokens[0].parse().unwrap(),
+      _ => match tokens[0].parse() {
+        Ok(v) => v,
+        Err(_) => return None,
+      },
     };
     let unit = DockerUptimeUnit::from(tokens[1]);
 
-    Self { val, unit }
+    Some(Self { val, unit })
   }
 }
 
@@ -214,7 +217,10 @@ impl DockerPsInfo {
       created_str.push_str(popfirst(&mut tokens)?);
       created_str.push_str(" ");
     }
-    let created = DockerUptime::from(&created_str);
+    let created = match DockerUptime::try_from(&created_str) {
+      Some(c) => c,
+      None => return None,
+    };
 
     if popfirst(&mut tokens)? != "Up" {
       return None;
@@ -228,7 +234,10 @@ impl DockerPsInfo {
       status_str.push_str(popfirst(&mut tokens)?);
       status_str.push_str(" ");
     }
-    let uptime = DockerUptime::from(&status_str);
+    let uptime = match DockerUptime::try_from(&status_str) {
+      Some(u) => u,
+      None => return None,
+    };
 
     let mut ports = vec![];
     if tokens.len() != 1 {

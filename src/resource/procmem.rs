@@ -43,10 +43,13 @@ impl Statm {
   }
 }
 
-pub fn read_statm(proc: &mut process::Process, parent_dir: &str) {
+pub fn read_statm(proc: &mut process::Process, parent_dir: &str) -> Result<(), ()> {
   use crate::consts::*;
 
-  let statm_s = fs::read_to_string(format!("{}/statm", parent_dir)).unwrap();
+  let statm_s = match fs::read_to_string(format!("{}/statm", parent_dir)) {
+    Ok(s) => s,
+    Err(_) => return Err(()),
+  };
   let statm = Statm::new(&statm_s);
 
   proc.m_virt = statm.m_virt * PAGESIZE_KB;
@@ -55,13 +58,15 @@ pub fn read_statm(proc: &mut process::Process, parent_dir: &str) {
   proc.m_text = statm.m_text;
   proc.m_data = statm.m_data;
   proc.m_dirty = statm.m_dirty;
+
+  Ok(())
 }
 
 // it reads only three fields: pss, swap, psswap.
-pub fn read_smaps_rollup(proc: &mut process::Process, parent_dir: &str) {
+pub fn read_smaps_rollup(proc: &mut process::Process, parent_dir: &str) -> Result<(), ()> {
   let smaps = match fs::read_to_string(format!("{}/smaps_rollup", parent_dir)) {
     Ok(_s) => _s,
-    Err(_) => return,
+    Err(_) => return Err(()),
   };
   for s in smaps.split('\n').into_iter() {
     if s.starts_with("Pss") {
@@ -75,6 +80,8 @@ pub fn read_smaps_rollup(proc: &mut process::Process, parent_dir: &str) {
       proc.m_psswap = ss[1].parse().unwrap();
     }
   }
+
+  Ok(())
 }
 
 #[cfg(test)]
@@ -86,7 +93,7 @@ pub mod tests {
   fn test_read_statm() {
     let path = "/proc/1";
     let mut process = process::Process::new(1);
-    read_statm(&mut process, path);
+    assert_eq!(read_statm(&mut process, path), Ok(()));
     println!("{:?}", process);
   }
 }

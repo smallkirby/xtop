@@ -112,8 +112,16 @@ pub fn read_stat(pid: pid_t) -> Result<PStat, String> {
   Ok(PStat::from(stat_str))
 }
 
-pub fn update_with_stat(proc: &mut Process, _dirname: &str, btime: i64, jiffy: i64) {
-  let stat = read_stat(proc.pid).unwrap();
+pub fn update_with_stat(
+  proc: &mut Process,
+  _dirname: &str,
+  btime: i64,
+  jiffy: i64,
+) -> Result<(), ()> {
+  let stat = match read_stat(proc.pid) {
+    Ok(s) => s,
+    Err(_) => return Err(()),
+  };
 
   if stat.pid != proc.pid {
     panic!("PID not match.");
@@ -143,6 +151,8 @@ pub fn update_with_stat(proc: &mut Process, _dirname: &str, btime: i64, jiffy: i
   }
   proc.processor = stat.processor;
   proc.time = proc.utime + proc.stime;
+
+  Ok(())
 }
 
 mod util {

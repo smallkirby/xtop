@@ -134,7 +134,9 @@ impl ProcList {
       }
 
       // update process's page usage
-      procmem::read_statm(proc, &format!("{}/{}", dname, pid));
+      if procmem::read_statm(proc, &format!("{}/{}", dname, pid)).is_err() {
+        return;
+      }
 
       if !proc.is_kernel_thread {
         if ppid.is_none() {
@@ -142,7 +144,7 @@ impl ProcList {
           if proc.is_smaps_read {
             proc.is_smaps_read = false;
           } else {
-            procmem::read_smaps_rollup(proc, &format!("{}/{}", dname, pid));
+            let _ = procmem::read_smaps_rollup(proc, &format!("{}/{}", dname, pid)).is_err();
             proc.is_smaps_read = true;
           }
         } else {
@@ -153,7 +155,7 @@ impl ProcList {
 
       let lasttimes = proc.utime + proc.stime;
       let old_tty_nr = proc.tty_nr;
-      pstat::update_with_stat(proc, dname, self.btime, self.jiffy);
+      let _ = pstat::update_with_stat(proc, dname, self.btime, self.jiffy).is_err();
 
       if old_tty_nr != proc.tty_nr && !self.tty_drivers.is_empty() {
         if proc.is_tty_read {
@@ -176,7 +178,7 @@ impl ProcList {
       };
 
       // update cmdline, comm, exe
-      cmdline::read_cmd_files(proc, &format!("{}/{}", dname, pid));
+      let _ = cmdline::read_cmd_files(proc, &format!("{}/{}", dname, pid));
 
       if proc.is_kernel_thread {
         self.kernel_threads += 1;
