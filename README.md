@@ -4,6 +4,12 @@ extremely-simplified top
 
 ![log8](./images/log8.png)
 
+## Installation
+
+```bash
+bash ./install.sh
+```
+
 
 ## Depends
 
